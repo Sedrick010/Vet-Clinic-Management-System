@@ -17,6 +17,53 @@
             </div>
             
             <ul class="navbar-nav justify-content-end">
+                <!-- Clinic Selector -->
+                @if(Auth::check())
+                <li class="nav-item dropdown pe-2 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link text-body font-weight-bold px-0" id="dropdownClinicSelector" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-clinic-medical me-sm-1"></i>
+                        <span class="d-sm-inline d-none">
+                            @php
+                                $currentClinicId = session('current_clinic_id', Auth::user()->clinic_id);
+                                $clinic = \App\Models\Clinic::find($currentClinicId);
+                            @endphp
+                            {{ $clinic ? $clinic->name : 'Select Clinic' }}
+                            <i class="fas fa-chevron-down ms-1 text-xs"></i>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownClinicSelector">
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="{{ route('clinics.select') }}">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-exchange-alt text-primary"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Switch Clinic
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="{{ route('clinics.create') }}">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-plus-circle text-success"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Register New Clinic
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endif
+                
                 <li class="nav-item d-flex align-items-center">
                     <a href="{{ route('profile.edit') }}" class="nav-link text-body font-weight-bold px-0">
                         <i class="fa fa-user me-sm-1"></i>
