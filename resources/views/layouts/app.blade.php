@@ -16,7 +16,7 @@
         <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
         
         <!-- CSS Files -->
-        <link id="pagestyle" href="{{ asset('soft-ui-dashboard-laravel-master/public/assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
+        <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
         
         <!-- Custom CSS -->
         @stack('css')
@@ -38,10 +38,10 @@
         </main>
         
         <!-- Core JS Files -->
-        <script src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/js/core/popper.min.js') }}"></script>
-        <script src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/js/core/bootstrap.min.js') }}"></script>
-        <script src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/js/plugins/perfect-scrollbar.min.js') }}"></script>
-        <script src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/js/plugins/smooth-scrollbar.min.js') }}"></script>
+        <script src="{{ asset('assets/js/core/popper.min.js') }}"></script>
+        <script src="{{ asset('assets/js/core/bootstrap.min.js') }}"></script>
+        <script src="{{ asset('assets/js/plugins/perfect-scrollbar.min.js') }}"></script>
+        <script src="{{ asset('assets/js/plugins/smooth-scrollbar.min.js') }}"></script>
         
         <!-- Sweet Alert -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -81,7 +81,7 @@
         </script>
         
         <!-- Custom JS -->
-        <script src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/js/soft-ui-dashboard.min.js') }}"></script>
+        <script src="{{ asset('assets/js/soft-ui-dashboard.min.js') }}"></script>
         @stack('js')
     </body>
 </html>

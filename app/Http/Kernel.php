@@ -65,6 +65,8 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'tenant' => ResolveTenant::class, // Register the tenant middleware as a route middleware too
+        'tenant' => \App\Http\Middleware\ResolveTenant::class, // Register the tenant middleware as a route middleware too
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
     ];
 } 

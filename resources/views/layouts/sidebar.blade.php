@@ -20,6 +20,40 @@
                 </a>
             </li>
             
+            <!-- Admin Section -->
+            @if(Auth::check() && Auth::user()->role === 'admin')
+            <li class="nav-item mt-3">
+                <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Admin</h6>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-shield text-primary"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Admin Dashboard</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('admin/clinics') ? 'active' : '' }}" href="{{ route('admin.clinics.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-clinic-medical text-success"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Clinic Approvals</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('admin/database-check') ? 'active' : '' }}" href="{{ route('admin.database.check') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-database text-info"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Database Check</span>
+                </a>
+            </li>
+            @endif
+            
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('patients*') ? 'active' : '' }}" href="#">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">

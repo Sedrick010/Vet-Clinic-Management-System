@@ -17,6 +17,49 @@
             </div>
             
             <ul class="navbar-nav justify-content-end">
+                <!-- Admin Links -->
+                @if(Auth::check() && Auth::user()->role === 'admin')
+                <li class="nav-item dropdown pe-2 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link text-body font-weight-bold px-0" id="dropdownAdminMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-shield me-sm-1"></i>
+                        <span class="d-sm-inline d-none">
+                            Admin
+                            <i class="fas fa-chevron-down ms-1 text-xs"></i>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownAdminMenu">
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="{{ route('admin.dashboard') }}">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-tachometer-alt text-primary"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Admin Dashboard
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="{{ route('admin.clinics.index') }}">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-clinic-medical text-success"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Clinic Approvals
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endif
+                
                 <!-- Clinic Selector -->
                 @if(Auth::check())
                 <li class="nav-item dropdown pe-2 d-flex align-items-center">
@@ -97,7 +140,7 @@
                             <a class="dropdown-item border-radius-md" href="javascript:;">
                                 <div class="d-flex py-1">
                                     <div class="my-auto">
-                                        <img src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/img/team-2.jpg') }}" class="avatar avatar-sm me-3">
+                                        <img src="{{ asset('assets/img/team-2.jpg') }}" class="avatar avatar-sm me-3">
                                     </div>
                                     <div class="d-flex flex-column justify-content-center">
                                         <h6 class="text-sm font-weight-normal mb-1">
@@ -116,7 +159,7 @@
                             <a class="dropdown-item border-radius-md" href="javascript:;">
                                 <div class="d-flex py-1">
                                     <div class="my-auto">
-                                        <img src="{{ asset('soft-ui-dashboard-laravel-master/public/assets/img/small-logos/logo-spotify.svg') }}" class="avatar avatar-sm bg-gradient-dark me-3">
+                                        <img src="{{ asset('assets/img/small-logos/logo-spotify.svg') }}" class="avatar avatar-sm bg-gradient-dark me-3">
                                     </div>
                                     <div class="d-flex flex-column justify-content-center">
                                         <h6 class="text-sm font-weight-normal mb-1">
@@ -150,6 +193,17 @@
                             </a>
                         </li>
                     </ul>
+                </li>
+                
+                <!-- Logout -->
+                <li class="nav-item d-flex align-items-center">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link text-body font-weight-bold px-0">
+                        <i class="fa fa-sign-out-alt me-sm-1"></i>
+                        <span class="d-sm-inline d-none">Logout</span>
+                    </a>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
                 </li>
             </ul>
         </div>

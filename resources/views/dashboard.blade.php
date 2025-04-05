@@ -1,9 +1,28 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - Vet Clinic System')
-@section('page_name', 'Dashboard')
+@section('title', $clinicName . ' - Dashboard')
+@section('page_name', $clinicName . ' Dashboard')
 
 @section('content')
+<!-- Welcome Message for Clinic Owner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4 class="mb-1">Welcome, {{ $userName }}!</h4>
+                        <p class="mb-0">You are logged in as <strong>{{ ucfirst($userRole) }}</strong> at <strong>{{ $clinicName }}</strong> Veterinary Clinic</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-gradient-success">Approved Clinic</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
