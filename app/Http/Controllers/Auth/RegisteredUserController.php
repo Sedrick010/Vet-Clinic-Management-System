@@ -45,6 +45,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        session()->flash('success', 'Registration successful! Welcome to your dashboard.');
+
         return redirect(route('dashboard', absolute: false));
     }
 }
