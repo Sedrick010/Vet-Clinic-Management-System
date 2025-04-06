@@ -9,13 +9,28 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
-use Illuminate\Support\Facades\Mail;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
-    // Default welcome route
     Route::get('/', function () {
-        return view('welcome');
+        // Check if accessing from a subdomain
+        $host = request()->getHost();
+        $appDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? '';
+        $subdomain = null;
+        
+        if ($host !== $appDomain && str_contains($host, $appDomain)) {
+            $subdomain = str_replace('.' . $appDomain, '', $host);
+        }
+        
+        $clinic = null;
+        if ($subdomain) {
+            $clinic = \App\Models\Clinic::where('subdomain', $subdomain)->first();
+        }
+        
+        return view('welcome', [
+            'clinic' => $clinic,
+            'is_subdomain' => !empty($subdomain)
+        ]);
     })->name('welcome');
 
     // Clinic registration routes
@@ -29,20 +44,10 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         Route::get('/clinics', [ClinicController::class, 'index'])->name('admin.clinics.index');
         Route::post('/clinics/{id}/approve', [ClinicController::class, 'approve'])->name('admin.clinics.approve');
         Route::post('/clinics/{id}/reject', [ClinicController::class, 'reject'])->name('admin.clinics.reject');
+        Route::delete('/clinics/{id}', [ClinicController::class, 'destroy'])->name('admin.clinics.destroy');
         Route::get('/database-check', function() {
             return view('admin.database-check');
         })->name('admin.database.check');
-        Route::get('/test-mail', function () {
-            try {
-                Mail::raw('Test email from Vet Clinic System', function($message) {
-                    $message->to('2201103184@student.buksu.edu.ph')
-                           ->subject('Test Email');
-                });
-                return 'Mail sent successfully!';
-            } catch (\Exception $e) {
-                return 'Error: ' . $e->getMessage();
-            }
-        });
     });
 
     // Clinic selector routes
@@ -112,6 +117,5 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     
     // Auth routes for both admin and tenant users - moved inside tenant.validate middleware
     require __DIR__.'/auth.php';
+    
 });
-
-// The debug-database route has been removed as it is not needed in production

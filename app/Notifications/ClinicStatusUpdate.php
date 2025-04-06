@@ -8,8 +8,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Log;
 
-class ClinicStatusUpdate extends Notification implements ShouldQueue
+class ClinicStatusUpdate extends Notification
 {
     use Queueable;
 
@@ -29,6 +30,14 @@ class ClinicStatusUpdate extends Notification implements ShouldQueue
         $this->ownerEmail = $ownerEmail;
         $this->ownerName = $ownerName;
         $this->rejectionReason = $rejectionReason;
+
+        // Log notification creation
+        Log::info('Creating clinic status notification', [
+            'clinic_id' => $clinic->id,
+            'status' => $status,
+            'owner_email' => $ownerEmail,
+            'clinic_email' => $clinic->email
+        ]);
     }
 
     /**
@@ -42,7 +51,7 @@ class ClinicStatusUpdate extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the recipients for the email notification.
+     * Get the mail representation of the notification.
      */
     public function toMail(object $notifiable): MailMessage
     {
@@ -51,11 +60,24 @@ class ClinicStatusUpdate extends Notification implements ShouldQueue
         $domain = str_replace(['http://', 'https://'], '', $baseUrl);
         $clinicUrl = $protocol . $this->clinic->subdomain . '.' . $domain;
         
+        // Log email preparation
+        Log::info('Preparing clinic status email', [
+            'clinic_id' => $this->clinic->id,
+            'status' => $this->status,
+            'to_email' => $this->clinic->email,
+            'cc_email' => $this->ownerEmail,
+            'clinic_url' => $clinicUrl
+        ]);
+        
         $message = new MailMessage;
         
         // Copy the notification to owner's email if it's different from clinic email
         if ($this->ownerEmail && $this->ownerEmail !== $this->clinic->email) {
             $message->cc($this->ownerEmail, $this->ownerName);
+            Log::info('Adding CC to email', [
+                'cc_email' => $this->ownerEmail,
+                'cc_name' => $this->ownerName
+            ]);
         }
         
         if ($this->status === 'approved') {

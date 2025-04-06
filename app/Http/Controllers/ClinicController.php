@@ -139,6 +139,24 @@ class ClinicController extends Controller
                 'subdomain' => $clinic->subdomain
             ]);
             
+            // Send registration notification
+            try {
+                $clinic->notify(new \App\Notifications\ClinicRegistrationNotification(
+                    $clinic,
+                    $request->owner_email,
+                    $request->owner_name
+                ));
+                Log::info('Registration notification sent', [
+                    'clinic_id' => $clinic->id,
+                    'owner_email' => $request->owner_email
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send registration notification: ' . $e->getMessage(), [
+                    'clinic_id' => $clinic->id,
+                    'owner_email' => $request->owner_email
+                ]);
+            }
+            
             // Set up the tenant database - this will run our migrations
             $tenantDatabaseService->setupTenantDatabase($clinic);
 
@@ -288,6 +306,14 @@ class ClinicController extends Controller
         $clinic->update([
             'approval_status' => 'approved',
         ]);
+
+        // Update session data for the pending page
+        session([
+            'pending_clinic_id' => $clinic->id,
+            'pending_clinic_name' => $clinic->name,
+            'pending_clinic_status' => 'approved',
+            'pending_clinic_subdomain' => $clinic->subdomain
+        ]);
         
         if ($statusChanged) {
             try {
@@ -361,6 +387,15 @@ class ClinicController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
         
+        // Update session data for the pending page
+        session([
+            'pending_clinic_id' => $clinic->id,
+            'pending_clinic_name' => $clinic->name,
+            'pending_clinic_status' => 'rejected',
+            'pending_clinic_reason' => $request->rejection_reason,
+            'pending_clinic_subdomain' => $clinic->subdomain
+        ]);
+        
         if ($statusChanged) {
             try {
                 // Fetch clinic owner info from tenant database
@@ -411,5 +446,43 @@ class ClinicController extends Controller
         }
 
         return back()->with('success', 'Clinic has been rejected!');
+    }
+
+    /**
+     * Delete a declined clinic registration.
+     */
+    public function destroy($id): RedirectResponse
+    {
+        // Ensure the user is an admin
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $clinic = Clinic::findOrFail($id);
+        
+        // Only allow deletion of rejected clinics
+        if ($clinic->approval_status !== 'rejected') {
+            return back()->with('error', 'Only rejected clinic registrations can be deleted.');
+        }
+
+        try {
+            // Delete the clinic's database if it exists
+            $tenantDatabaseService = app(TenantDatabaseService::class);
+            if ($tenantDatabaseService->databaseExists($clinic->database_name)) {
+                DB::statement("DROP DATABASE IF EXISTS `" . str_replace('`', '', $clinic->database_name) . "`");
+            }
+
+            // Delete the clinic record
+            $clinic->delete();
+
+            return back()->with('success', 'Clinic registration has been deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error deleting clinic: ' . $e->getMessage(), [
+                'clinic_id' => $id,
+                'database_name' => $clinic->database_name
+            ]);
+
+            return back()->with('error', 'An error occurred while deleting the clinic registration.');
+        }
     }
 } 

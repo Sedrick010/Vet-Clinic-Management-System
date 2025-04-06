@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>Login - VetClinic</title>
+        <title>{{ $clinic ? $clinic->name : 'VetClinic' }} - Login</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -24,13 +24,13 @@
                         <div class="flex">
                             <div class="flex-shrink-0 flex items-center">
                                 <a href="{{ route('welcome') }}" class="text-xl font-bold text-primary">
-                                    <i class="fas fa-paw me-2"></i> VetClinic
+                                    <i class="fas fa-paw me-2"></i> {{ $clinic ? $clinic->name : 'VetClinic' }}
                                 </a>
                             </div>
                         </div>
                         
                         <div class="flex items-center">
-                            @if (Route::has('clinics.create'))
+                            @if (!$is_subdomain && Route::has('clinics.create'))
                                 <a href="{{ route('clinics.create') }}" class="text-sm text-gray-700 hover:text-gray-900">Register Clinic</a>
                             @endif
                         </div>
@@ -43,8 +43,13 @@
                 <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                         <div class="bg-primary text-white px-6 py-4">
-                            <h2 class="text-2xl font-bold">Login to VetClinic</h2>
-                            <p class="text-sm opacity-80 mt-1">Access your veterinary clinic dashboard</p>
+                            @if($clinic)
+                                <h2 class="text-2xl font-bold">Login to {{ $clinic->name }}</h2>
+                                <p class="text-sm opacity-80 mt-1">Access your clinic dashboard</p>
+                            @else
+                                <h2 class="text-2xl font-bold">Login to VetClinic</h2>
+                                <p class="text-sm opacity-80 mt-1">Access your veterinary clinic dashboard</p>
+                            @endif
                         </div>
                         
                         <div class="p-6">
@@ -115,6 +120,7 @@
                             </form>
 
                             <!-- Clinic Subdomain Login -->
+                            @if(!$is_subdomain)
                             <div class="mt-8 pt-6 border-t border-gray-200">
                                 <h3 class="text-lg font-semibold text-gray-800 mb-3">Access Your Clinic Directly</h3>
                                 <p class="text-gray-600 mb-3">Use your clinic's unique subdomain for direct access:</p>
@@ -143,6 +149,7 @@
                                     </a>
                                 </p>
                             </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -154,11 +161,11 @@
                     <div class="border-t border-gray-200 pt-8">
                         <div class="flex flex-col md:flex-row justify-between">
                             <div class="mb-4 md:mb-0">
-                                <h3 class="text-lg font-semibold">VetClinic Management System</h3>
-                                <p class="text-gray-600 mt-2">The complete solution for veterinary clinics</p>
+                                <h3 class="text-lg font-semibold">{{ $clinic ? $clinic->name : 'VetClinic Management System' }}</h3>
+                                <p class="text-gray-600 mt-2">{{ $clinic ? 'Welcome to our veterinary clinic' : 'The complete solution for veterinary clinics' }}</p>
                             </div>
                             <div>
-                                <p class="text-gray-600">&copy; {{ date('Y') }} VetClinic. All rights reserved.</p>
+                                <p class="text-gray-600">&copy; {{ date('Y') }} {{ $clinic ? $clinic->name : 'VetClinic' }}. All rights reserved.</p>
                             </div>
                         </div>
                     </div>
@@ -178,5 +185,16 @@
                 }
             }
         </script>
+
+        @if(session('clear_history'))
+            <script>
+                if (window.history && window.history.pushState) {
+                    window.history.pushState('', '', window.location.href);
+                    window.onpopstate = function () {
+                        window.history.pushState('', '', window.location.href);
+                    };
+                }
+            </script>
+        @endif
     </body>
 </html>

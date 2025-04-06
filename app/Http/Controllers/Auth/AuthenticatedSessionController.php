@@ -45,11 +45,20 @@ class AuthenticatedSessionController extends Controller
             session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
             session()->invalidate();
             session()->regenerateToken();
-            
-            // We shouldn't redirect here to avoid infinite loops
         }
         
-        return view('auth.login');
+        // Check if accessing from a subdomain
+        $subdomain = $this->getSubdomain(request());
+        $clinic = null;
+        
+        if ($subdomain) {
+            $clinic = Clinic::where('subdomain', $subdomain)->first();
+        }
+        
+        return view('auth.login', [
+            'clinic' => $clinic,
+            'is_subdomain' => !empty($subdomain)
+        ]);
     }
 
     /**
@@ -268,10 +277,14 @@ class AuthenticatedSessionController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect('/');
+            return redirect()->route('login')
+                ->with('clear_history', true)
+                ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT');
         } catch (\Exception $e) {
             Log::error('Logout error: ' . $e->getMessage());
-            return redirect('/');
+            return redirect()->route('login');
         }
     }
     

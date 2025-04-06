@@ -158,6 +158,13 @@
                                                         <i class="fas fa-check me-1"></i> Approve
                                                     </button>
                                                 </form>
+                                                <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="mt-2" onsubmit="return confirm('Are you sure you want to delete this clinic registration? This action cannot be undone.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-action btn-danger">
+                                                        <i class="fas fa-trash me-1"></i> Delete
+                                                    </button>
+                                                </form>
                                             @endif
                                         </td>
                                     </tr>

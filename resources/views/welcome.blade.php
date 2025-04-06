@@ -5,18 +5,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>VetClinic - Complete Veterinary Clinic Management System</title>
+        <title>{{ $clinic ? $clinic->name : 'VetClinic' }} - Welcome</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-        <!-- SweetAlert -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
@@ -27,7 +27,7 @@
                         <div class="flex">
                             <div class="flex-shrink-0 flex items-center">
                                 <a href="{{ route('welcome') }}" class="text-xl font-bold text-primary">
-                                    <i class="fas fa-paw me-2"></i> VetClinic
+                                    <i class="fas fa-paw me-2"></i> {{ $clinic ? $clinic->name : 'VetClinic' }}
                                 </a>
                             </div>
                         </div>
@@ -38,7 +38,10 @@
                                     @auth
                                         <a href="{{ route('dashboard') }}" class="text-sm text-gray-700 dark:text-gray-500 underline">Dashboard</a>
                                     @else
-                                        <!-- Login and Register Clinic links removed -->
+                                        @if(!$is_subdomain)
+                                            <a href="{{ route('clinics.create') }}" class="text-sm text-gray-700 hover:text-gray-900">Register Clinic</a>
+                                        @endif
+                                        <a href="{{ route('login') }}" class="text-sm text-gray-700 hover:text-gray-900 ml-4">Login</a>
                                     @endauth
                                 </div>
                             @endif
@@ -69,29 +72,54 @@
                 <div class="container mx-auto px-4 py-12">
                     <div class="flex flex-col items-center justify-center">
                         <div class="text-center mb-12">
-                            <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">VetClinic Management System</h1>
-                            <h2 class="text-xl md:text-2xl mb-4">The complete solution for veterinary clinics and independent vets</h2>
-                            <p class="text-lg text-gray-600 mb-5 max-w-3xl mx-auto">Manage your entire veterinary practice with our powerful, easy-to-use platform.</p>
+                            @if($clinic)
+                                <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">Welcome to {{ $clinic->name }}</h1>
+                                <h2 class="text-xl md:text-2xl mb-4">Your Trusted Veterinary Care Partner</h2>
+                                <p class="text-lg text-gray-600 mb-5 max-w-3xl mx-auto">
+                                    Access our comprehensive veterinary services and manage your pet's healthcare with our state-of-the-art clinic management system.
+                                </p>
+                            @else
+                                <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">VetClinic Management System</h1>
+                                <h2 class="text-xl md:text-2xl mb-4">The complete solution for veterinary clinics and independent vets</h2>
+                                <p class="text-lg text-gray-600 mb-5 max-w-3xl mx-auto">
+                                    Manage your entire veterinary practice with our powerful, easy-to-use platform.
+                                </p>
+                            @endif
                             
                             <!-- Quick Access Box -->
                             <div class="mx-auto max-w-lg mt-8 mb-8 bg-white rounded-lg shadow-lg overflow-hidden">
                                 <div class="p-4 bg-primary text-white">
-                                    <h3 class="text-xl font-bold">Already have an account?</h3>
+                                    @if($clinic)
+                                        <h3 class="text-xl font-bold">Access {{ $clinic->name }}</h3>
+                                    @else
+                                        <h3 class="text-xl font-bold">Already have an account?</h3>
+                                    @endif
                                 </div>
                                 <div class="p-6">
                                     <div class="mb-4">
-                                        <p class="mb-2">Log in to manage your veterinary clinic:</p>
-                                        <div class="flex justify-center gap-4">
-                                            <a href="{{ route('login') }}" class="inline-flex items-center justify-center bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
-                                                <i class="fas fa-sign-in-alt me-2"></i> Log In
-                                            </a>
-                                            <a href="{{ route('clinics.create') }}" class="inline-flex items-center justify-center border border-primary text-primary px-6 py-2 rounded-md hover:bg-gray-50 transition-colors">
-                                                <i class="fas fa-clinic-medical me-2"></i> Register New Clinic
-                                            </a>
-                                        </div>
+                                        @if($clinic)
+                                            <p class="mb-2">Log in to access your veterinary services:</p>
+                                            <div class="flex justify-center">
+                                                <a href="{{ route('login') }}" class="inline-flex items-center justify-center bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
+                                                    <i class="fas fa-sign-in-alt me-2"></i> Log In to {{ $clinic->name }}
+                                                </a>
+                                            </div>
+                                        @else
+                                            <p class="mb-2">Log in to manage your veterinary clinic:</p>
+                                            <div class="flex justify-center gap-4">
+                                                <a href="{{ route('login') }}" class="inline-flex items-center justify-center bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
+                                                    <i class="fas fa-sign-in-alt me-2"></i> Log In
+                                                </a>
+                                                <a href="{{ route('clinics.create') }}" class="inline-flex items-center justify-center border border-primary text-primary px-6 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                                                    <i class="fas fa-clinic-medical me-2"></i> Register New Clinic
+                                                </a>
+                                            </div>
+                                        @endif
                                     </div>
-                                    <div class="mt-4 pt-4 border-t border-gray-200">
-                                        <p class="text-sm text-gray-600 mb-2">Access your clinic directly via subdomain:</p>
+
+                                    @if(!$is_subdomain)
+                                    <div class="mt-6 pt-6 border-t border-gray-200">
+                                        <p class="text-sm text-gray-600 mb-3">Access your clinic directly:</p>
                                         <div class="flex items-center">
                                             <div class="flex-1">
                                                 <div class="flex items-stretch">
@@ -109,33 +137,32 @@
                                             </button>
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </main>
 
-                   
-
-                       
-                   
             <!-- Footer -->
             <footer class="bg-white py-8">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="border-t border-gray-200 pt-8">
                         <div class="flex flex-col md:flex-row justify-between">
                             <div class="mb-4 md:mb-0">
-                                <h3 class="text-lg font-semibold">VetClinic Management System</h3>
-                                <p class="text-gray-600 mt-2">The complete solution for veterinary clinics</p>
+                                <h3 class="text-lg font-semibold">{{ $clinic ? $clinic->name : 'VetClinic Management System' }}</h3>
+                                <p class="text-gray-600 mt-2">{{ $clinic ? 'Your trusted veterinary care partner' : 'The complete solution for veterinary clinics' }}</p>
                             </div>
                             <div>
-                                <p class="text-gray-600">&copy; {{ date('Y') }} VetClinic. All rights reserved.</p>
+                                <p class="text-gray-600">&copy; {{ date('Y') }} {{ $clinic ? $clinic->name : 'VetClinic' }}. All rights reserved.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </footer>
         </div>
-    
+
         <!-- SweetAlert for Flash Messages -->
         @if(session('error') && !str_contains(session('error'), 'SECURITY ALERT'))
         <script>
@@ -170,7 +197,9 @@
             function goToClinicFromWelcome() {
                 const subdomain = document.getElementById('welcome-subdomain').value.trim();
                 if (subdomain) {
-                    window.location.href = `https://${subdomain}.{{ Str::after(config('app.url'), 'http://') }}`;
+                    window.location.href = `${window.location.protocol}//${subdomain}.{{ Str::after(config('app.url'), 'http://') }}`;
+                } else {
+                    alert('Please enter your clinic subdomain');
                 }
             }
         </script>

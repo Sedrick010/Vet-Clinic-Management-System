@@ -39,6 +39,8 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate tenant subdomain first
             ResolveTenant::class, // Then resolve tenant database if subdomain is valid
+            \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+            \App\Http\Middleware\NoCacheHeaders::class,
         ],
 
         'api' => [
