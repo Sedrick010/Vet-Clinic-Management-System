@@ -38,11 +38,7 @@
                                     @auth
                                         <a href="{{ route('dashboard') }}" class="text-sm text-gray-700 dark:text-gray-500 underline">Dashboard</a>
                                     @else
-                                        <a href="{{ route('login') }}" class="text-sm text-gray-700 dark:text-gray-500 underline">Log in</a>
-
-                                        @if (Route::has('clinics.create'))
-                                            <a href="{{ route('clinics.create') }}" class="ml-4 text-sm text-gray-700 dark:text-gray-500 underline">Register Clinic</a>
-                                        @endif
+                                        <!-- Login and Register Clinic links removed -->
                                     @endauth
                                 </div>
                             @endif
@@ -118,112 +114,10 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-                        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                            <div class="p-6 text-center">
-                                <i class="fas fa-hospital text-4xl text-primary mb-4"></i>
-                                <h3 class="text-xl font-bold mb-2">For Veterinary Clinics</h3>
-                                <p class="text-gray-600 mb-4">Perfect for clinics of all sizes with multiple staff members and locations.</p>
-                                <ul class="text-left mb-6">
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Multi-user access control</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Comprehensive patient records</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Inventory management</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Reporting and analytics</li>
-                                </ul>
-                            </div>
-                            <div class="px-6 pb-6 text-center">
-                                <a href="{{ route('clinics.create') }}" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">Register Your Clinic</a>
-                            </div>
-                        </div>
+                   
 
-                        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                            <div class="p-6 text-center">
-                                <i class="fas fa-user-md text-4xl text-primary mb-4"></i>
-                                <h3 class="text-xl font-bold mb-2">For Independent Vets</h3>
-                                <p class="text-gray-600 mb-4">Streamlined system for individual practitioners and mobile veterinarians.</p>
-                                <ul class="text-left mb-6">
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Simple appointment scheduling</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Client and patient management</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Digital medical records</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Billing and invoicing</li>
-                                </ul>
-                            </div>
-                            <div class="px-6 pb-6 text-center">
-                                <a href="{{ route('clinics.create') }}" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">Get Started</a>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                            <div class="p-6 text-center">
-                                <i class="fas fa-paw text-4xl text-primary mb-4"></i>
-                                <h3 class="text-xl font-bold mb-2">Key Features</h3>
-                                <p class="text-gray-600 mb-4">Everything you need to run your practice efficiently.</p>
-                                <ul class="text-left mb-6">
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Appointment management</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Patient & owner records</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Treatment plans</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Inventory tracking</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Billing and payment processing</li>
-                                    <li class="mb-2"><i class="fas fa-check text-green-500 mr-2"></i> Reporting and analytics</li>
-                                </ul>
-                            </div>
-                            <div class="px-6 pb-6 text-center">
-                                <a href="#features" class="border border-primary text-primary px-6 py-2 rounded-md hover:bg-gray-50 transition-colors">Learn More</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-16 mb-12">
-                        <div class="text-center mb-8">
-                            <h2 class="text-3xl font-bold">Why Choose VetClinic?</h2>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="flex items-start">
-                                <div class="mr-4 bg-primary rounded-full p-3 text-white">
-                                    <i class="fas fa-cloud"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-xl font-bold mb-2">Cloud-Based Solution</h4>
-                                    <p class="text-gray-600">Access your clinic's information from anywhere, on any device, at any time. No software to install.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <div class="mr-4 bg-primary rounded-full p-3 text-white">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-xl font-bold mb-2">Secure & Private</h4>
-                                    <p class="text-gray-600">Your data is protected with enterprise-grade security and encryption. HIPAA compliant.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <div class="mr-4 bg-primary rounded-full p-3 text-white">
-                                    <i class="fas fa-coins"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-xl font-bold mb-2">Cost Effective</h4>
-                                    <p class="text-gray-600">Affordable subscription plans for practices of all sizes. No expensive hardware required.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <div class="mr-4 bg-primary rounded-full p-3 text-white">
-                                    <i class="fas fa-headset"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-xl font-bold mb-2">Dedicated Support</h4>
-                                    <p class="text-gray-600">Our team is always available to help you get the most out of the system.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-16 mb-12 text-center">
-                        <h2 class="text-3xl font-bold mb-6">Ready to transform your veterinary practice?</h2>
-                        <a href="{{ route('clinics.create') }}" class="bg-primary text-white px-8 py-3 rounded-md text-lg hover:bg-primary-dark transition-colors">Register Your Clinic Today</a>
-                    </div>
-                </div>
-            </main>
-
+                       
+                   
             <!-- Footer -->
             <footer class="bg-white py-8">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

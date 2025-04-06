@@ -38,11 +38,7 @@
                                     @auth
                                         <a href="{{ route('dashboard') }}" class="text-sm text-gray-700 dark:text-gray-500 underline">Dashboard</a>
                                     @else
-                                        <a href="{{ route('login') }}" class="text-sm text-gray-700 dark:text-gray-500 underline">Log in</a>
-
-                                        @if (Route::has('clinics.create'))
-                                            <a href="{{ route('clinics.create') }}" class="ml-4 text-sm text-gray-700 dark:text-gray-500 underline">Register Clinic</a>
-                                        @endif
+                                        <!-- Login and Register Clinic links removed -->
                                     @endauth
                                 </div>
                             @endif
