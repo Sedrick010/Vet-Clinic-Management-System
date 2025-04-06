@@ -37,7 +37,8 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            ResolveTenant::class, // Add the tenant resolver middleware
+            \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate tenant subdomain first
+            ResolveTenant::class, // Then resolve tenant database if subdomain is valid
         ],
 
         'api' => [
@@ -68,5 +69,6 @@ class Kernel extends HttpKernel
         'tenant' => \App\Http\Middleware\ResolveTenant::class, // Register the tenant middleware as a route middleware too
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
+        'tenant.validate' => \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate subdomain against registered clinics
     ];
 } 

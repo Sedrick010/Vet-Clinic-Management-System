@@ -14,6 +14,9 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- SweetAlert2 for nicer alerts -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col justify-between bg-gray-100">
@@ -48,6 +51,23 @@
                 </div>
             </nav>
 
+            <!-- Flash Messages -->
+            @if(session('error'))
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                    <p class="font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+            @endif
+
+            @if(session('success'))
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md" role="alert">
+                    <p class="font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+            @endif
+
             <!-- Page Content -->
             <main class="flex-grow">
                 <div class="flex flex-col items-center pt-6 pb-6 bg-gray-100">
@@ -72,5 +92,34 @@
                 </div>
             </footer>
         </div>
+
+        <!-- SweetAlert for Flash Messages -->
+        @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "{{ session('error') }}",
+                    timer: 5000,
+                    showConfirmButton: true
+                });
+            });
+        </script>
+        @endif
+
+        @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: "{{ session('success') }}",
+                    timer: 5000,
+                    showConfirmButton: true
+                });
+            });
+        </script>
+        @endif
     </body>
 </html>

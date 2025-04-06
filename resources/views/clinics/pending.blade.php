@@ -185,20 +185,32 @@
             console.log("Showing success modal"); // Debug
             let successModal = document.getElementById('successModal');
             if (successModal) {
+                // Ensure modal is visible by setting display style directly
                 successModal.classList.remove('hidden');
+                successModal.style.display = 'block';
                 
                 // Add event listener to close button
                 let closeBtn = document.getElementById('closeSuccessModal');
                 if (closeBtn) {
                     closeBtn.addEventListener('click', function() {
                         successModal.classList.add('hidden');
+                        successModal.style.display = 'none';
                     });
                 }
                 
-                // Auto-hide the modal after 5 seconds
+                // Close when clicking outside the modal content
+                successModal.addEventListener('click', function(e) {
+                    if (e.target === successModal) {
+                        successModal.classList.add('hidden');
+                        successModal.style.display = 'none';
+                    }
+                });
+                
+                // Auto-hide the modal after 6 seconds
                 setTimeout(function() {
                     successModal.classList.add('hidden');
-                }, 5000);
+                    successModal.style.display = 'none';
+                }, 6000);
             } else {
                 console.error("Success modal not found");
             }

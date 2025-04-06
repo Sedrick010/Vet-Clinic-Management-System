@@ -12,6 +12,9 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+        <!-- SweetAlert -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -47,6 +50,23 @@
                     </div>
                 </div>
             </nav>
+
+            <!-- Flash Messages -->
+            @if(session('error') && !str_contains(session('error'), 'SECURITY ALERT'))
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                    <p class="font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+            @endif
+
+            @if(session('success'))
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md" role="alert">
+                    <p class="font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+            @endif
 
             <!-- Page Content -->
             <main>
@@ -221,16 +241,42 @@
                 </div>
             </footer>
         </div>
+    
+        <!-- SweetAlert for Flash Messages -->
+        @if(session('error') && !str_contains(session('error'), 'SECURITY ALERT'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "{{ session('error') }}",
+                    timer: 5000,
+                    showConfirmButton: true
+                });
+            });
+        </script>
+        @endif
 
+        @if(session('error') && str_contains(session('error'), 'SECURITY ALERT'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Security Alert',
+                    html: "The subdomain is not registered in our system.<br>You have been redirected to the main site for your safety.",
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#3085d6'
+                });
+            });
+        </script>
+        @endif
+
+        <!-- Subdomain navigation script -->
         <script>
             function goToClinicFromWelcome() {
                 const subdomain = document.getElementById('welcome-subdomain').value.trim();
                 if (subdomain) {
-                    const protocol = window.location.protocol;
-                    const domain = '{{ Str::after(config('app.url'), 'http://') }}';
-                    window.location.href = `${protocol}//${subdomain}.${domain}`;
-                } else {
-                    alert('Please enter your clinic subdomain');
+                    window.location.href = `https://${subdomain}.{{ Str::after(config('app.url'), 'http://') }}`;
                 }
             }
         </script>

@@ -92,12 +92,17 @@ class ResolveTenant
         // Look for a clinic with this subdomain
         $clinic = Clinic::where('subdomain', $subdomain)->first();
         
-        // If no clinic found with this subdomain, redirect to main site
+        // If no clinic found with this subdomain, block access and redirect to main site
         if (!$clinic) {
-            Log::info('No clinic found for subdomain', ['subdomain' => $subdomain]);
+            Log::warning('Access attempt to unregistered subdomain', [
+                'subdomain' => $subdomain,
+                'host' => $host,
+                'ip' => $request->ip(),
+                'path' => $request->path()
+            ]);
             
             return redirect()->to(config('app.url'))
-                ->with('error', 'Clinic not found. The subdomain "' . $subdomain . '" does not exist.');
+                ->with('error', 'Access denied. The subdomain "' . $subdomain . '" is not registered in our system.');
         }
         
         // Check if the clinic is approved
@@ -174,8 +179,13 @@ class ResolveTenant
         // Normalize the base domain by removing www if present
         $baseDomain = preg_replace('/^www\./', '', $baseDomain);
         
-        // If the host doesn't end with the base domain, it's not a valid subdomain
-        if (!str_ends_with($host, $baseDomain)) {
+        // If the host is exactly the base domain, there's no subdomain
+        if ($host === $baseDomain) {
+            return null;
+        }
+        
+        // If the host doesn't contain the base domain, it's not a valid host for our app
+        if (!str_contains($host, $baseDomain)) {
             Log::warning('Invalid domain detected', [
                 'host' => $host,
                 'base_domain' => $baseDomain
@@ -183,21 +193,40 @@ class ResolveTenant
             return null;
         }
         
-        // Remove the base domain part to get the subdomain
-        $subdomain = substr($host, 0, strlen($host) - strlen($baseDomain) - 1);
+        // Extract the subdomain part (everything before the base domain)
+        $subdomainPart = str_replace('.' . $baseDomain, '', $host);
         
-        // If subdomain is empty or contains further dots (could be a nested subdomain)
-        if (empty($subdomain) || strpos($subdomain, '.') !== false) {
-            Log::warning('Invalid subdomain format detected', [
+        // Handle the case of possible nested subdomains
+        // For example: something.clinic.vetclinic.localhost
+        // We want to extract "clinic" as the main subdomain
+        $parts = explode('.', $subdomainPart);
+        
+        // If there are multiple parts, log it for debugging
+        if (count($parts) > 1) {
+            Log::info('Complex subdomain structure detected', [
                 'host' => $host,
-                'extracted_subdomain' => $subdomain,
-                'base_domain' => $baseDomain
+                'subdomain_parts' => $parts
             ]);
+            
+            // Use the first-level subdomain (the one directly before the base domain)
+            // In our example: clinic.vetclinic.localhost -> "clinic"
+            $subdomain = $parts[count($parts) - 1];
+        } else {
+            $subdomain = $subdomainPart;
+        }
+        
+        // Validate the extracted subdomain
+        if (empty($subdomain)) {
+            Log::warning('Empty subdomain extracted', ['host' => $host]);
             return null;
         }
         
         // Only return the subdomain if it matches our expected format
         if (preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$/', $subdomain)) {
+            Log::info('Valid subdomain extracted', [
+                'host' => $host,
+                'subdomain' => $subdomain
+            ]);
             return $subdomain;
         }
         
@@ -217,28 +246,16 @@ class ResolveTenant
         $currentRoute = $request->route()->getName() ?? '';
         $currentPath = $request->path();
         
-        // Check if user is trying to access a protected route
-        $protectedRoutes = ['tenant.dashboard', 'login', 'register'];
-        $isProtectedRoute = false;
+        // Log the invalid access attempt
+        Log::warning('Invalid subdomain access attempt', [
+            'host' => $request->getHost(),
+            'route' => $currentRoute,
+            'path' => $currentPath,
+            'ip' => $request->ip()
+        ]);
         
-        foreach ($protectedRoutes as $route) {
-            if (str_contains($currentRoute, $route) || str_contains($currentPath, $route)) {
-                $isProtectedRoute = true;
-                break;
-            }
-        }
-        
-        if ($isProtectedRoute) {
-            Log::warning('Invalid subdomain access attempt to protected route', [
-                'host' => $request->getHost(),
-                'route' => $currentRoute,
-                'path' => $currentPath
-            ]);
-            
-            return redirect(config('app.url'))->with('error', 'Invalid clinic subdomain. Please check the URL and try again.');
-        }
-        
-        // For other routes, just proceed normally (will fall back to central database)
-        return $next($request);
+        // Block access to all invalid subdomains
+        return redirect(config('app.url'))->with('error', 
+            'Invalid domain format. Please use the main application at ' . config('app.url'));
     }
 } 

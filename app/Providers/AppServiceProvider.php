@@ -16,6 +16,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(TenantDatabaseService::class, function ($app) {
             return new TenantDatabaseService();
         });
+
+        // Register the SubdomainService in the container
+        $this->app->singleton('subdomain', function ($app) {
+            return new \App\Services\SubdomainService();
+        });
     }
 
     /**
