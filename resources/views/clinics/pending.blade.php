@@ -29,11 +29,11 @@
                             </div>
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                    Registration Successful!
+                                    Success
                                 </h3>
                                 <div class="mt-2">
                                     <p class="text-sm text-gray-500">
-                                        {{ session('success') }}
+                                        {!! session('success') !!}
                                     </p>
                                 </div>
                             </div>
@@ -67,7 +67,7 @@
                 </svg>
             </div>
             
-            <h3 class="text-xl font-medium text-center text-gray-800 mb-4">{{ $clinicName }} Has Been Approved!</h3>
+            <h3 class="text-xl font-medium text-center text-gray-800 mb-4">Your Clinic Has Been Approved!</h3>
         @elseif($status === 'rejected')
             <!-- Rejected Status -->
             <h2 class="text-center text-2xl font-bold text-red-600 mb-5">Registration Rejected</h2>
@@ -78,7 +78,7 @@
                 </svg>
             </div>
             
-            <h3 class="text-xl font-medium text-center text-gray-800 mb-4">{{ $clinicName }} Registration Was Not Approved</h3>
+            <h3 class="text-xl font-medium text-center text-gray-800 mb-4">Your Clinic Registration Was Not Approved</h3>
         @else
             <!-- Pending Status (Default) -->
             <h2 class="text-center text-2xl font-bold text-yellow-600 mb-5">Registration Pending</h2>
@@ -89,7 +89,7 @@
                 </svg>
             </div>
             
-            <h3 class="text-xl font-medium text-center text-gray-800 mb-4">{{ $clinicName }} Registration is Pending Approval</h3>
+            <h3 class="text-xl font-medium text-center text-gray-800 mb-4">Your Clinic Registration is Pending Approval</h3>
         @endif
         
         <!-- Clinic Information Box -->

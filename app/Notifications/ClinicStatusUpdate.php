@@ -42,7 +42,7 @@ class ClinicStatusUpdate extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the mail representation of the notification.
+     * Get the recipients for the email notification.
      */
     public function toMail(object $notifiable): MailMessage
     {
@@ -51,31 +51,38 @@ class ClinicStatusUpdate extends Notification implements ShouldQueue
         $domain = str_replace(['http://', 'https://'], '', $baseUrl);
         $clinicUrl = $protocol . $this->clinic->subdomain . '.' . $domain;
         
+        $message = new MailMessage;
+        
+        // Copy the notification to owner's email if it's different from clinic email
+        if ($this->ownerEmail && $this->ownerEmail !== $this->clinic->email) {
+            $message->cc($this->ownerEmail, $this->ownerName);
+        }
+        
         if ($this->status === 'approved') {
-            return (new MailMessage)
+            return $message
                 ->subject('Your Veterinary Clinic Registration Has Been Approved!')
                 ->greeting('Hello ' . ($this->ownerName ?? 'Clinic Owner') . '!')
                 ->line('Great news! Your veterinary clinic registration has been approved.')
-                ->line('Your clinic "' . $this->clinic->name . '" is now ready to use.')
+                ->line('Your clinic ' . $this->clinic->name . ' is now ready to use.')
                 ->action('Access Your Clinic', $clinicUrl)
                 ->line('You can log in using the email and password you provided during registration.')
                 ->line('Your clinic subdomain: ' . $this->clinic->subdomain . '.' . $domain)
                 ->line('Thank you for choosing our Veterinary Clinic Management System!');
         } elseif ($this->status === 'rejected') {
-            return (new MailMessage)
+            return $message
                 ->subject('Update on Your Veterinary Clinic Registration')
                 ->greeting('Hello ' . ($this->ownerName ?? 'Clinic Owner') . ',')
-                ->line('We have reviewed your registration for "' . $this->clinic->name . '".')
+                ->line('We have reviewed your registration for ' . $this->clinic->name . '.')
                 ->line('Unfortunately, we are unable to approve your clinic registration at this time.')
                 ->line('Reason: ' . ($this->rejectionReason ?? 'Your application did not meet our requirements.'))
                 ->action('Review Your Application', URL::route('clinics.pending'))
                 ->line('You can update your information and submit a new application.')
                 ->line('If you have any questions or need assistance, please contact our support team.');
         } else {
-            return (new MailMessage)
+            return $message
                 ->subject('Veterinary Clinic Registration Status Update')
                 ->greeting('Hello ' . ($this->ownerName ?? 'Clinic Owner') . ',')
-                ->line('We are writing to inform you of an update to your clinic registration for "' . $this->clinic->name . '".')
+                ->line('We are writing to inform you of an update to your clinic registration for ' . $this->clinic->name . '.')
                 ->line('Your registration is currently: ' . strtoupper($this->status))
                 ->action('Check Status', URL::route('clinics.pending'))
                 ->line('Thank you for your patience.');

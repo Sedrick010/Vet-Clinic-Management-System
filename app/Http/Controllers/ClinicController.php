@@ -183,7 +183,7 @@ class ClinicController extends Controller
             ]);
             
             // Flash a success message
-            $successMessage = "Thank you for registering your clinic '{$clinic->name}'! Your registration is pending approval. You will receive an email once it's approved.";
+            $successMessage = "Thank you for registering your clinic {$clinic->name}! Your registration is pending approval. You will receive an email once it's approved.";
             
             // Using flash instead of with to ensure it persists through the redirect
             $request->session()->flash('success', $successMessage);
@@ -291,11 +291,41 @@ class ClinicController extends Controller
         
         if ($statusChanged) {
             try {
-                // Send notification email
-                $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
-                    $clinic, 
-                    'approved'
-                ));
+                // Fetch clinic owner info from tenant database
+                $tenantDatabaseService = app(TenantDatabaseService::class);
+                try {
+                    // Switch to tenant database
+                    $tenantDatabaseService->switchToTenant($clinic);
+                    
+                    // Get clinic owner details (first owner account)
+                    $owner = DB::connection('tenant')
+                        ->table('users')
+                        ->where('role', 'owner')
+                        ->first();
+                    
+                    // Switch back to main database
+                    $tenantDatabaseService->switchToMain();
+                    
+                    // Get owner details
+                    $ownerName = $owner ? $owner->name : null;
+                    $ownerEmail = $owner ? $owner->email : null;
+                    
+                    // Send notification email with owner details
+                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
+                        $clinic, 
+                        'approved',
+                        $ownerEmail,
+                        $ownerName
+                    ));
+                } catch (\Exception $dbException) {
+                    \Log::error('Failed to fetch owner details: ' . $dbException->getMessage());
+                    
+                    // Fall back to sending notification without owner details
+                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
+                        $clinic, 
+                        'approved'
+                    ));
+                }
                 
                 return back()->with('success', 'Clinic has been approved! Notification email has been sent.');
             } catch (\Exception $e) {
@@ -333,14 +363,45 @@ class ClinicController extends Controller
         
         if ($statusChanged) {
             try {
-                // Send notification email
-                $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
-                    $clinic, 
-                    'rejected', 
-                    null,
-                    null,
-                    $request->rejection_reason
-                ));
+                // Fetch clinic owner info from tenant database
+                $tenantDatabaseService = app(TenantDatabaseService::class);
+                try {
+                    // Switch to tenant database
+                    $tenantDatabaseService->switchToTenant($clinic);
+                    
+                    // Get clinic owner details (first owner account)
+                    $owner = DB::connection('tenant')
+                        ->table('users')
+                        ->where('role', 'owner')
+                        ->first();
+                    
+                    // Switch back to main database
+                    $tenantDatabaseService->switchToMain();
+                    
+                    // Get owner details
+                    $ownerName = $owner ? $owner->name : null;
+                    $ownerEmail = $owner ? $owner->email : null;
+                    
+                    // Send notification email with owner details
+                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
+                        $clinic, 
+                        'rejected', 
+                        $ownerEmail,
+                        $ownerName,
+                        $request->rejection_reason
+                    ));
+                } catch (\Exception $dbException) {
+                    \Log::error('Failed to fetch owner details: ' . $dbException->getMessage());
+                    
+                    // Fall back to sending notification without owner details
+                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
+                        $clinic, 
+                        'rejected', 
+                        null,
+                        null,
+                        $request->rejection_reason
+                    ));
+                }
                 
                 return back()->with('success', 'Clinic has been rejected! Notification email has been sent.');
             } catch (\Exception $e) {

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
+use Illuminate\Support\Facades\Mail;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
@@ -31,6 +32,17 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         Route::get('/database-check', function() {
             return view('admin.database-check');
         })->name('admin.database.check');
+        Route::get('/test-mail', function () {
+            try {
+                Mail::raw('Test email from Vet Clinic System', function($message) {
+                    $message->to('2201103184@student.buksu.edu.ph')
+                           ->subject('Test Email');
+                });
+                return 'Mail sent successfully!';
+            } catch (\Exception $e) {
+                return 'Error: ' . $e->getMessage();
+            }
+        });
     });
 
     // Clinic selector routes
