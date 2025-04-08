@@ -86,9 +86,12 @@ class ClinicStatusUpdate extends Notification
                 ->greeting('Hello ' . ($this->ownerName ?? 'Clinic Owner') . '!')
                 ->line('Great news! Your veterinary clinic registration has been approved.')
                 ->line('Your clinic ' . $this->clinic->name . ' is now ready to use.')
+                ->line('Your clinic domain: ' . $this->clinic->subdomain . '.' . $domain)
+                ->line('You can log in using the following credentials:')
+                ->line('Email: ' . $this->ownerEmail)
+                ->line('Password: ' . $this->clinic->temp_password)
+                ->line('Please change your password after your first login for security purposes.')
                 ->action('Access Your Clinic', $clinicUrl)
-                ->line('You can log in using the email and password you provided during registration.')
-                ->line('Your clinic subdomain: ' . $this->clinic->subdomain . '.' . $domain)
                 ->line('Thank you for choosing our Veterinary Clinic Management System!');
         } elseif ($this->status === 'rejected') {
             return $message

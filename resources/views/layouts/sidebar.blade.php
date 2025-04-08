@@ -11,6 +11,8 @@
     
     <div class="collapse navbar-collapse w-auto max-height-vh-100 h-100" id="sidenav-collapse-main">
         <ul class="navbar-nav">
+            <!-- Dashboard - Only show for non-admin users -->
+            @if(!Auth::check() || Auth::user()->role !== 'admin')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -19,6 +21,7 @@
                     <span class="nav-link-text ms-1">Dashboard</span>
                 </a>
             </li>
+            @endif
             
             <!-- Admin Section -->
             @if(Auth::check() && Auth::user()->role === 'admin')
@@ -54,6 +57,8 @@
             </li>
             @endif
             
+            <!-- Clinic Functionality - Only show for non-admin users or specific clinic staff -->
+            @if(!Auth::check() || Auth::user()->role !== 'admin') 
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('patients*') ? 'active' : '' }}" href="#">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -107,7 +112,9 @@
                     <span class="nav-link-text ms-1">Invoices</span>
                 </a>
             </li>
+            @endif
             
+            <!-- Account Section -->
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account</h6>
             </li>
@@ -120,6 +127,17 @@
                     <span class="nav-link-text ms-1">Profile</span>
                 </a>
             </li>
+
+            @if(session()->has('tenant_user'))
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('theme') ? 'active' : '' }}" href="{{ route('tenant.theme.edit') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-palette text-dark"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Theme Settings</span>
+                </a>
+            </li>
+            @endif
             
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">

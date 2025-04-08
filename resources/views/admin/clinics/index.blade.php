@@ -42,6 +42,14 @@
     .btn-danger:hover {
         background-color: #d03157;
     }
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
 </style>
 @endpush
 
@@ -96,87 +104,222 @@
                         </div>
                     @endif
 
-                    <!-- Clinics Table -->
-                    <div class="table-responsive p-0 mx-4">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Clinic</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contact</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Registered On</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($clinics as $clinic)
+                    @if (session('error'))
+                        <div class="alert alert-danger mx-4 mb-4" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <!-- Pending Registrations Section -->
+                    <div class="mx-4 mb-5">
+                        <h3 class="section-title">
+                            <i class="fas fa-hourglass-half me-2 text-warning"></i>
+                            Pending Registrations
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0">
+                                <thead>
                                     <tr>
-                                        <td>
-                                            <div class="d-flex px-2 py-1">
-                                                <div class="d-flex flex-column justify-content-center">
-                                                    <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
-                                                    <p class="text-xs text-secondary mb-0">{{ $clinic->subdomain }}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <p class="text-xs font-weight-bold mb-0">{{ $clinic->email }}</p>
-                                            <p class="text-xs text-secondary mb-0">{{ $clinic->phone }}</p>
-                                        </td>
-                                        <td>
-                                            @if ($clinic->approval_status === 'pending')
-                                                <span class="badge badge-warning">Pending</span>
-                                            @elseif ($clinic->approval_status === 'approved')
-                                                <span class="badge badge-success">Approved</span>
-                                            @elseif ($clinic->approval_status === 'rejected')
-                                                <span class="badge badge-danger">Rejected</span>
-                                                @if ($clinic->rejection_reason)
-                                                    <p class="text-xs text-danger mt-1">{{ $clinic->rejection_reason }}</p>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary text-xs font-weight-bold">{{ $clinic->created_at->format('M d, Y H:i') }}</span>
-                                        </td>
-                                        <td>
-                                            @if ($clinic->approval_status === 'pending')
-                                                <div class="d-flex">
-                                                    <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST" class="me-2">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-action btn-success">
-                                                            <i class="fas fa-check me-1"></i> Approve
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Clinic</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contact</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Registered On</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php $hasPending = false; @endphp
+                                    @foreach ($clinics as $clinic)
+                                        @if ($clinic->approval_status === 'pending')
+                                            @php $hasPending = true; @endphp
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex px-2 py-1">
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                                                            <p class="text-xs text-secondary mb-0">{{ $clinic->subdomain }}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <p class="text-xs font-weight-bold mb-0">{{ $clinic->email }}</p>
+                                                    <p class="text-xs text-secondary mb-0">{{ $clinic->phone }}</p>
+                                                </td>
+                                                <td>
+                                                    <span class="text-secondary text-xs font-weight-bold">{{ $clinic->created_at->format('M d, Y H:i') }}</span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-action btn-success">
+                                                                <i class="fas fa-check me-1"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <button type="button" class="btn btn-action btn-danger" onclick="openRejectModal({{ $clinic->id }})">
+                                                            <i class="fas fa-times me-1"></i> Reject
                                                         </button>
-                                                    </form>
-                                                    <button type="button" class="btn btn-action btn-danger" onclick="openRejectModal({{ $clinic->id }})">
-                                                        <i class="fas fa-times me-1"></i> Reject
-                                                    </button>
-                                                </div>
-                                            @elseif ($clinic->approval_status === 'rejected')
-                                                <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-action btn-success">
-                                                        <i class="fas fa-check me-1"></i> Approve
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="mt-2" onsubmit="return confirm('Are you sure you want to delete this clinic registration? This action cannot be undone.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-action btn-danger">
-                                                        <i class="fas fa-trash me-1"></i> Delete
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
+                                                        <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this clinic registration? This action cannot be undone.');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-action btn-danger">
+                                                                <i class="fas fa-trash me-1"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                    @if (!$hasPending)
+                                        <tr>
+                                            <td colspan="4" class="text-center p-4">
+                                                <p class="text-sm text-secondary">No pending registrations found.</p>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Approved Clinics Section -->
+                    <div class="mx-4 mb-5">
+                        <h3 class="section-title">
+                            <i class="fas fa-check-circle me-2 text-success"></i>
+                            Approved Clinics
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0">
+                                <thead>
                                     <tr>
-                                        <td colspan="5" class="text-center p-4">
-                                            <p class="text-sm text-secondary">No clinics found matching your criteria.</p>
-                                        </td>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Clinic</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contact</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Approved On</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
                                     </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @php $hasApproved = false; @endphp
+                                    @foreach ($clinics as $clinic)
+                                        @if ($clinic->approval_status === 'approved')
+                                            @php $hasApproved = true; @endphp
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex px-2 py-1">
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                                                            <p class="text-xs text-secondary mb-0">{{ $clinic->subdomain }}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <p class="text-xs font-weight-bold mb-0">{{ $clinic->email }}</p>
+                                                    <p class="text-xs text-secondary mb-0">{{ $clinic->phone }}</p>
+                                                </td>
+                                                <td>
+                                                    <span class="text-secondary text-xs font-weight-bold">{{ $clinic->updated_at->format('M d, Y H:i') }}</span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="button" class="btn btn-action btn-danger" onclick="openRejectModal({{ $clinic->id }})">
+                                                            <i class="fas fa-ban me-1"></i> Revoke
+                                                        </button>
+                                                        <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this approved clinic? This will permanently remove all their data and cannot be undone.');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-action btn-danger">
+                                                                <i class="fas fa-trash me-1"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                    @if (!$hasApproved)
+                                        <tr>
+                                            <td colspan="4" class="text-center p-4">
+                                                <p class="text-sm text-secondary">No approved clinics found.</p>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Rejected Registrations Section -->
+                    <div class="mx-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-times-circle me-2 text-danger"></i>
+                            Rejected Registrations
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Clinic</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contact</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Rejected On</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Reason</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php $hasRejected = false; @endphp
+                                    @foreach ($clinics as $clinic)
+                                        @if ($clinic->approval_status === 'rejected')
+                                            @php $hasRejected = true; @endphp
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex px-2 py-1">
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                                                            <p class="text-xs text-secondary mb-0">{{ $clinic->subdomain }}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <p class="text-xs font-weight-bold mb-0">{{ $clinic->email }}</p>
+                                                    <p class="text-xs text-secondary mb-0">{{ $clinic->phone }}</p>
+                                                </td>
+                                                <td>
+                                                    <span class="text-secondary text-xs font-weight-bold">{{ $clinic->updated_at->format('M d, Y H:i') }}</span>
+                                                </td>
+                                                <td>
+                                                    <p class="text-xs text-danger mb-0">{{ $clinic->rejection_reason }}</p>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-action btn-success">
+                                                                <i class="fas fa-check me-1"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this rejected clinic registration? This action cannot be undone.');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-action btn-danger">
+                                                                <i class="fas fa-trash me-1"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                    @if (!$hasRejected)
+                                        <tr>
+                                            <td colspan="5" class="text-center p-4">
+                                                <p class="text-sm text-secondary">No rejected registrations found.</p>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Pagination -->
@@ -194,7 +337,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="rejectModalLabel">Reject Clinic Registration</h5>
+                <h5 class="modal-title" id="rejectModalLabel">Reject/Revoke Clinic Registration</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeRejectModal()">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -203,15 +346,15 @@
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="rejection_reason" class="form-control-label">Reason for Rejection</label>
+                        <label for="rejection_reason" class="form-control-label">Reason for Rejection/Revocation</label>
                         <textarea id="rejection_reason" name="rejection_reason" rows="3" required
                             class="form-control"
-                            placeholder="Please provide a reason for rejecting this clinic registration..."></textarea>
+                            placeholder="Please provide a reason for rejecting/revoking this clinic registration..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" onclick="closeRejectModal()">Cancel</button>
-                    <button type="submit" class="btn bg-gradient-danger">Reject</button>
+                    <button type="submit" class="btn bg-gradient-danger">Reject/Revoke</button>
                 </div>
             </form>
         </div>

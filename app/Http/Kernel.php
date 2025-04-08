@@ -40,7 +40,9 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate tenant subdomain first
             ResolveTenant::class, // Then resolve tenant database if subdomain is valid
             \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
-            \App\Http\Middleware\NoCacheHeaders::class,
+            // Combined cache prevention and session validation
+            \App\Http\Middleware\CheckSessionValid::class,
+            \App\Http\Middleware\NoCacheMiddleware::class,
         ],
 
         'api' => [
@@ -72,5 +74,6 @@ class Kernel extends HttpKernel
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
         'tenant.validate' => \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate subdomain against registered clinics
+        'check.session' => \App\Http\Middleware\CheckSessionValid::class, // Verify session validity
     ];
 } 

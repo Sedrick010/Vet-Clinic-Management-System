@@ -267,25 +267,24 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        try {
-            // Clear regular authentication
-            Auth::guard('web')->logout();
+        // Log out Laravel authenticated user if present
+        Auth::guard('web')->logout();
 
-            // Clear tenant session data
-            $request->session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
-            
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        // Clear tenant-specific session data
+        session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
 
-            return redirect()->route('login')
-                ->with('clear_history', true)
-                ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
-                ->header('Pragma', 'no-cache')
-                ->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT');
-        } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
-            return redirect()->route('login');
-        }
+        // Invalidate and regenerate the session
+        session()->invalidate();
+        session()->regenerateToken();
+
+        // Set cache control headers to prevent back button from showing protected pages
+        return redirect()->route('login')
+            ->with('success', 'You have been successfully logged out.')
+            ->withHeaders([
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+                'Pragma' => 'no-cache',
+                'Expires' => 'Sat, 01 Jan 2000 00:00:00 GMT'
+            ]);
     }
     
     /**

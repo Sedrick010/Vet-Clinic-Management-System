@@ -144,21 +144,6 @@
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                             @enderror
                                         </div>
-
-                                        <!-- Password -->
-                                        <div>
-                                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                            <input id="password" type="password" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-20" name="password" required>
-                                            @error('password')
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                        </div>
-
-                                        <!-- Confirm Password -->
-                                        <div>
-                                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                                            <input id="password_confirmation" type="password" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-20" name="password_confirmation" required>
-                                        </div>
                                     </div>
                                 </div>
 

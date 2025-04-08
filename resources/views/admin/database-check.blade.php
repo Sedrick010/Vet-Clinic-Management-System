@@ -25,10 +25,14 @@
                                         <th class="py-2 px-4 border-b">Subdomain</th>
                                         <th class="py-2 px-4 border-b">Database</th>
                                         <th class="py-2 px-4 border-b">Status</th>
+                                        <th class="py-2 px-4 border-b">Database Exists</th>
                                         <th class="py-2 px-4 border-b">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="clinics-table-body">
+                                    @php
+                                        $tenantDatabaseService = app(\App\Services\TenantDatabaseService::class);
+                                    @endphp
                                     @forelse(\App\Models\Clinic::all() as $clinic)
                                     <tr>
                                         <td class="py-2 px-4 border-b">{{ $clinic->id }}</td>
@@ -41,12 +45,35 @@
                                             </span>
                                         </td>
                                         <td class="py-2 px-4 border-b">
+                                            @php
+                                                $dbExists = $tenantDatabaseService->databaseExists($clinic->database_name);
+                                            @endphp
+                                            <span class="{{ $dbExists ? 'text-green-600' : 'text-red-600' }} font-semibold">
+                                                @if ($dbExists)
+                                                    <i class="fas fa-check-circle mr-1"></i> Yes
+                                                @else
+                                                    <i class="fas fa-times-circle mr-1"></i> No
+                                                    @if ($clinic->approval_status === 'approved')
+                                                        <span class="text-xs text-red-500 block">(Issue detected!)</span>
+                                                    @endif
+                                                @endif
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
                                             <a href="{{ route('admin.clinics.index') }}" class="text-blue-600 hover:underline">Manage</a>
+                                            @if ($clinic->approval_status === 'approved' && !$dbExists)
+                                                <form method="POST" action="{{ route('admin.clinics.recreate-database', $clinic->id) }}" class="mt-1 inline">
+                                                    @csrf
+                                                    <button type="submit" class="text-white bg-red-500 hover:bg-red-600 rounded px-2 py-1 text-xs">
+                                                        Create Database
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="6" class="py-4 px-4 text-center">No clinics found</td>
+                                        <td colspan="7" class="py-4 px-4 text-center">No clinics found</td>
                                     </tr>
                                     @endforelse
                                 </tbody>

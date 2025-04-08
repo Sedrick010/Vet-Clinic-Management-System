@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
+use App\Http\Controllers\TenantThemeController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
@@ -39,19 +40,20 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     Route::get('/clinic-pending', [ClinicController::class, 'pending'])->name('clinics.pending');
 
     // Admin routes - only accessible to admin users
-    Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    Route::prefix('admin')->middleware(['auth', 'admin', \App\Http\Middleware\CheckSessionValid::class])->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::get('/clinics', [ClinicController::class, 'index'])->name('admin.clinics.index');
         Route::post('/clinics/{id}/approve', [ClinicController::class, 'approve'])->name('admin.clinics.approve');
         Route::post('/clinics/{id}/reject', [ClinicController::class, 'reject'])->name('admin.clinics.reject');
         Route::delete('/clinics/{id}', [ClinicController::class, 'destroy'])->name('admin.clinics.destroy');
+        Route::post('/clinics/{id}/recreate-database', [ClinicController::class, 'recreateDatabase'])->name('admin.clinics.recreate-database');
         Route::get('/database-check', function() {
             return view('admin.database-check');
         })->name('admin.database.check');
     });
 
     // Clinic selector routes
-    Route::middleware(['auth'])->group(function() {
+    Route::middleware(['auth', \App\Http\Middleware\CheckSessionValid::class])->group(function() {
         Route::get('/select-clinic', [ClinicSelectorController::class, 'index'])->name('clinics.select');
         Route::get('/switch-clinic/{clinicId}', [ClinicSelectorController::class, 'switchClinic'])->name('clinics.switch');
     });
@@ -102,10 +104,10 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         
         // Not authenticated at all, redirect to login
         return redirect()->route('login');
-    })->name('dashboard');
+    })->middleware([\App\Http\Middleware\CheckSessionValid::class])->name('dashboard');
 
     // Profile routes
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', \App\Http\Middleware\CheckSessionValid::class])->group(function () {
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -115,7 +117,19 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     Route::get('/subdomain-demo', [App\Http\Controllers\SubdomainDemoController::class, 'index'])
         ->name('subdomain.demo');
     
+    // Session check route for AJAX validation
+    Route::get('/session-check', function() {
+        return response()->json([
+            'valid' => (auth()->check() || session()->has('tenant_user'))
+        ]);
+    })->name('session.check');
+    
     // Auth routes for both admin and tenant users - moved inside tenant.validate middleware
     require __DIR__.'/auth.php';
     
+    // Theme Management Routes - Only for tenants
+    Route::middleware(['tenant.auth'])->group(function () {
+        Route::get('/theme', [TenantThemeController::class, 'edit'])->name('tenant.theme.edit');
+        Route::put('/theme', [TenantThemeController::class, 'update'])->name('tenant.theme.update');
+    });
 });

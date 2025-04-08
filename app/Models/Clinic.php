@@ -28,6 +28,9 @@ class Clinic extends Model
         'is_active',
         'approval_status',
         'rejection_reason',
+        'owner_email',
+        'owner_name',
+        'temp_password',
     ];
 
     /**

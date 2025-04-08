@@ -95,7 +95,12 @@
                                 <!-- Password -->
                                 <div>
                                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                    <input id="password" type="password" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-20" name="password" required>
+                                    <div class="relative">
+                                        <input id="password" type="password" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-20 pr-10" name="password" required>
+                                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 px-3 flex items-center" tabindex="-1">
+                                            <i id="password-toggle-icon" class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Remember Me -->
@@ -174,6 +179,21 @@
         </div>
 
         <script>
+            function togglePasswordVisibility() {
+                const passwordInput = document.getElementById('password');
+                const icon = document.getElementById('password-toggle-icon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+
             function goToSubdomain() {
                 const subdomain = document.getElementById('subdomain').value.trim();
                 if (subdomain) {

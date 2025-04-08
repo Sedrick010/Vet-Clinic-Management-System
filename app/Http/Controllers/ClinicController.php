@@ -99,7 +99,6 @@ class ClinicController extends Controller
             'address' => ['required', 'string', 'max:255'],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         if ($validator->fails()) {
@@ -107,6 +106,9 @@ class ClinicController extends Controller
         }
 
         try {
+            // Generate a random password
+            $generatedPassword = Str::random(12);
+
             // Log the start of clinic registration
             Log::info('Beginning clinic registration process', [
                 'clinic_name' => $request->name,
@@ -114,10 +116,11 @@ class ClinicController extends Controller
                 'email' => $request->email
             ]);
             
-            // Create the database for the clinic
-            $databaseName = $tenantDatabaseService->createDatabase($request->name);
-
-            Log::info('Database name generated for clinic', [
+            // Generate a database name but don't create the database yet
+            $tenantDatabaseService = app(TenantDatabaseService::class);
+            $databaseName = 'vet_clinic_' . Str::slug($request->name) . '_' . Str::lower(Str::random(8));
+            
+            Log::info('Database name generated for clinic (will be created on approval)', [
                 'clinic_name' => $request->name,
                 'database_name' => $databaseName
             ]);
@@ -131,6 +134,9 @@ class ClinicController extends Controller
                 'address' => $request->address,
                 'database_name' => $databaseName,
                 'approval_status' => 'pending',
+                'owner_email' => $request->owner_email,
+                'owner_name' => $request->owner_name,
+                'temp_password' => $generatedPassword,
             ]);
 
             Log::info('Clinic record created in central database', [
@@ -156,39 +162,6 @@ class ClinicController extends Controller
                     'owner_email' => $request->owner_email
                 ]);
             }
-            
-            // Set up the tenant database - this will run our migrations
-            $tenantDatabaseService->setupTenantDatabase($clinic);
-
-            Log::info('Tenant database setup completed', [
-                'clinic_id' => $clinic->id,
-                'database_name' => $databaseName
-            ]);
-            
-            // Switch to tenant database to create the user
-            $tenantDatabaseService->switchToTenant($clinic);
-
-            // Create the clinic owner user in the tenant database
-            // We use insert directly to avoid model conflicts with the central database
-            $userId = DB::connection('tenant')->table('users')->insertGetId([
-                'name' => $request->owner_name,
-                'email' => $request->owner_email,
-                'password' => Hash::make($request->password),
-                'role' => 'owner',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Log success for debugging
-            Log::info('Created tenant clinic owner', [
-                'clinic_id' => $clinic->id,
-                'clinic_subdomain' => $clinic->subdomain,
-                'user_id' => $userId,
-                'user_email' => $request->owner_email
-            ]);
-
-            // Switch back to the main database
-            $tenantDatabaseService->switchToMain();
 
             // Store clinic info in session for pending page
             $request->session()->put([
@@ -317,11 +290,51 @@ class ClinicController extends Controller
         
         if ($statusChanged) {
             try {
-                // Fetch clinic owner info from tenant database
+                // Now create and set up the tenant database only after approval
                 $tenantDatabaseService = app(TenantDatabaseService::class);
+                
                 try {
-                    // Switch to tenant database
-                    $tenantDatabaseService->switchToTenant($clinic);
+                    // Check if the database already exists
+                    if (!$tenantDatabaseService->databaseExists($clinic->database_name)) {
+                        // Create the database for the clinic
+                        Log::info('Creating database for approved clinic', [
+                            'clinic_id' => $clinic->id,
+                            'database_name' => $clinic->database_name
+                        ]);
+                        
+                        // Create the database using plain SQL
+                        DB::statement("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '', $clinic->database_name) . "`");
+                        
+                        // Set up the tenant database schema
+                        $tenantDatabaseService->setupTenantDatabase($clinic);
+                        
+                        // Switch to tenant database to create the user
+                        $tenantDatabaseService->switchToTenant($clinic);
+                        
+                        // Create the clinic owner user in the tenant database
+                        $userId = DB::connection('tenant')->table('users')->insertGetId([
+                            'name' => $clinic->owner_name,
+                            'email' => $clinic->owner_email,
+                            'password' => Hash::make($clinic->temp_password),
+                            'role' => 'owner',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        
+                        Log::info('Created tenant database and owner account for approved clinic', [
+                            'clinic_id' => $clinic->id,
+                            'database_name' => $clinic->database_name,
+                            'owner_id' => $userId
+                        ]);
+                    } else {
+                        Log::info('Database already exists for approved clinic', [
+                            'clinic_id' => $clinic->id,
+                            'database_name' => $clinic->database_name
+                        ]);
+                        
+                        // Switch to tenant database
+                        $tenantDatabaseService->switchToTenant($clinic);
+                    }
                     
                     // Get clinic owner details (first owner account)
                     $owner = DB::connection('tenant')
@@ -332,9 +345,9 @@ class ClinicController extends Controller
                     // Switch back to main database
                     $tenantDatabaseService->switchToMain();
                     
-                    // Get owner details
-                    $ownerName = $owner ? $owner->name : null;
-                    $ownerEmail = $owner ? $owner->email : null;
+                    // Get owner details from the clinic record if not available in tenant db
+                    $ownerName = $owner ? $owner->name : $clinic->owner_name;
+                    $ownerEmail = $owner ? $owner->email : $clinic->owner_email;
                     
                     // Send notification email with owner details
                     $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
@@ -344,7 +357,11 @@ class ClinicController extends Controller
                         $ownerName
                     ));
                 } catch (\Exception $dbException) {
-                    \Log::error('Failed to fetch owner details: ' . $dbException->getMessage());
+                    \Log::error('Failed to set up clinic database or fetch owner details: ' . $dbException->getMessage(), [
+                        'clinic_id' => $clinic->id,
+                        'error' => $dbException->getMessage(),
+                        'trace' => $dbException->getTraceAsString()
+                    ]);
                     
                     // Fall back to sending notification without owner details
                     $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
@@ -353,10 +370,10 @@ class ClinicController extends Controller
                     ));
                 }
                 
-                return back()->with('success', 'Clinic has been approved! Notification email has been sent.');
+                return back()->with('success', 'Clinic has been approved! Database has been created and notification email has been sent.');
             } catch (\Exception $e) {
                 \Log::error('Failed to send approval notification: ' . $e->getMessage());
-                return back()->with('success', 'Clinic has been approved! However, the notification email could not be sent.');
+                return back()->with('success', 'Clinic has been approved! However, there was an issue with database setup or notification.');
             }
         }
 
@@ -379,8 +396,11 @@ class ClinicController extends Controller
 
         $clinic = Clinic::findOrFail($id);
         
-        // Only send notification if status is changing
+        // Only process if status is changing
         $statusChanged = $clinic->approval_status !== 'rejected';
+        
+        // Check if clinic was previously approved and now being rejected
+        $wasApproved = $clinic->approval_status === 'approved';
         
         $clinic->update([
             'approval_status' => 'rejected',
@@ -396,60 +416,63 @@ class ClinicController extends Controller
             'pending_clinic_subdomain' => $clinic->subdomain
         ]);
         
+        // If clinic was previously approved, we should clean up their database
+        if ($wasApproved) {
+            try {
+                $tenantDatabaseService = app(TenantDatabaseService::class);
+                
+                // Check if database exists, if so, delete it
+                if ($tenantDatabaseService->databaseExists($clinic->database_name)) {
+                    Log::info('Deleting database of rejected clinic that was previously approved', [
+                        'clinic_id' => $clinic->id,
+                        'database_name' => $clinic->database_name
+                    ]);
+                    
+                    // Drop the database
+                    DB::statement("DROP DATABASE IF EXISTS `" . str_replace('`', '', $clinic->database_name) . "`");
+                    
+                    Log::info('Successfully deleted database of rejected clinic', [
+                        'clinic_id' => $clinic->id,
+                        'database_name' => $clinic->database_name
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to delete database of rejected clinic: ' . $e->getMessage(), [
+                    'clinic_id' => $clinic->id,
+                    'database_name' => $clinic->database_name,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
         if ($statusChanged) {
             try {
-                // Fetch clinic owner info from tenant database
-                $tenantDatabaseService = app(TenantDatabaseService::class);
-                try {
-                    // Switch to tenant database
-                    $tenantDatabaseService->switchToTenant($clinic);
-                    
-                    // Get clinic owner details (first owner account)
-                    $owner = DB::connection('tenant')
-                        ->table('users')
-                        ->where('role', 'owner')
-                        ->first();
-                    
-                    // Switch back to main database
-                    $tenantDatabaseService->switchToMain();
-                    
-                    // Get owner details
-                    $ownerName = $owner ? $owner->name : null;
-                    $ownerEmail = $owner ? $owner->email : null;
-                    
-                    // Send notification email with owner details
-                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
-                        $clinic, 
-                        'rejected', 
-                        $ownerEmail,
-                        $ownerName,
-                        $request->rejection_reason
-                    ));
-                } catch (\Exception $dbException) {
-                    \Log::error('Failed to fetch owner details: ' . $dbException->getMessage());
-                    
-                    // Fall back to sending notification without owner details
-                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
-                        $clinic, 
-                        'rejected', 
-                        null,
-                        null,
-                        $request->rejection_reason
-                    ));
-                }
+                // For rejecting a clinic, we don't need to access the tenant database
+                // as it might not exist or we just deleted it
                 
-                return back()->with('success', 'Clinic has been rejected! Notification email has been sent.');
+                // Send notification email with rejection reason
+                $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
+                    $clinic, 
+                    'rejected', 
+                    $clinic->owner_email,
+                    $clinic->owner_name,
+                    $request->rejection_reason
+                ));
+                
+                return back()->with('success', 'Clinic has been rejected! Notification email has been sent.' . 
+                    ($wasApproved ? ' Database has been cleaned up.' : ''));
             } catch (\Exception $e) {
                 \Log::error('Failed to send rejection notification: ' . $e->getMessage());
-                return back()->with('success', 'Clinic has been rejected! However, the notification email could not be sent.');
+                return back()->with('success', 'Clinic has been rejected! However, the notification email could not be sent.' . 
+                    ($wasApproved ? ' Database has been cleaned up.' : ''));
             }
         }
 
-        return back()->with('success', 'Clinic has been rejected!');
+        return back()->with('success', 'Clinic has been rejected!' . ($wasApproved ? ' Database has been cleaned up.' : ''));
     }
 
     /**
-     * Delete a declined clinic registration.
+     * Delete a clinic registration.
      */
     public function destroy($id): RedirectResponse
     {
@@ -459,30 +482,118 @@ class ClinicController extends Controller
         }
 
         $clinic = Clinic::findOrFail($id);
-        
-        // Only allow deletion of rejected clinics
-        if ($clinic->approval_status !== 'rejected') {
-            return back()->with('error', 'Only rejected clinic registrations can be deleted.');
-        }
 
         try {
             // Delete the clinic's database if it exists
             $tenantDatabaseService = app(TenantDatabaseService::class);
+            
+            // First check if database exists
             if ($tenantDatabaseService->databaseExists($clinic->database_name)) {
+                Log::info('Deleting database of clinic being deleted', [
+                    'clinic_id' => $clinic->id,
+                    'clinic_name' => $clinic->name,
+                    'database_name' => $clinic->database_name
+                ]);
+                
+                // Drop the database with proper SQL injection prevention
                 DB::statement("DROP DATABASE IF EXISTS `" . str_replace('`', '', $clinic->database_name) . "`");
+                
+                Log::info('Successfully deleted clinic database', [
+                    'clinic_id' => $clinic->id,
+                    'database_name' => $clinic->database_name
+                ]);
+            } else {
+                Log::info('No database found for clinic being deleted', [
+                    'clinic_id' => $clinic->id,
+                    'database_name' => $clinic->database_name
+                ]);
             }
 
             // Delete the clinic record
             $clinic->delete();
 
-            return back()->with('success', 'Clinic registration has been deleted successfully.');
+            return back()->with('success', 'Clinic registration and all associated data have been deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Error deleting clinic: ' . $e->getMessage(), [
                 'clinic_id' => $id,
-                'database_name' => $clinic->database_name
+                'database_name' => $clinic->database_name,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->with('error', 'An error occurred while deleting the clinic registration.');
+            return back()->with('error', 'An error occurred while deleting the clinic registration: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Recreate a clinic's database if it doesn't exist.
+     * This is useful for fixing issues where a clinic is approved but its database wasn't created.
+     */
+    public function recreateDatabase($id): RedirectResponse
+    {
+        // Ensure the user is an admin
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $clinic = Clinic::findOrFail($id);
+        
+        // Only allow recreation for approved clinics
+        if ($clinic->approval_status !== 'approved') {
+            return back()->with('error', 'Only approved clinics can have their databases recreated.');
+        }
+        
+        $tenantDatabaseService = app(TenantDatabaseService::class);
+        
+        // Check if the database already exists
+        if ($tenantDatabaseService->databaseExists($clinic->database_name)) {
+            return back()->with('info', 'Database already exists for this clinic.');
+        }
+        
+        try {
+            // Create the database using plain SQL
+            Log::info('Recreating database for approved clinic', [
+                'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name
+            ]);
+            
+            DB::statement("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '', $clinic->database_name) . "`");
+            
+            // Set up the tenant database schema
+            $tenantDatabaseService->setupTenantDatabase($clinic);
+            
+            // Switch to tenant database to create the user
+            $tenantDatabaseService->switchToTenant($clinic);
+            
+            // Create the clinic owner user in the tenant database
+            $userId = DB::connection('tenant')->table('users')->insertGetId([
+                'name' => $clinic->owner_name,
+                'email' => $clinic->owner_email,
+                'password' => Hash::make($clinic->temp_password),
+                'role' => 'owner',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // Switch back to main database
+            $tenantDatabaseService->switchToMain();
+            
+            Log::info('Successfully recreated database and owner account', [
+                'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name,
+                'owner_id' => $userId
+            ]);
+            
+            return back()->with('success', "Database for {$clinic->name} has been successfully created.");
+        } catch (\Exception $e) {
+            Log::error('Error recreating clinic database: ' . $e->getMessage(), [
+                'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', "Failed to recreate database: {$e->getMessage()}");
         }
     }
 } 

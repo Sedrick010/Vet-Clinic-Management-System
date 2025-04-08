@@ -55,6 +55,9 @@ class ClinicRegistrationNotification extends Notification implements ShouldQueue
             ->line('Thank you for registering your veterinary clinic with our system.')
             ->line('Your clinic "' . $this->clinic->name . '" has been successfully registered and is pending approval.')
             ->line('Our administrative team will review your application and you will receive another email once it is approved.')
+            ->line('For security purposes, we have generated a temporary password for your account:')
+            ->line('Temporary Password: ' . $this->clinic->temp_password)
+            ->line('Please make sure to change this password after your first login.')
             ->action('Check Registration Status', URL::route('clinics.pending'))
             ->line('If you have any questions or need assistance, please contact our support team.');
     }

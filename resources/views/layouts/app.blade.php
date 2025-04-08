@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
         <title>{{ config('app.name', 'Vet Clinic System') }}</title>
         
         <!-- Fonts and icons -->
@@ -13,6 +16,9 @@
         
         <!-- CSS Files -->
         <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
+        
+        <!-- Theme Styles -->
+        <x-theme-styles :theme="$theme ?? null" />
         
         <!-- Custom CSS -->
         @stack('css')
@@ -78,6 +84,38 @@
         
         <!-- Custom JS -->
         <script src="{{ asset('assets/js/soft-ui-dashboard.min.js') }}"></script>
+        
+        <!-- Session validation check -->
+        <script>
+            // Check session validity regularly on authenticated pages
+            document.addEventListener('DOMContentLoaded', function() {
+                // Only on authenticated pages
+                @if(Auth::check() || session()->has('tenant_user'))
+                    // Check session every 5 seconds
+                    setInterval(function() {
+                        fetch('{{ route("session.check") }}', {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.valid) {
+                                // Session is invalid, redirect to login
+                                window.location.href = '{{ route("login") }}';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Session check failed:', error);
+                        });
+                    }, 5000);
+                @endif
+            });
+        </script>
+        
         @stack('js')
     </body>
 </html>
