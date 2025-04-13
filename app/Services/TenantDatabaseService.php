@@ -44,8 +44,12 @@ class TenantDatabaseService
             
             // Create the database with proper error handling
             try {
+                // Get the current MySQL user's privileges
+                $privileges = DB::select("SHOW GRANTS FOR CURRENT_USER()");
+                Log::info('Current user privileges:', ['privileges' => $privileges]);
+                
                 // Use direct SQL with proper quoting to avoid SQL injection
-                $query = "CREATE DATABASE `" . str_replace('`', '', $databaseName) . "`";
+                $query = "CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '', $databaseName) . "`";
                 Log::debug('Creating tenant database with query', ['query' => $query]);
                 
                 DB::statement($query);
@@ -64,7 +68,8 @@ class TenantDatabaseService
             } catch (\Exception $e) {
                 Log::error('Database creation SQL error: ' . $e->getMessage(), [
                     'database_name' => $databaseName,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
                 throw $e;
             }
@@ -80,9 +85,7 @@ class TenantDatabaseService
                 Log::warning('Using fallback database name in development environment', [
                     'clinic_name' => $clinicName
                 ]);
-                $timestamp = time();
-                $randomStr = Str::random(4);
-                return config('database.connections.mysql.database') . '_tenant_' . Str::slug($clinicName) . '_' . $timestamp . '_' . $randomStr;
+                return config('database.connections.mysql.database');
             }
             
             // In production, rethrow the exception
@@ -104,7 +107,11 @@ class TenantDatabaseService
             
             return count($results) > 0;
         } catch (\Exception $e) {
-            Log::error('Error checking if database exists: ' . $e->getMessage(), ['database' => $databaseName]);
+            Log::error('Error checking if database exists: ' . $e->getMessage(), [
+                'database' => $databaseName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
@@ -114,188 +121,191 @@ class TenantDatabaseService
      *
      * @param Clinic $clinic
      * @return void
+     * @throws \Exception
      */
     public function setupTenantDatabase(Clinic $clinic): void
     {
         try {
+            Log::info('Starting tenant database setup', [
+                'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name
+            ]);
+
             // Check if database exists first
             if (!$this->databaseExists($clinic->database_name)) {
+                Log::info('Database does not exist, creating it', [
+                    'database_name' => $clinic->database_name
+                ]);
+                
                 // Create the database if it doesn't exist
-                $query = "CREATE DATABASE `" . str_replace('`', '', $clinic->database_name) . "`";
+                $query = "CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '', $clinic->database_name) . "`";
                 DB::statement($query);
-                Log::info('Created missing tenant database', ['database' => $clinic->database_name]);
+                
+                if (!$this->databaseExists($clinic->database_name)) {
+                    throw new \Exception("Failed to create database {$clinic->database_name}");
+                }
             }
             
             // Switch to the tenant database
             $this->switchToTenant($clinic);
             
-            // Check if users table already exists to avoid migration errors
-            $tableExists = false;
-            try {
-                $tableExists = DB::connection('tenant')->getSchemaBuilder()->hasTable('users');
-            } catch (\Exception $e) {
-                Log::warning('Error checking if users table exists: ' . $e->getMessage(), [
-                    'database' => $clinic->database_name
-                ]);
-            }
+            // Create essential tables directly to ensure they exist
+            $this->createEssentialTables();
             
-            // Log migration start
-            Log::info('Running tenant database migrations', [
-                'database' => $clinic->database_name,
-                'users_table_exists' => $tableExists
-            ]);
+            // Run migrations
+            $this->runTenantMigrations($clinic);
             
-            if (!$tableExists) {
-                // Create the users table directly if migrations are failing
-                try {
-                    DB::connection('tenant')->statement('
-                        CREATE TABLE IF NOT EXISTS `users` (
-                            `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-                            `name` varchar(255) NOT NULL,
-                            `email` varchar(255) NOT NULL,
-                            `email_verified_at` timestamp NULL DEFAULT NULL,
-                            `password` varchar(255) NOT NULL,
-                            `role` varchar(255) NOT NULL DEFAULT "staff",
-                            `remember_token` varchar(100) DEFAULT NULL,
-                            `created_at` timestamp NULL DEFAULT NULL,
-                            `updated_at` timestamp NULL DEFAULT NULL,
-                            PRIMARY KEY (`id`),
-                            UNIQUE KEY `users_email_unique` (`email`)
-                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                    ');
-                    
-                    Log::info('Created users table directly', [
-                        'database' => $clinic->database_name
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Error creating users table directly: ' . $e->getMessage(), [
-                        'database' => $clinic->database_name
-                    ]);
-                }
-            }
-            
-            // Then run all tenant migrations
-            try {
-                // Run migrations
-                Artisan::call('migrate', [
-                    '--database' => 'tenant',
-                    '--path' => 'database/migrations/tenant',
-                    '--force' => true,
-                ]);
-                
-                Log::info('Tenant database migrations completed', [
-                    'database' => $clinic->database_name,
-                    'migration_output' => trim(Artisan::output())
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Error running tenant migrations: ' . $e->getMessage(), [
-                    'database' => $clinic->database_name,
-                    'trace' => $e->getTraceAsString()
-                ]);
-                
-                // We'll continue if there was an error with migrations since we created the users table directly
-            }
+            // Create owner account
+            $this->createOwnerAccount($clinic);
             
             // Switch back to the main database
             $this->switchToMain();
             
             Log::info('Tenant database setup completed successfully', [
                 'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name
+                'database_name' => $clinic->database_name
             ]);
         } catch (\Exception $e) {
-            Log::error('Error setting up tenant database: ' . $e->getMessage(), [
-                'database' => $clinic->database_name,
+            Log::error('Error in tenant database setup: ' . $e->getMessage(), [
                 'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name,
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // Always throw the exception so the caller can handle it
+            // Switch back to main database in case of error
+            try {
+                $this->switchToMain();
+            } catch (\Exception $e2) {
+                Log::error('Error switching back to main database: ' . $e2->getMessage());
+            }
+            
             throw $e;
         }
     }
     
     /**
-     * Switch to a tenant's database
-     *
-     * @param Clinic $clinic
-     * @return void
-     * @throws Exception if the database doesn't exist or connection fails
+     * Create essential database tables
+     */
+    private function createEssentialTables(): void
+    {
+        try {
+            // Create users table if it doesn't exist
+            if (!DB::connection('tenant')->getSchemaBuilder()->hasTable('users')) {
+                DB::connection('tenant')->statement('
+                    CREATE TABLE IF NOT EXISTS `users` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+                        `name` varchar(255) NOT NULL,
+                        `email` varchar(255) NOT NULL,
+                        `email_verified_at` timestamp NULL DEFAULT NULL,
+                        `password` varchar(255) NOT NULL,
+                        `role` varchar(255) NOT NULL DEFAULT "staff",
+                        `phone` varchar(20) DEFAULT NULL,
+                        `dob` date DEFAULT NULL,
+                        `gender` varchar(10) DEFAULT NULL,
+                        `employee_id` varchar(50) DEFAULT NULL,
+                        `address` text DEFAULT NULL,
+                        `city` varchar(100) DEFAULT NULL,
+                        `state` varchar(100) DEFAULT NULL,
+                        `postal_code` varchar(20) DEFAULT NULL,
+                        `hire_date` date DEFAULT NULL,
+                        `specialization` varchar(100) DEFAULT NULL,
+                        `license_number` varchar(100) DEFAULT NULL,
+                        `remember_token` varchar(100) DEFAULT NULL,
+                        `created_at` timestamp NULL DEFAULT NULL,
+                        `updated_at` timestamp NULL DEFAULT NULL,
+                        PRIMARY KEY (`id`),
+                        UNIQUE KEY `users_email_unique` (`email`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error creating essential tables: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+    
+    /**
+     * Run tenant migrations
+     */
+    private function runTenantMigrations(Clinic $clinic): void
+    {
+        try {
+            Artisan::call('migrate', [
+                '--database' => 'tenant',
+                '--path' => 'database/migrations/tenant',
+                '--force' => true,
+            ]);
+            
+            Log::info('Tenant migrations completed', [
+                'clinic_id' => $clinic->id,
+                'output' => trim(Artisan::output())
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error running tenant migrations: ' . $e->getMessage(), [
+                'clinic_id' => $clinic->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Continue even if migrations fail since we created essential tables directly
+        }
+    }
+    
+    /**
+     * Create the owner account in the tenant database
+     */
+    private function createOwnerAccount(Clinic $clinic): void
+    {
+        try {
+            if (!DB::connection('tenant')->table('users')->where('role', 'owner')->exists()) {
+                DB::connection('tenant')->table('users')->insert([
+                    'name' => $clinic->owner_name,
+                    'email' => $clinic->owner_email,
+                    'password' => bcrypt($clinic->temp_password),
+                    'role' => 'owner',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                Log::info('Owner account created in tenant database', [
+                    'clinic_id' => $clinic->id,
+                    'owner_email' => $clinic->owner_email
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error creating owner account: ' . $e->getMessage(), [
+                'clinic_id' => $clinic->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Switch to tenant database connection
      */
     public function switchToTenant(Clinic $clinic): void
     {
-        // First check if the database exists
-        if (!$this->databaseExists($clinic->database_name)) {
-            Log::error('Attempted to switch to non-existent database', [
-                'database' => $clinic->database_name,
-                'clinic_id' => $clinic->id
-            ]);
-            throw new Exception("Tenant database does not exist: {$clinic->database_name}");
-        }
+        Config::set('database.connections.tenant.database', $clinic->database_name);
+        DB::purge('tenant');
+        DB::reconnect('tenant');
         
-        try {
-            // Get the current database configuration
-            $currentConnection = config('database.connections.' . config('database.default'));
-            
-            // Use the same credentials as the current connection, just change the database name
-            Config::set('database.connections.tenant', [
-                'driver'    => $currentConnection['driver'] ?? 'mysql',
-                'host'      => $currentConnection['host'] ?? env('DB_HOST', '127.0.0.1'),
-                'port'      => $currentConnection['port'] ?? env('DB_PORT', '3306'),
-                'database'  => $clinic->database_name,
-                'username'  => $currentConnection['username'] ?? env('DB_USERNAME', 'forge'),
-                'password'  => $currentConnection['password'] ?? env('DB_PASSWORD', ''),
-                'charset'   => $currentConnection['charset'] ?? 'utf8mb4',
-                'collation' => $currentConnection['collation'] ?? 'utf8mb4_unicode_ci',
-                'prefix'    => $currentConnection['prefix'] ?? '',
-                'strict'    => $currentConnection['strict'] ?? true,
-                'engine'    => $currentConnection['engine'] ?? null,
-            ]);
-            
-            // Purge any existing connection
-            DB::purge('tenant');
-            
-            // Test connection
-            try {
-                DB::connection('tenant')->getPdo();
-                
-                Log::info('Successfully connected to tenant database', [
-                    'database' => $clinic->database_name,
-                    'clinic_id' => $clinic->id
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to connect to tenant database', [
-                    'database' => $clinic->database_name,
-                    'error' => $e->getMessage()
-                ]);
-                throw new Exception("Failed to connect to tenant database: " . $e->getMessage());
-            }
-        } catch (\Exception $e) {
-            Log::error('Error switching to tenant database: ' . $e->getMessage(), [
-                'database' => $clinic->database_name,
-                'clinic_id' => $clinic->id,
-                'trace' => $e->getTraceAsStream()
-            ]);
-            throw $e;
-        }
+        Log::info('Successfully connected to tenant database', [
+            'database' => $clinic->database_name,
+            'clinic_id' => $clinic->id
+        ]);
     }
-    
+
     /**
-     * Switch back to the main database
-     *
-     * @return void
+     * Switch back to main database connection
      */
     public function switchToMain(): void
     {
-        try {
-            DB::purge('tenant');
-            DB::reconnect('mysql');
-        } catch (\Exception $e) {
-            Log::error('Error switching back to main database: ' . $e->getMessage());
-            
-            if (!app()->environment('local')) {
-                throw $e;
-            }
-        }
+        DB::purge('tenant');
+        DB::reconnect('mysql');
     }
 } 

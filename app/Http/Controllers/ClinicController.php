@@ -293,82 +293,16 @@ class ClinicController extends Controller
                 // Now create and set up the tenant database only after approval
                 $tenantDatabaseService = app(TenantDatabaseService::class);
                 
-                try {
-                    // Check if the database already exists
-                    if (!$tenantDatabaseService->databaseExists($clinic->database_name)) {
-                        // Create the database for the clinic
-                        Log::info('Creating database for approved clinic', [
-                            'clinic_id' => $clinic->id,
-                            'database_name' => $clinic->database_name
-                        ]);
-                        
-                        // Create the database using plain SQL
-                        DB::statement("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '', $clinic->database_name) . "`");
-                        
-                        // Set up the tenant database schema
-                        $tenantDatabaseService->setupTenantDatabase($clinic);
-                        
-                        // Switch to tenant database to create the user
-                        $tenantDatabaseService->switchToTenant($clinic);
-                        
-                        // Create the clinic owner user in the tenant database
-                        $userId = DB::connection('tenant')->table('users')->insertGetId([
-                            'name' => $clinic->owner_name,
-                            'email' => $clinic->owner_email,
-                            'password' => Hash::make($clinic->temp_password),
-                            'role' => 'owner',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                        
-                        Log::info('Created tenant database and owner account for approved clinic', [
-                            'clinic_id' => $clinic->id,
-                            'database_name' => $clinic->database_name,
-                            'owner_id' => $userId
-                        ]);
-                    } else {
-                        Log::info('Database already exists for approved clinic', [
-                            'clinic_id' => $clinic->id,
-                            'database_name' => $clinic->database_name
-                        ]);
-                        
-                        // Switch to tenant database
-                        $tenantDatabaseService->switchToTenant($clinic);
-                    }
-                    
-                    // Get clinic owner details (first owner account)
-                    $owner = DB::connection('tenant')
-                        ->table('users')
-                        ->where('role', 'owner')
-                        ->first();
-                    
-                    // Switch back to main database
-                    $tenantDatabaseService->switchToMain();
-                    
-                    // Get owner details from the clinic record if not available in tenant db
-                    $ownerName = $owner ? $owner->name : $clinic->owner_name;
-                    $ownerEmail = $owner ? $owner->email : $clinic->owner_email;
-                    
-                    // Send notification email with owner details
-                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
-                        $clinic, 
-                        'approved',
-                        $ownerEmail,
-                        $ownerName
-                    ));
-                } catch (\Exception $dbException) {
-                    \Log::error('Failed to set up clinic database or fetch owner details: ' . $dbException->getMessage(), [
-                        'clinic_id' => $clinic->id,
-                        'error' => $dbException->getMessage(),
-                        'trace' => $dbException->getTraceAsString()
-                    ]);
-                    
-                    // Fall back to sending notification without owner details
-                    $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
-                        $clinic, 
-                        'approved'
-                    ));
-                }
+                // Set up the tenant database (this will create tables and owner account)
+                $tenantDatabaseService->setupTenantDatabase($clinic);
+                
+                // Send notification email with owner details
+                $clinic->notify(new \App\Notifications\ClinicStatusUpdate(
+                    $clinic, 
+                    'approved',
+                    $clinic->owner_email, // Use the owner_email from the clinic record
+                    $clinic->owner_name,  // Use the owner_name from the clinic record
+                ));
                 
                 return back()->with('success', 'Clinic has been approved! Database has been created and notification email has been sent.');
             } catch (\Exception $e) {
