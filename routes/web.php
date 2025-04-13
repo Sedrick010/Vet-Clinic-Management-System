@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
 use App\Http\Controllers\TenantThemeController;
+use App\Http\Controllers\StaffController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
@@ -131,5 +132,10 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     Route::middleware(['tenant.auth'])->group(function () {
         Route::get('/theme', [TenantThemeController::class, 'edit'])->name('tenant.theme.edit');
         Route::put('/theme', [TenantThemeController::class, 'update'])->name('tenant.theme.update');
+    });
+
+    // Staff Management Routes
+    Route::middleware(['tenant.auth'])->group(function () {
+        Route::resource('staff', StaffController::class);
     });
 });

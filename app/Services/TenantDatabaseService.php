@@ -226,51 +226,56 @@ class TenantDatabaseService
     {
         // First check if the database exists
         if (!$this->databaseExists($clinic->database_name)) {
-            Log::error('Attempted to connect to non-existent tenant database', [
-                'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name
+            Log::error('Attempted to switch to non-existent database', [
+                'database' => $clinic->database_name,
+                'clinic_id' => $clinic->id
             ]);
             throw new Exception("Tenant database does not exist: {$clinic->database_name}");
         }
         
         try {
+            // Get the current database configuration
+            $currentConnection = config('database.connections.' . config('database.default'));
+            
+            // Use the same credentials as the current connection, just change the database name
             Config::set('database.connections.tenant', [
-                'driver' => 'mysql',
-                'url' => env('DATABASE_URL'),
-                'host' => env('DB_HOST', 'localhost'),
-                'port' => env('DB_PORT', '3306'),
-                'database' => $clinic->database_name,
-                'username' => env('DB_USERNAME', 'forge'),
-                'password' => env('DB_PASSWORD', ''),
-                'unix_socket' => env('DB_SOCKET', ''),
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix' => '',
-                'prefix_indexes' => true,
-                'strict' => true,
-                'engine' => null,
-                'options' => extension_loaded('pdo_mysql') ? array_filter([
-                    \PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-                ]) : [],
+                'driver'    => $currentConnection['driver'] ?? 'mysql',
+                'host'      => $currentConnection['host'] ?? env('DB_HOST', '127.0.0.1'),
+                'port'      => $currentConnection['port'] ?? env('DB_PORT', '3306'),
+                'database'  => $clinic->database_name,
+                'username'  => $currentConnection['username'] ?? env('DB_USERNAME', 'forge'),
+                'password'  => $currentConnection['password'] ?? env('DB_PASSWORD', ''),
+                'charset'   => $currentConnection['charset'] ?? 'utf8mb4',
+                'collation' => $currentConnection['collation'] ?? 'utf8mb4_unicode_ci',
+                'prefix'    => $currentConnection['prefix'] ?? '',
+                'strict'    => $currentConnection['strict'] ?? true,
+                'engine'    => $currentConnection['engine'] ?? null,
             ]);
             
+            // Purge any existing connection
             DB::purge('tenant');
-            DB::reconnect('tenant');
             
-            // Test the connection to make sure it works
-            DB::connection('tenant')->getPdo();
-            
-            Log::debug('Successfully connected to tenant database', [
-                'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name
-            ]);
+            // Test connection
+            try {
+                DB::connection('tenant')->getPdo();
+                
+                Log::info('Successfully connected to tenant database', [
+                    'database' => $clinic->database_name,
+                    'clinic_id' => $clinic->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to connect to tenant database', [
+                    'database' => $clinic->database_name,
+                    'error' => $e->getMessage()
+                ]);
+                throw new Exception("Failed to connect to tenant database: " . $e->getMessage());
+            }
         } catch (\Exception $e) {
             Log::error('Error switching to tenant database: ' . $e->getMessage(), [
+                'database' => $clinic->database_name,
                 'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name
+                'trace' => $e->getTraceAsStream()
             ]);
-            
-            // Always throw the exception - we need ResolveTenant to catch it
             throw $e;
         }
     }
