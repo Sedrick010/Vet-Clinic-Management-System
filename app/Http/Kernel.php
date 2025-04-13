@@ -42,7 +42,6 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
             // Combined cache prevention and session validation
             \App\Http\Middleware\CheckSessionValid::class,
-            \App\Http\Middleware\NoCacheMiddleware::class,
         ],
 
         'api' => [

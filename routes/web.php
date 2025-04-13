@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
-use App\Http\Controllers\TenantThemeController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
@@ -42,6 +41,7 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     // Admin routes - only accessible to admin users
     Route::prefix('admin')->middleware(['auth', 'admin', \App\Http\Middleware\CheckSessionValid::class])->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/theme-reference', [AdminController::class, 'themeReference'])->name('admin.theme-reference');
         Route::get('/clinics', [ClinicController::class, 'index'])->name('admin.clinics.index');
         Route::post('/clinics/{id}/approve', [ClinicController::class, 'approve'])->name('admin.clinics.approve');
         Route::post('/clinics/{id}/reject', [ClinicController::class, 'reject'])->name('admin.clinics.reject');
@@ -127,9 +127,4 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     // Auth routes for both admin and tenant users - moved inside tenant.validate middleware
     require __DIR__.'/auth.php';
     
-    // Theme Management Routes - Only for tenants
-    Route::middleware(['tenant.auth'])->group(function () {
-        Route::get('/theme', [TenantThemeController::class, 'edit'])->name('tenant.theme.edit');
-        Route::put('/theme', [TenantThemeController::class, 'update'])->name('tenant.theme.update');
-    });
 });

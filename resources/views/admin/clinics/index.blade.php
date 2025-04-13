@@ -3,7 +3,74 @@
 @section('title', 'Manage Clinics')
 
 @push('css')
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<!-- Animated Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
 <style>
+    :root {
+        --primary-gradient: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+        --success-gradient: linear-gradient(310deg, #2dce89 0%, #4fd1c5 100%);
+        --warning-gradient: linear-gradient(310deg, #fb6340 0%, #fbb140 100%);
+        --danger-gradient: linear-gradient(310deg, #f5365c 0%, #f56036 100%);
+        --info-gradient: linear-gradient(310deg, #11cdef 0%, #1171ef 100%);
+    }
+    
+    .card {
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border-radius: 18px;
+        border: none;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.05);
+        margin-bottom: 28px;
+        position: relative;
+        overflow: hidden;
+    }
+    .card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background-image: var(--primary-gradient);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+    .card:hover::after {
+        opacity: 1;
+    }
+    .card.primary-card::after { background-image: var(--primary-gradient); }
+    .card.success-card::after { background-image: var(--success-gradient); }
+    .card.warning-card::after { background-image: var(--warning-gradient); }
+    .card.danger-card::after { background-image: var(--danger-gradient); }
+    
+    .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.75rem 1.75rem 1.25rem;
+    }
+    .card-header .card-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        background-image: var(--primary-gradient);
+        box-shadow: 0 5px 15px rgba(94, 114, 228, 0.3);
+    }
+    .card-header .title-container {
+        display: flex;
+        align-items: center;
+    }
+    
     .badge {
         padding: 5px 10px;
         border-radius: 8px;

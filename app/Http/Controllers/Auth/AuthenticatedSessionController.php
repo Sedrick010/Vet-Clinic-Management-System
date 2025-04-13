@@ -267,24 +267,31 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        // Log out Laravel authenticated user if present
+        // Log the logout attempt
+        Log::info('User logging out', [
+            'user_id' => Auth::id(),
+            'tenant_user' => session('tenant_user'),
+            'clinic_id' => session('current_clinic_id')
+        ]);
+
+        // Clear authentication
         Auth::guard('web')->logout();
 
-        // Clear tenant-specific session data
+        // Clear all session data
         session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
-
-        // Invalidate and regenerate the session
         session()->invalidate();
         session()->regenerateToken();
 
-        // Set cache control headers to prevent back button from showing protected pages
-        return redirect()->route('login')
-            ->with('success', 'You have been successfully logged out.')
-            ->withHeaders([
-                'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
-                'Pragma' => 'no-cache',
-                'Expires' => 'Sat, 01 Jan 2000 00:00:00 GMT'
-            ]);
+        // Set the flag to prevent back navigation after logout
+        session()->flash('just_logged_out', true);
+
+        // Set cache control headers
+        $response = redirect()->route('login')->with('status', 'You have been logged out successfully.');
+        
+        // Clear any cached pages
+        return $response->header('Cache-Control','nocache, no-store, max-age=0, must-revalidate')
+            ->header('Pragma','no-cache')
+            ->header('Expires','Sun, 02 Jan 1990 00:00:00 GMT');
     }
     
     /**

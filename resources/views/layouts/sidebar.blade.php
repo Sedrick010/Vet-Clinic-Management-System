@@ -3,15 +3,64 @@
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand m-0" href="{{ route('dashboard') }}">
             <img src="{{ asset('favicon.ico') }}" class="navbar-brand-img h-100" alt="main_logo">
-            <span class="ms-1 font-weight-bold">Vet Clinic System</span>
+            <span class="ms-1 font-weight-bold">{{ $theme['name'] ?? 'Vet Clinic System' }}</span>
         </a>
     </div>
     
     <hr class="horizontal dark mt-0">
     
+    <style>
+    /* Custom styling for sidebar to maintain consistency */
+    .sidenav .nav-link {
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        margin: 0.2rem 1rem;
+    }
+    
+    .sidenav .nav-link:hover {
+        background-color: rgba(94, 114, 228, 0.1);
+    }
+    
+    .sidenav .nav-link.active {
+        background-color: {{ $theme['colors']['primary'] ?? '#5e72e4' }};
+        box-shadow: 0 5px 15px rgba(94, 114, 228, 0.3);
+    }
+    
+    .sidenav .nav-link.active .icon-shape {
+        background-color: #fff;
+    }
+    
+    .sidenav .nav-link.active .icon-shape i {
+        color: {{ $theme['colors']['primary'] ?? '#5e72e4' }} !important;
+    }
+    
+    .sidenav .nav-link.active .nav-link-text {
+        color: #fff !important;
+        font-weight: 600;
+    }
+    
+    .icon-shape {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-item h6.text-uppercase {
+        margin-left: 1rem;
+        font-size: 0.65rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    </style>
+    
     <div class="collapse navbar-collapse w-auto max-height-vh-100 h-100" id="sidenav-collapse-main">
         <ul class="navbar-nav">
-            <!-- Dashboard - Only show for non-admin users -->
+            <!-- Only show main dashboard for non-admin users -->
             @if(!Auth::check() || Auth::user()->role !== 'admin')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
@@ -29,32 +78,16 @@
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Admin</h6>
             </li>
             
+            @foreach($adminMenu ?? [] as $menuItem)
             <li class="nav-item">
-                <a class="nav-link {{ Request::is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                <a class="nav-link {{ Request::is($menuItem['matches'][0]) ? 'active' : '' }}" href="{{ route($menuItem['route']) }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user-shield text-primary"></i>
+                        <i class="{{ $menuItem['icon'] }} text-{{ $menuItem['color'] }}"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Admin Dashboard</span>
+                    <span class="nav-link-text ms-1">{{ $menuItem['name'] }}</span>
                 </a>
             </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('admin/clinics') ? 'active' : '' }}" href="{{ route('admin.clinics.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-clinic-medical text-success"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Clinic Approvals</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('admin/database-check') ? 'active' : '' }}" href="{{ route('admin.database.check') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-database text-info"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Database Check</span>
-                </a>
-            </li>
+            @endforeach
             @endif
             
             <!-- Clinic Functionality - Only show for non-admin users or specific clinic staff -->
@@ -114,7 +147,6 @@
             </li>
             @endif
             
-            <!-- Account Section -->
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account</h6>
             </li>
@@ -127,17 +159,6 @@
                     <span class="nav-link-text ms-1">Profile</span>
                 </a>
             </li>
-
-            @if(session()->has('tenant_user'))
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('theme') ? 'active' : '' }}" href="{{ route('tenant.theme.edit') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-palette text-dark"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Theme Settings</span>
-                </a>
-            </li>
-            @endif
             
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">

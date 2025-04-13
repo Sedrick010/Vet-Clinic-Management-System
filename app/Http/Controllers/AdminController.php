@@ -25,4 +25,14 @@ class AdminController extends Controller
             'isSidebar' => true,
         ]);
     }
+    
+    /**
+     * Display the theme reference page.
+     */
+    public function themeReference(): View
+    {
+        return view('admin.theme-reference', [
+            'isSidebar' => true,
+        ]);
+    }
 }

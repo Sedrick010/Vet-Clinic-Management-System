@@ -17,14 +17,21 @@
         <!-- CSS Files -->
         <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
         
-        <!-- Theme Styles -->
-        <x-theme-styles :theme="$theme ?? null" />
-        
         <!-- Custom CSS -->
         @stack('css')
+        
+        <!-- Only prevent back button after logout -->
+        @if(session('just_logged_out'))
+        <script type="text/javascript">
+            window.history.forward();
+            function noBack() {
+                window.history.forward();
+            }
+        </script>
+        @endif
     </head>
 
-    <body class="g-sidenav-show bg-gray-100">
+    <body class="g-sidenav-show bg-gray-100" @if(session('just_logged_out')) onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="" @endif>
         @if(isset($isSidebar) && $isSidebar)
             @include('layouts.sidebar')
         @endif

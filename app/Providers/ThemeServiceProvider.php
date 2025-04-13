@@ -4,40 +4,11 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
-use App\Services\TenantDatabaseService;
-use App\Models\TenantTheme;
-use App\Models\TenantThemeSetting;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Request;
 
 class ThemeServiceProvider extends ServiceProvider
 {
-    protected $tenantDatabaseService;
-
     /**
-     * Default theme settings
-     */
-    protected $defaultTheme = [
-        'primary_color' => '#4F46E5',
-        'secondary_color' => '#10B981',
-        'accent_color' => '#F59E0B',
-        'text_color' => '#111827',
-        'background_color' => '#FFFFFF',
-        'font_family' => 'Inter',
-        'button_style' => 'rounded',
-        'card_style' => 'shadow',
-        'layout_style' => 'default',
-    ];
-
-    public function __construct($app)
-    {
-        parent::__construct($app);
-        $this->tenantDatabaseService = app(TenantDatabaseService::class);
-    }
-
-    /**
-     * Register services.
+     * Register any application services.
      */
     public function register(): void
     {
@@ -45,57 +16,54 @@ class ThemeServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap services.
+     * Bootstrap any application services.
      */
     public function boot(): void
     {
-        View::composer('*', function ($view) {
-            try {
-                // Skip theme settings for admin routes
-                if (str_starts_with(Request::path(), 'admin')) {
-                    return;
-                }
+        // Share theme configurations with all views
+        View::share('theme', [
+            'name' => 'VetClinic Admin',
+            'version' => '1.0.0',
+            'colors' => [
+                'primary' => '#5e72e4',
+                'secondary' => '#8392ab',
+                'success' => '#2dce89',
+                'info' => '#11cdef',
+                'warning' => '#fb6340',
+                'danger' => '#f5365c'
+            ],
+            'gradients' => [
+                'primary' => 'linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)',
+                'success' => 'linear-gradient(310deg, #2dce89 0%, #4fd1c5 100%)',
+                'info' => 'linear-gradient(310deg, #11cdef 0%, #1171ef 100%)',
+                'warning' => 'linear-gradient(310deg, #fb6340 0%, #fbb140 100%)',
+                'danger' => 'linear-gradient(310deg, #f5365c 0%, #f56036 100%)'
+            ]
+        ]);
 
-                // Check if we're in a tenant context by looking for current_clinic in session
-                if (Session::has('current_clinic')) {
-                    $clinic = Session::get('current_clinic');
-                    
-                    if ($clinic) {
-                        $this->tenantDatabaseService->switchToTenant($clinic);
-                        
-                        // Get active theme
-                        $activeTheme = TenantTheme::where('is_active', true)->first();
-                        
-                        if ($activeTheme && $activeTheme->settings) {
-                            $themeSettings = $activeTheme->settings;
-                            
-                            // Share theme settings with all views only if a theme is active
-                            $view->with([
-                                'theme' => [
-                                    'primary_color' => $themeSettings->primary_color,
-                                    'secondary_color' => $themeSettings->secondary_color,
-                                    'accent_color' => $themeSettings->accent_color,
-                                    'text_color' => $themeSettings->text_color,
-                                    'background_color' => $themeSettings->background_color,
-                                    'font_family' => $themeSettings->font_family,
-                                    'button_style' => $themeSettings->button_style,
-                                    'card_style' => $themeSettings->card_style,
-                                    'layout_style' => $themeSettings->layout_style,
-                                ]
-                            ]);
-                            
-                            return;
-                        }
-                    }
-                }
-                
-                // If no theme is selected, don't apply any theme settings
-                $view->with(['theme' => null]);
-            } catch (\Exception $e) {
-                Log::error('Error loading theme settings: ' . $e->getMessage());
-                // If there's an error, don't apply any theme settings
-                $view->with(['theme' => null]);
-            }
-        });
+        // Share admin menu with all views for consistency
+        View::share('adminMenu', [
+            [
+                'name' => 'Dashboard',
+                'route' => 'admin.dashboard',
+                'icon' => 'fas fa-tachometer-alt',
+                'color' => 'primary',
+                'matches' => ['admin/dashboard']
+            ],
+            [
+                'name' => 'Clinic Approvals',
+                'route' => 'admin.clinics.index',
+                'icon' => 'fas fa-clinic-medical',
+                'color' => 'success',
+                'matches' => ['admin/clinics']
+            ],
+            [
+                'name' => 'Database Check',
+                'route' => 'admin.database.check',
+                'icon' => 'fas fa-database',
+                'color' => 'info',
+                'matches' => ['admin/database-check']
+            ]
+        ]);
     }
 }

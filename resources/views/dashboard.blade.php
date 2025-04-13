@@ -204,7 +204,7 @@
         </div>
     </div>
     <div class="col-lg-5">
-        <div class="card h-100">
+        <div class="card">
             <div class="card-header pb-0">
                 <h6>Recent Activities</h6>
             </div>
