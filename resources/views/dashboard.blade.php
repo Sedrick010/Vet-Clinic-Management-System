@@ -23,6 +23,78 @@
     </div>
 </div>
 
+<!-- New Feature Notification -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <div class="d-flex">
+                <div class="icon icon-sm me-3">
+                    <i class="fas fa-info-circle text-white"></i>
+                </div>
+                <div>
+                    <span class="fw-bold">New Feature:</span> Staff Management is now available! Easily add, edit, and manage clinic staff members. <a href="{{ route('staff.index') }}" class="alert-link text-white text-decoration-underline">Try it now →</a>
+                    <button type="button" class="btn-close text-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>Quick Actions</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="#" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-info">
+                                    <i class="fas fa-calendar-plus text-white opacity-10"></i>
+                                </div>
+                                <h6 class="mb-0 text-dark">New Appointment</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="#" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-success">
+                                    <i class="fas fa-paw text-white opacity-10"></i>
+                                </div>
+                                <h6 class="mb-0 text-dark">Register Patient</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{{ route('staff.index') }}" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-primary">
+                                    <i class="fas fa-user-tie text-white opacity-10"></i>
+                                </div>
+                                <h6 class="mb-0 text-dark">Staff Management</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="#" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-warning">
+                                    <i class="fas fa-chart-bar text-white opacity-10"></i>
+                                </div>
+                                <h6 class="mb-0 text-dark">Reports</h6>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
@@ -74,15 +146,20 @@
                 <div class="row">
                     <div class="col-8">
                         <div class="numbers">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Veterinarians</p>
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Clinic Staff</p>
                             <h5 class="font-weight-bolder mb-0">
-                                8
+                                <a href="{{ route('staff.index') }}" class="text-decoration-none">
+                                    {{ $staffCount ?? 0 }}
+                                    <span class="text-success text-sm font-weight-bolder ml-1">
+                                        <i class="fas fa-users"></i>
+                                    </span>
+                                </a>
                             </h5>
                         </div>
                     </div>
                     <div class="col-4 text-end">
-                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                            <i class="fas fa-user-md text-lg opacity-10" aria-hidden="true"></i>
+                        <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                            <i class="fas fa-user-tie text-lg opacity-10" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>

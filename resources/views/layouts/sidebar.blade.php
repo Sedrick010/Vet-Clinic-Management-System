@@ -50,6 +50,11 @@
         transition: all 0.3s ease;
     }
     
+    /* Custom colors for icons */
+    .text-purple {
+        color: #8b5cf6 !important;
+    }
+    
     .nav-item h6.text-uppercase {
         margin-left: 1rem;
         font-size: 0.65rem;
@@ -118,6 +123,18 @@
                     <span class="nav-link-text ms-1">Veterinarians</span>
                 </a>
             </li>
+            
+            <!-- Staff Management - Only visible to clinic owners or admins -->
+            @if(session('current_clinic_id') || (Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'owner')))
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('staff*') ? 'active' : '' }}" href="{{ route('staff.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-tie text-purple"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Staff Management</span>
+                </a>
+            </li>
+            @endif
             
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('owners*') ? 'active' : '' }}" href="#">

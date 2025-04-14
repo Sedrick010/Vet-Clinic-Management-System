@@ -234,14 +234,17 @@ class TenantDatabaseService
         }
         
         try {
+            // Get the main database credentials to reuse them for the tenant connection
+            $mainConnection = config('database.connections.mysql');
+            
             Config::set('database.connections.tenant', [
                 'driver' => 'mysql',
                 'url' => env('DATABASE_URL'),
                 'host' => env('DB_HOST', 'localhost'),
                 'port' => env('DB_PORT', '3306'),
                 'database' => $clinic->database_name,
-                'username' => env('DB_USERNAME', 'forge'),
-                'password' => env('DB_PASSWORD', ''),
+                'username' => env('DB_USERNAME', $mainConnection['username'] ?? 'root'),
+                'password' => env('DB_PASSWORD', $mainConnection['password'] ?? ''),
                 'unix_socket' => env('DB_SOCKET', ''),
                 'charset' => 'utf8mb4',
                 'collation' => 'utf8mb4_unicode_ci',

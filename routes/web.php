@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\StaffController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
@@ -94,11 +96,50 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
             // Switch to tenant database for this request
             app(\App\Services\TenantDatabaseService::class)->switchToTenant($clinic);
             
+            // Check if this staff account has been deleted
+            try {
+                if (\Illuminate\Support\Facades\DB::connection('tenant')->getSchemaBuilder()->hasTable('deleted_staff')) {
+                    $deleted = \Illuminate\Support\Facades\DB::connection('tenant')
+                        ->table('deleted_staff')
+                        ->where('id', $tenantUser->id)
+                        ->orWhere('email', $tenantUser->email)
+                        ->exists();
+                    
+                    if ($deleted) {
+                        // Staff account has been deleted, invalidate session
+                        \Illuminate\Support\Facades\Log::info('Invalidating session for deleted staff member in dashboard', [
+                            'staff_id' => $tenantUser->id,
+                            'email' => $tenantUser->email
+                        ]);
+                        
+                        // Clear all session data
+                        \Illuminate\Support\Facades\Session::flush();
+                        
+                        // Redirect to login with message
+                        return redirect()->route('login')
+                            ->with('error', 'Your account has been deactivated. Please contact the clinic administrator.');
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log the error but allow the request to continue
+                \Illuminate\Support\Facades\Log::error('Error checking for deleted staff in dashboard: ' . $e->getMessage());
+            }
+            
+            // Get staff count for the dashboard
+            $staffCount = 0;
+            try {
+                $staffCount = \App\Models\Staff::count();
+            } catch (\Exception $e) {
+                // Log error but continue
+                \Illuminate\Support\Facades\Log::error('Failed to get staff count: ' . $e->getMessage());
+            }
+            
             return view('dashboard', [
                 'isSidebar' => true,
                 'clinicName' => $clinic->name,
                 'userRole' => $tenantUser->role,
                 'userName' => $tenantUser->name,
+                'staffCount' => $staffCount,
             ]);
         }
         
@@ -127,4 +168,35 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     // Auth routes for both admin and tenant users - moved inside tenant.validate middleware
     require __DIR__.'/auth.php';
     
+    // Customer routes
+    Route::middleware('guest')->group(function () {
+        // Main site routes for clinic browsing
+        Route::get('/clinics', [CustomerController::class, 'showClinicSelection'])->name('clinics.browse');
+        Route::get('/clinic/{subdomain}/select', [CustomerController::class, 'selectClinic'])->name('clinic.select');
+        
+        // Subdomain-specific routes
+        Route::get('/customer/register', [CustomerController::class, 'showRegistrationForm'])->name('customer.register');
+        Route::post('/customer/register', [CustomerController::class, 'register']);
+        Route::get('/customer/login', [CustomerController::class, 'showLoginForm'])->name('customer.login');
+        Route::post('/customer/login', [CustomerController::class, 'login']);
+    });
+
+    Route::middleware(['customer.auth'])->group(function () {
+        Route::get('/customer/dashboard', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
+        Route::post('/customer/logout', [CustomerController::class, 'logout'])->name('customer.logout');
+    });
+
+    // Tenant staff management routes - only for authenticated tenant users
+    Route::middleware([\App\Http\Middleware\AuthTenantStaff::class])->group(function() {
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::get('/staff/create', [StaffController::class, 'create'])->name('staff.create');
+        Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::get('/staff/{id}', [StaffController::class, 'show'])->name('staff.show');
+        Route::get('/staff/{id}/edit', [StaffController::class, 'edit'])->name('staff.edit');
+        Route::put('/staff/{id}', [StaffController::class, 'update'])->name('staff.update');
+        Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
+        Route::post('/staff/{id}/resend-invitation', [StaffController::class, 'resendInvitation'])->name('staff.resend-invitation');
+        // Debug route - only for development
+        Route::post('/staff/{id}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
+    });
 });

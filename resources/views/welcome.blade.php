@@ -92,30 +92,61 @@
                                     @if($clinic)
                                         <h3 class="text-xl font-bold">Access {{ $clinic->name }}</h3>
                                     @else
-                                        <h3 class="text-xl font-bold">Already have an account?</h3>
+                                        <h3 class="text-xl font-bold">Quick Access</h3>
                                     @endif
                                 </div>
                                 <div class="p-6">
-                                    <div class="mb-4">
-                                        @if($clinic)
-                                            <p class="mb-2">Log in to access your veterinary services:</p>
-                                            <div class="flex justify-center">
-                                                <a href="{{ route('login') }}" class="inline-flex items-center justify-center bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
-                                                    <i class="fas fa-sign-in-alt me-2"></i> Log In to {{ $clinic->name }}
+                                    @if($clinic)
+                                        <!-- Clinic-specific actions -->
+                                        <div class="space-y-4">
+                                            <div class="text-center">
+                                                <a href="{{ route('customer.login', ['subdomain' => $clinic->subdomain]) }}" 
+                                                   class="inline-block w-full bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
+                                                    <i class="fas fa-user me-2"></i> Customer Login
                                                 </a>
                                             </div>
-                                        @else
-                                            <p class="mb-2">Log in to manage your veterinary clinic:</p>
-                                            <div class="flex justify-center gap-4">
-                                                <a href="{{ route('login') }}" class="inline-flex items-center justify-center bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
-                                                    <i class="fas fa-sign-in-alt me-2"></i> Log In
-                                                </a>
-                                                <a href="{{ route('clinics.create') }}" class="inline-flex items-center justify-center border border-primary text-primary px-6 py-2 rounded-md hover:bg-gray-50 transition-colors">
-                                                    <i class="fas fa-clinic-medical me-2"></i> Register New Clinic
+                                            <div class="text-center">
+                                                <a href="{{ route('customer.register') }}" 
+                                                   class="inline-block w-full border border-primary text-primary px-6 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                                                    <i class="fas fa-user-plus me-2"></i> Register as New Customer
                                                 </a>
                                             </div>
-                                        @endif
-                                    </div>
+                                            <div class="text-center">
+                                                <a href="{{ route('login') }}" 
+                                                   class="inline-block w-full bg-gray-800 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                                                    <i class="fas fa-clinic-medical me-2"></i> Staff Login
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <!-- Main site actions -->
+                                        <div class="space-y-6">
+                                            <div>
+                                                <h4 class="text-lg font-semibold mb-3">For Pet Owners</h4>
+                                                <div class="space-y-3">
+                                                    <a href="{{ route('clinics.browse') }}" 
+                                                       class="block w-full bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dark transition-colors text-center">
+                                                        <i class="fas fa-search me-2"></i> Browse Veterinary Clinics
+                                                    </a>
+                                                    <p class="text-sm text-gray-600 text-center">Find and register with your preferred veterinary clinic</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="border-t pt-6">
+                                                <h4 class="text-lg font-semibold mb-3">For Veterinary Clinics</h4>
+                                                <div class="space-y-3">
+                                                    <a href="{{ route('clinics.create') }}" 
+                                                       class="block w-full border border-primary text-primary px-6 py-3 rounded-md hover:bg-gray-50 transition-colors text-center">
+                                                        <i class="fas fa-clinic-medical me-2"></i> Register Your Clinic
+                                                    </a>
+                                                    <a href="{{ route('login') }}" 
+                                                       class="block w-full bg-gray-800 text-white px-6 py-3 rounded-md hover:bg-gray-700 transition-colors text-center">
+                                                        <i class="fas fa-sign-in-alt me-2"></i> Clinic Staff Login
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
 
                                     @if(!$is_subdomain)
                                     <div class="mt-6 pt-6 border-t border-gray-200">

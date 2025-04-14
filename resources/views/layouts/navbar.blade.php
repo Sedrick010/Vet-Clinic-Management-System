@@ -107,6 +107,63 @@
                 </li>
                 @endif
                 
+                <!-- Quick Links - Only shown for tenant users -->
+                @if(session('tenant_user') || (Auth::check() && Auth::user()->role !== 'admin'))
+                <li class="nav-item dropdown pe-2 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link text-body font-weight-bold px-0" id="dropdownQuickLinks" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-th me-sm-1"></i>
+                        <span class="d-sm-inline d-none">
+                            Quick Links
+                            <i class="fas fa-chevron-down ms-1 text-xs"></i>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownQuickLinks">
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="{{ route('staff.index') }}">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-user-tie text-primary"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Staff Management
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="#">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-calendar-alt text-success"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Appointments
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item border-radius-md" href="#">
+                                <div class="d-flex py-1">
+                                    <div class="my-auto me-3">
+                                        <i class="fas fa-paw text-info"></i>
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="text-sm font-weight-normal mb-1">
+                                            Patients
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endif
+                
                 <li class="nav-item d-flex align-items-center">
                     <a href="{{ route('profile.edit') }}" class="nav-link text-body font-weight-bold px-0">
                         <i class="fa fa-user me-sm-1"></i>

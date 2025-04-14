@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Schema;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -114,12 +115,80 @@ class AuthenticatedSessionController extends Controller
                     $this->tenantDatabaseService->switchToTenant($clinic);
                     
                     try {
-                        // Try to find the user in this tenant database
-                        $tenantUser = DB::connection('tenant')->table('users')
-                            ->where('email', $request->email)
-                            ->first();
+                        // Try to find the user in this tenant database - check both users and staff tables
+                        $tenantUserExists = false;
+                        $tenantUser = null;
                         
-                        if ($tenantUser && Hash::check($request->password, $tenantUser->password)) {
+                        // Check if we can connect to the tenant database
+                        try {
+                            DB::connection('tenant')->getPdo();
+                            Log::info('Successfully connected to tenant database', [
+                                'clinic_id' => $clinic->id,
+                                'database' => $clinic->database_name
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Failed to connect to tenant database: ' . $e->getMessage(), [
+                                'clinic_id' => $clinic->id,
+                                'database' => $clinic->database_name
+                            ]);
+                            
+                            return back()->withErrors([
+                                'email' => 'Database connection error. Please contact support.',
+                            ])->withInput($request->except('password'));
+                        }
+                        
+                        // Check if the users table exists
+                        $hasUsersTable = Schema::connection('tenant')->hasTable('users');
+                        Log::info('Users table existence check', [
+                            'clinic_id' => $clinic->id,
+                            'has_users_table' => $hasUsersTable
+                        ]);
+                        
+                        // Check if the staff table exists
+                        $hasStaffTable = Schema::connection('tenant')->hasTable('staff');
+                        Log::info('Staff table existence check', [
+                            'clinic_id' => $clinic->id,
+                            'has_staff_table' => $hasStaffTable
+                        ]);
+                        
+                        // First try the users table
+                        if ($hasUsersTable) {
+                            $tenantUser = DB::connection('tenant')->table('users')
+                                ->where('email', $request->email)
+                                ->first();
+                                
+                            if ($tenantUser && Hash::check($request->password, $tenantUser->password)) {
+                                $tenantUserExists = true;
+                                Log::info('Found user in users table', [
+                                    'clinic_id' => $clinic->id,
+                                    'email' => $request->email
+                                ]);
+                            }
+                        }
+                        
+                        // Then try the staff table if not found in users
+                        if (!$tenantUserExists && $hasStaffTable) {
+                            $staffUser = DB::connection('tenant')->table('staff')
+                                ->where('email', $request->email)
+                                ->first();
+                                
+                            if ($staffUser && Hash::check($request->password, $staffUser->password)) {
+                                $tenantUser = $staffUser;
+                                $tenantUserExists = true;
+                                Log::info('Found user in staff table', [
+                                    'clinic_id' => $clinic->id,
+                                    'email' => $request->email,
+                                    'role' => $staffUser->role
+                                ]);
+                            } else if ($staffUser) {
+                                Log::warning('Staff user found but password mismatch', [
+                                    'clinic_id' => $clinic->id,
+                                    'email' => $request->email
+                                ]);
+                            }
+                        }
+                        
+                        if ($tenantUserExists && $tenantUser) {
                             // Tenant user login successful
                             Log::info('Tenant user login successful via subdomain', [
                                 'clinic_id' => $clinic->id, 
@@ -157,7 +226,8 @@ class AuthenticatedSessionController extends Controller
                         Log::error('Error checking tenant user via subdomain: ' . $e->getMessage(), [
                             'clinic_id' => $clinic->id,
                             'subdomain' => $subdomain,
-                            'email' => $request->email
+                            'email' => $request->email,
+                            'trace' => $e->getTraceAsString()
                         ]);
                         
                         return back()->withErrors([

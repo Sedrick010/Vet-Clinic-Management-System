@@ -74,5 +74,7 @@ class Kernel extends HttpKernel
         'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
         'tenant.validate' => \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate subdomain against registered clinics
         'check.session' => \App\Http\Middleware\CheckSessionValid::class, // Verify session validity
+        'customer.auth' => \App\Http\Middleware\CustomerAuth::class,
+        'auth.tenant.staff' => \App\Http\Middleware\AuthTenantStaff::class, // Auth for both Laravel users and tenant users
     ];
 } 
