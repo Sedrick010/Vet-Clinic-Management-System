@@ -19,7 +19,7 @@
                             <p class="text-sm mb-0">Information about {{ $staff->name }}</p>
                         </div>
                         <div>
-                            <a href="{{ route('staff.edit', $staff->id) }}" class="btn btn-sm btn-primary ms-1">
+                            <a href="{{ route('staff.edit', ['id' => $staff->id]) }}" class="btn btn-sm btn-primary ms-1">
                                 <i class="fas fa-edit me-1"></i> Edit
                             </a>
                             <a href="{{ route('staff.index') }}" class="btn btn-sm btn-secondary ms-1">
@@ -77,16 +77,16 @@
                             <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Quick Actions</h6>
                             <div class="bg-light rounded p-3">
                                 <div class="d-grid gap-2">
-                                    <a href="{{ route('staff.edit', $staff->id) }}" class="btn btn-primary">
+                                    <a href="{{ route('staff.edit', ['id' => $staff->id]) }}" class="btn btn-primary">
                                         <i class="fas fa-edit me-2"></i>Edit Staff Member
                                     </a>
-                                    <form action="{{ route('staff.resend-invitation', $staff->id) }}" method="POST">
+                                    <form action="{{ route('staff.resend-invitation', ['id' => $staff->id]) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="btn btn-info w-100">
                                             <i class="fas fa-envelope me-2"></i>Resend Login Details
                                         </button>
                                     </form>
-                                    <form action="{{ route('staff.destroy', $staff->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this staff member? This action cannot be undone.');">
+                                    <form action="{{ route('staff.destroy', ['id' => $staff->id]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this staff member? This action cannot be undone.');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger w-100">
@@ -106,11 +106,23 @@
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <p class="text-xs text-secondary mb-1">Member Since</p>
-                                        <p class="font-weight-bold mb-0">{{ $staff->created_at->format('M d, Y') }}</p>
+                                        <p class="font-weight-bold mb-0">
+                                            @if($staff->created_at)
+                                                {{ $staff->created_at->format('M d, Y') }}
+                                            @else
+                                                Unknown
+                                            @endif
+                                        </p>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <p class="text-xs text-secondary mb-1">Last Updated</p>
-                                        <p class="font-weight-bold mb-0">{{ $staff->updated_at->format('M d, Y') }}</p>
+                                        <p class="font-weight-bold mb-0">
+                                            @if($staff->updated_at)
+                                                {{ $staff->updated_at->format('M d, Y') }}
+                                            @else
+                                                Unknown
+                                            @endif
+                                        </p>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <p class="text-xs text-secondary mb-1">Email Verified</p>

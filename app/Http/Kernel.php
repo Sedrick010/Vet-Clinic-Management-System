@@ -66,15 +66,19 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'tenant' => \App\Http\Middleware\ResolveTenant::class, // Register the tenant middleware as a route middleware too
+        'tenant' => \App\Http\Middleware\ResolveTenant::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'subscription' => \App\Http\Middleware\CheckSubscriptionAccess::class,
         'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
         'tenant.validate' => \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate subdomain against registered clinics
         'check.session' => \App\Http\Middleware\CheckSessionValid::class, // Verify session validity
         'customer.auth' => \App\Http\Middleware\CustomerAuth::class,
         'auth.tenant.staff' => \App\Http\Middleware\AuthTenantStaff::class, // Auth for both Laravel users and tenant users
+        'clinic.active' => \App\Http\Middleware\CheckClinicActive::class,
+        'clinic.enabled' => \App\Http\Middleware\CheckClinicEnabled::class, // Check if clinic is enabled
     ];
 } 

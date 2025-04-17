@@ -226,6 +226,9 @@
                                                         <button type="button" class="btn btn-action btn-danger" onclick="openRejectModal({{ $clinic->id }})">
                                                             <i class="fas fa-times me-1"></i> Reject
                                                         </button>
+                                                        <a href="{{ route('admin.clinics.subscription.edit', $clinic) }}" class="btn btn-action btn-primary">
+                                                            <i class="fas fa-cog me-1"></i> Manage
+                                                        </a>
                                                         <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this clinic registration? This action cannot be undone.');">
                                                             @csrf
                                                             @method('DELETE')
@@ -263,6 +266,7 @@
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Clinic</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contact</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Approved On</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
                                     </tr>
                                 </thead>
@@ -288,10 +292,41 @@
                                                     <span class="text-secondary text-xs font-weight-bold">{{ $clinic->updated_at->format('M d, Y H:i') }}</span>
                                                 </td>
                                                 <td>
+                                                    <span class="badge {{ $clinic->is_enabled ? 'bg-gradient-success' : 'bg-gradient-danger' }}">
+                                                        {{ $clinic->is_enabled ? 'Enabled' : 'Disabled' }}
+                                                    </span>
+                                                    @if(!$clinic->is_enabled && $clinic->disable_reason)
+                                                        <span class="d-block mt-1 text-xs text-muted" data-bs-toggle="tooltip" title="{{ $clinic->disable_reason }}">
+                                                            {{ Str::limit($clinic->disable_reason, 30) }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td>
                                                     <div class="d-flex gap-2">
+                                                        @if($clinic->is_enabled)
+                                                            <button type="button" class="btn btn-action btn-warning" onclick="openDisableModal({{ $clinic->id }})">
+                                                                <i class="fas fa-ban me-1"></i> Disable
+                                                            </button>
+                                                        @else
+                                                            <form action="{{ route('admin.clinics.toggle-enabled', $clinic) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <button type="submit" class="btn btn-action btn-success">
+                                                                    <i class="fas fa-check-circle me-1"></i> Enable
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                         <button type="button" class="btn btn-action btn-danger" onclick="openRejectModal({{ $clinic->id }})">
                                                             <i class="fas fa-ban me-1"></i> Revoke
                                                         </button>
+                                                        <form action="{{ route('admin.clinics.subscription.toggle', $clinic) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <button type="submit" class="btn btn-action {{ $clinic->is_subscription_active ? 'btn-warning' : 'btn-success' }}">
+                                                                <i class="fas {{ $clinic->is_subscription_active ? 'fa-toggle-off' : 'fa-toggle-on' }} me-1"></i> 
+                                                                {{ $clinic->is_subscription_active ? 'Deactivate Sub' : 'Activate Sub' }}
+                                                            </button>
+                                                        </form>
                                                         <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this approved clinic? This will permanently remove all their data and cannot be undone.');">
                                                             @csrf
                                                             @method('DELETE')
@@ -306,7 +341,7 @@
                                     @endforeach
                                     @if (!$hasApproved)
                                         <tr>
-                                            <td colspan="4" class="text-center p-4">
+                                            <td colspan="5" class="text-center p-4">
                                                 <p class="text-sm text-secondary">No approved clinics found.</p>
                                             </td>
                                         </tr>
@@ -363,6 +398,14 @@
                                                             @csrf
                                                             <button type="submit" class="btn btn-action btn-success">
                                                                 <i class="fas fa-check me-1"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <form action="{{ route('admin.clinics.subscription.toggle', $clinic) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <button type="submit" class="btn btn-action {{ $clinic->is_subscription_active ? 'btn-warning' : 'btn-success' }}">
+                                                                <i class="fas {{ $clinic->is_subscription_active ? 'fa-toggle-off' : 'fa-toggle-on' }} me-1"></i> 
+                                                                {{ $clinic->is_subscription_active ? 'Deactivate Sub' : 'Activate Sub' }}
                                                             </button>
                                                         </form>
                                                         <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this rejected clinic registration? This action cannot be undone.');">
@@ -428,10 +471,49 @@
     </div>
 </div>
 
+<!-- Disable Clinic Modal -->
+<div class="modal fade" id="disableClinicModal" tabindex="-1" role="dialog" aria-labelledby="disableClinicModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form id="disableForm" action="" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header">
+                    <h5 class="modal-title" id="disableClinicModalLabel">Disable Clinic</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeDisableModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="disable_reason" class="form-control-label">Reason for Disabling</label>
+                        <textarea id="disable_reason" name="disable_reason" rows="3" required
+                            class="form-control"
+                            placeholder="Please provide a reason for disabling this clinic..."></textarea>
+                        <small class="text-muted">This reason will be displayed to users when they try to access the clinic.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="closeDisableModal()">Cancel</button>
+                    <button type="submit" class="btn bg-gradient-warning">Disable Clinic</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('js')
 <script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+
     function openRejectModal(clinicId) {
         document.getElementById('rejectForm').action = `/admin/clinics/${clinicId}/reject`;
         var myModal = new bootstrap.Modal(document.getElementById('rejectModal'));
@@ -439,10 +521,21 @@
     }
 
     function closeRejectModal() {
-        var myModal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
-        if (myModal) {
-            myModal.hide();
-        }
+        var myModalEl = document.getElementById('rejectModal');
+        var modal = bootstrap.Modal.getInstance(myModalEl);
+        modal.hide();
+    }
+
+    function openDisableModal(clinicId) {
+        document.getElementById('disableForm').action = `/admin/clinics/${clinicId}/toggle-enabled`;
+        var myModal = new bootstrap.Modal(document.getElementById('disableClinicModal'));
+        myModal.show();
+    }
+
+    function closeDisableModal() {
+        var myModalEl = document.getElementById('disableClinicModal');
+        var modal = bootstrap.Modal.getInstance(myModalEl);
+        modal.hide();
     }
 </script>
 @endpush 

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Services\TenantDatabaseService;
+use App\Http\Middleware\CheckClinicActive;
+use App\Services\SubdomainService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
         // Register the SubdomainService in the container
         $this->app->singleton('subdomain', function ($app) {
             return new \App\Services\SubdomainService();
+        });
+        
+        // Explicitly bind the CheckClinicActive class
+        $this->app->bind(CheckClinicActive::class, function ($app) {
+            return new CheckClinicActive($app->make(SubdomainService::class));
         });
     }
 

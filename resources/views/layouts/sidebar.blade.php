@@ -162,6 +162,22 @@
                     <span class="nav-link-text ms-1">Invoices</span>
                 </a>
             </li>
+            
+            <!-- Premium Reports - Only visible if clinic has active subscription -->
+            @if(isset($clinic) && $clinic->is_subscription_active)
+            <li class="nav-item mt-3" id="premium-features-section">
+                <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Premium Features</h6>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('premium*') ? 'active' : '' }}" href="{{ route('premium.reports') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-chart-bar text-warning"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Premium Reports</span>
+                    <span class="badge bg-gradient-warning text-white ms-auto">PRO</span>
+                </a>
+            </li>
+            @endif
             @endif
             
             <li class="nav-item mt-3">
@@ -188,6 +204,23 @@
                     @csrf
                 </form>
             </li>
+            
+            @if(isset($clinic))
+            <li class="nav-item mt-4">
+                <hr class="horizontal dark">
+                <div class="px-3 py-2">
+                    <p class="text-xs mb-1">Subscription Status:</p>
+                    <div class="d-flex align-items-center">
+                        <span id="subscription-status-badge" class="badge {{ $clinic->is_subscription_active ? 'bg-gradient-success' : 'bg-gradient-danger' }} me-2">
+                            {{ $clinic->is_subscription_active ? 'ACTIVE' : 'INACTIVE' }}
+                        </span>
+                        <a href="{{ request()->url() }}?refresh={{ time() }}" class="btn btn-sm btn-outline-primary" title="Refresh to see latest features">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </a>
+                    </div>
+                </div>
+            </li>
+            @endif
         </ul>
     </div>
 </aside> 

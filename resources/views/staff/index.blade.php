@@ -17,13 +17,6 @@
                         <div>
                             <h6 class="mb-0">Staff Members</h6>
                             <p class="text-sm mb-0">Manage your clinic staff accounts</p>
-                            @if(app()->environment('local'))
-                            <p class="text-xs text-muted mt-1">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Your role: {{ session('tenant_user')->role ?? 'Unknown' }} 
-                                (Management permission: {{ request()->attributes->get('can_manage_staff', false) ? 'Yes' : 'No' }})
-                            </p>
-                            @endif
                         </div>
                         @if(request()->attributes->get('can_manage_staff', false))
                         <a href="{{ route('staff.create') }}" class="btn bg-gradient-primary">
@@ -110,49 +103,41 @@
                                                 </span>
                                             </td>
                                             <td class="align-middle">
-                                                <a href="{{ route('staff.show', $member->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                
-                                                @if(request()->attributes->get('can_manage_staff', false))
-                                                <a href="{{ route('staff.edit', $member->id) }}" class="btn btn-sm btn-primary ms-1" data-bs-toggle="tooltip" title="Edit Staff">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                
-                                                <form action="{{ route('staff.destroy', $member->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this staff member?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger ms-1" data-bs-toggle="tooltip" title="Delete Staff">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                                
-                                                <div class="dropdown d-inline">
-                                                    <button class="btn btn-sm btn-secondary ms-1 dropdown-toggle" type="button" id="moreActions{{ $member->id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        More
-                                                    </button>
-                                                    <ul class="dropdown-menu" aria-labelledby="moreActions{{ $member->id }}">
-                                                        <li>
-                                                            <form action="{{ route('staff.resend-invitation', $member->id) }}" method="POST">
-                                                                @csrf
-                                                                <button type="submit" class="dropdown-item">
-                                                                    <i class="fas fa-envelope text-success me-2"></i>Resend Invitation
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                        @if(app()->environment('local'))
-                                                        <li>
-                                                            <form action="{{ route('staff.reset-password', $member->id) }}" method="POST">
-                                                                @csrf
-                                                                <button type="submit" class="dropdown-item">
-                                                                    <i class="fas fa-key text-warning me-2"></i>Reset Password
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                        @endif
-                                                    </ul>
+                                                <div class="d-flex">
+                                                    <a href="{{ route('staff.show', ['id' => $member->id]) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    
+                                                    @if(request()->attributes->get('can_manage_staff', false))
+                                                    <a href="{{ route('staff.edit', ['id' => $member->id]) }}" class="btn btn-sm btn-primary ms-1" data-bs-toggle="tooltip" title="Edit Staff">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                    
+                                                    <form action="{{ route('staff.destroy', ['id' => $member->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this staff member?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger ms-1" data-bs-toggle="tooltip" title="Delete Staff">
+                                                            <i class="fas fa-trash"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                    
+                                                    <div class="dropdown d-inline">
+                                                        <button class="btn btn-sm btn-secondary ms-1 dropdown-toggle" type="button" id="moreActions{{ $member->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            More
+                                                        </button>
+                                                        <ul class="dropdown-menu" aria-labelledby="moreActions{{ $member->id }}">
+                                                            <li>
+                                                                <form action="{{ route('staff.resend-invitation', ['id' => $member->id]) }}" method="POST">
+                                                                    @csrf
+                                                                    <button type="submit" class="dropdown-item">
+                                                                        <i class="fas fa-envelope text-success me-2"></i>Resend Invitation
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                    @endif
                                                 </div>
-                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

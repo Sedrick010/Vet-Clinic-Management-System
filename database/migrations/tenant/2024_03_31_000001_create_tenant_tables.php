@@ -43,7 +43,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->constrained();
             $table->foreignId('client_id')->constrained('clients');
-            $table->foreignId('staff_id')->nullable()->constrained('users');
+            $table->foreignId('staff_id')->nullable()->constrained('staff');
             $table->dateTime('start_time');
             $table->dateTime('end_time');
             $table->string('status'); // scheduled, confirmed, completed, cancelled, no-show
@@ -57,7 +57,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->constrained();
             $table->foreignId('appointment_id')->nullable()->constrained();
-            $table->foreignId('staff_id')->constrained('users');
+            $table->foreignId('staff_id')->constrained('staff');
             $table->text('diagnosis')->nullable();
             $table->text('treatment')->nullable();
             $table->text('notes')->nullable();

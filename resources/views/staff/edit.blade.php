@@ -18,7 +18,7 @@
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     <div class="px-4 py-3">
-                        <form method="POST" action="{{ route('staff.update', $staff->id) }}">
+                        <form method="POST" action="{{ route('staff.update', ['id' => $staff->id]) }}">
                             @csrf
                             @method('PUT')
 
@@ -105,7 +105,7 @@
                         <div>
                             <p class="text-sm mb-0">Once you delete a staff member, there is no going back. This action cannot be undone.</p>
                         </div>
-                        <form action="{{ route('staff.destroy', $staff->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this staff member? This action cannot be undone.');">
+                        <form action="{{ route('staff.destroy', ['id' => $staff->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this staff member? This action cannot be undone.');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">

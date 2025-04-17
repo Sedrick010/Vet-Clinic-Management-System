@@ -129,12 +129,12 @@ class TenantDatabaseService
             // Switch to the tenant database
             $this->switchToTenant($clinic);
             
-            // Check if users table already exists to avoid migration errors
-            $tableExists = false;
+            // Check if tables already exist to avoid migration errors
+            $staffTableExists = false;
             try {
-                $tableExists = DB::connection('tenant')->getSchemaBuilder()->hasTable('users');
+                $staffTableExists = DB::connection('tenant')->getSchemaBuilder()->hasTable('staff');
             } catch (\Exception $e) {
-                Log::warning('Error checking if users table exists: ' . $e->getMessage(), [
+                Log::warning('Error checking if staff table exists: ' . $e->getMessage(), [
                     'database' => $clinic->database_name
                 ]);
             }
@@ -142,58 +142,104 @@ class TenantDatabaseService
             // Log migration start
             Log::info('Running tenant database migrations', [
                 'database' => $clinic->database_name,
-                'users_table_exists' => $tableExists
+                'staff_table_exists' => $staffTableExists
             ]);
             
-            if (!$tableExists) {
-                // Create the users table directly if migrations are failing
+            if (!$staffTableExists) {
+                // Create the staff table directly if migrations are failing
                 try {
                     DB::connection('tenant')->statement('
-                        CREATE TABLE IF NOT EXISTS `users` (
+                        CREATE TABLE IF NOT EXISTS `staff` (
                             `id` bigint unsigned NOT NULL AUTO_INCREMENT,
                             `name` varchar(255) NOT NULL,
                             `email` varchar(255) NOT NULL,
-                            `email_verified_at` timestamp NULL DEFAULT NULL,
                             `password` varchar(255) NOT NULL,
-                            `role` varchar(255) NOT NULL DEFAULT "staff",
+                            `phone` varchar(255) DEFAULT NULL,
+                            `role` enum("admin","doctor","receptionist","assistant") DEFAULT "assistant",
+                            `is_active` tinyint(1) DEFAULT 1,
+                            `email_verified_at` timestamp NULL DEFAULT NULL,
                             `remember_token` varchar(100) DEFAULT NULL,
                             `created_at` timestamp NULL DEFAULT NULL,
                             `updated_at` timestamp NULL DEFAULT NULL,
                             PRIMARY KEY (`id`),
-                            UNIQUE KEY `users_email_unique` (`email`)
+                            UNIQUE KEY `staff_email_unique` (`email`)
                         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                     ');
                     
-                    Log::info('Created users table directly', [
+                    DB::connection('tenant')->statement('
+                        CREATE TABLE IF NOT EXISTS `deleted_staff` (
+                            `id` bigint unsigned NOT NULL,
+                            `name` varchar(255) NOT NULL,
+                            `email` varchar(255) NOT NULL,
+                            `phone` varchar(255) DEFAULT NULL,
+                            `role` varchar(255) NOT NULL,
+                            `deleted_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            `deleted_by` bigint unsigned DEFAULT NULL,
+                            PRIMARY KEY (`id`)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                    ');
+                    
+                    Log::info('Created staff tables directly', [
                         'database' => $clinic->database_name
                     ]);
                 } catch (\Exception $e) {
-                    Log::error('Error creating users table directly: ' . $e->getMessage(), [
-                        'database' => $clinic->database_name
+                    Log::error('Error creating staff tables directly: ' . $e->getMessage(), [
+                        'database' => $clinic->database_name,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
             
             // Then run all tenant migrations
             try {
-                // Run migrations
+                // Run migrations with more detailed output and explicit path
                 Artisan::call('migrate', [
                     '--database' => 'tenant',
                     '--path' => 'database/migrations/tenant',
                     '--force' => true,
                 ]);
                 
+                $migrationOutput = trim(Artisan::output());
+                
                 Log::info('Tenant database migrations completed', [
                     'database' => $clinic->database_name,
-                    'migration_output' => trim(Artisan::output())
+                    'migration_output' => $migrationOutput
                 ]);
+                
+                // Double check if staff table exists after migrations
+                $staffTableExists = DB::connection('tenant')->getSchemaBuilder()->hasTable('staff');
+                if (!$staffTableExists) {
+                    Log::error('Staff table still does not exist after migrations', [
+                        'database' => $clinic->database_name,
+                        'migration_output' => $migrationOutput
+                    ]);
+                    
+                    // Try to recreate it one more time if needed
+                    DB::connection('tenant')->statement('
+                        CREATE TABLE IF NOT EXISTS `staff` (
+                            `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+                            `name` varchar(255) NOT NULL,
+                            `email` varchar(255) NOT NULL,
+                            `password` varchar(255) NOT NULL,
+                            `phone` varchar(255) DEFAULT NULL,
+                            `role` enum("admin","doctor","receptionist","assistant") DEFAULT "assistant",
+                            `is_active` tinyint(1) DEFAULT 1,
+                            `email_verified_at` timestamp NULL DEFAULT NULL,
+                            `remember_token` varchar(100) DEFAULT NULL,
+                            `created_at` timestamp NULL DEFAULT NULL,
+                            `updated_at` timestamp NULL DEFAULT NULL,
+                            PRIMARY KEY (`id`),
+                            UNIQUE KEY `staff_email_unique` (`email`)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                    ');
+                }
             } catch (\Exception $e) {
                 Log::error('Error running tenant migrations: ' . $e->getMessage(), [
                     'database' => $clinic->database_name,
+                    'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
-                
-                // We'll continue if there was an error with migrations since we created the users table directly
             }
             
             // Switch back to the main database

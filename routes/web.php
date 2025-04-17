@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\AdminDashboardController;
 
 // Protection against unregistered subdomains - apply at the top of the file
-Route::middleware([ValidateTenantSubdomain::class])->group(function () {
+Route::middleware([
+    \App\Http\Middleware\ValidateTenantSubdomain::class,
+    \App\Http\Middleware\CheckClinicEnabled::class
+])->group(function () {
     Route::get('/', function () {
         // Check if accessing from a subdomain
         $host = request()->getHost();
@@ -52,6 +56,9 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         Route::get('/database-check', function() {
             return view('admin.database-check');
         })->name('admin.database.check');
+        Route::get('/clinics/{clinic}', [ClinicController::class, 'show'])->name('admin.clinics.show');
+        Route::patch('/clinics/{clinic}/toggle-active', [ClinicController::class, 'toggleActive'])->name('admin.clinics.toggle-active');
+        Route::patch('/clinics/{clinic}/toggle-enabled', [\App\Http\Controllers\Admin\ClinicController::class, 'toggleEnabled'])->name('admin.clinics.toggle-enabled');
     });
 
     // Clinic selector routes
@@ -88,6 +95,12 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
             
             if (!$clinic || $clinic->approval_status !== 'approved') {
                 return redirect()->route('clinics.pending');
+            }
+            
+            // Always get fresh clinic data to reflect subscription changes
+            $freshClinic = \App\Models\Clinic::find($clinicId)->fresh();
+            if ($freshClinic) {
+                $clinic = $freshClinic;
             }
             
             // Get tenant user data as object
@@ -140,6 +153,7 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
                 'userRole' => $tenantUser->role,
                 'userName' => $tenantUser->name,
                 'staffCount' => $staffCount,
+                'clinic' => $clinic,
             ]);
         }
         
@@ -165,6 +179,24 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         ]);
     })->name('session.check');
     
+    // Subscription status check route for AJAX
+    Route::get('/check-subscription-status', function() {
+        if (!session()->has('tenant_user') || !session('current_clinic_id')) {
+            return response()->json(['error' => 'No tenant session'], 403);
+        }
+        
+        $clinicId = session('current_clinic_id');
+        $clinic = \App\Models\Clinic::find($clinicId);
+        
+        if (!$clinic) {
+            return response()->json(['error' => 'Clinic not found'], 404);
+        }
+        
+        return response()->json([
+            'status' => (bool)$clinic->is_subscription_active
+        ]);
+    })->name('subscription.status.check');
+    
     // Auth routes for both admin and tenant users - moved inside tenant.validate middleware
     require __DIR__.'/auth.php';
     
@@ -186,8 +218,12 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         Route::post('/customer/logout', [CustomerController::class, 'logout'])->name('customer.logout');
     });
 
-    // Tenant staff management routes - only for authenticated tenant users
-    Route::middleware([\App\Http\Middleware\AuthTenantStaff::class])->group(function() {
+    // Tenant staff management routes - only for authenticated tenant users in active clinics
+    Route::middleware([
+        \App\Http\Middleware\AuthTenantStaff::class, 
+        \App\Http\Middleware\CheckClinicActive::class,
+        \App\Http\Middleware\CheckClinicEnabled::class
+    ])->group(function() {
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::get('/staff/create', [StaffController::class, 'create'])->name('staff.create');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
@@ -198,5 +234,31 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
         Route::post('/staff/{id}/resend-invitation', [StaffController::class, 'resendInvitation'])->name('staff.resend-invitation');
         // Debug route - only for development
         Route::post('/staff/{id}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
+    });
+
+    // Premium features - requires active subscription
+    Route::middleware([
+        \App\Http\Middleware\AuthTenantStaff::class, 
+        \App\Http\Middleware\CheckClinicActive::class,
+        \App\Http\Middleware\CheckClinicEnabled::class,
+        \App\Http\Middleware\CheckSubscriptionAccess::class
+    ])->prefix('premium')->name('premium.')->group(function() {
+        Route::get('/reports', [\App\Http\Controllers\PremiumReportsController::class, 'index'])->name('reports');
+        Route::get('/analytics', [\App\Http\Controllers\PremiumReportsController::class, 'analytics'])->name('analytics');
+    });
+
+    // Admin routes for managing clinics
+    Route::middleware(['auth', 'admin', 'web'])->prefix('admin/clinics')->name('admin.clinics.')->group(function () {
+        // Show clinic details
+        Route::get('/{clinic}', [\App\Http\Controllers\Admin\ClinicController::class, 'show'])->name('show');
+    });
+
+    // Admin routes for clinic subscription management
+    Route::middleware(['auth', 'admin', 'web'])->prefix('admin/clinics/{clinic}')->name('admin.clinics.')->group(function () {
+        // Subscription management
+        Route::get('/subscription', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'edit'])->name('subscription.edit');
+        Route::put('/subscription', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'update'])->name('subscription.update');
+        Route::put('/subscription/toggle-activation', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggleActivation'])->name('subscription.toggle-activation');
+        Route::patch('/subscription/toggle', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggle'])->name('subscription.toggle');
     });
 });

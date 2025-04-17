@@ -119,6 +119,48 @@
                             console.error('Session check failed:', error);
                         });
                     }, 5000);
+                    
+                    // Check subscription status every 30 seconds (only for tenant users)
+                    @if(session()->has('tenant_user') && isset($clinic))
+                    setInterval(function() {
+                        fetch('/check-subscription-status', {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status !== undefined) {
+                                const statusBadge = document.getElementById('subscription-status-badge');
+                                const premiumSection = document.getElementById('premium-features-section');
+                                
+                                if (statusBadge) {
+                                    // Update badge
+                                    statusBadge.className = data.status ? 
+                                        'badge bg-gradient-success me-2' : 
+                                        'badge bg-gradient-danger me-2';
+                                    statusBadge.textContent = data.status ? 'ACTIVE' : 'INACTIVE';
+                                }
+                                
+                                // If subscription status changed from inactive to active, reload the page
+                                if (data.status === true && premiumSection === null) {
+                                    window.location.reload();
+                                }
+                                
+                                // If subscription status changed from active to inactive and premium section exists, reload
+                                if (data.status === false && premiumSection !== null) {
+                                    window.location.reload();
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Subscription check failed:', error);
+                        });
+                    }, 30000);
+                    @endif
                 @endif
             });
         </script>

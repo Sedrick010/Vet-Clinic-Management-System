@@ -127,7 +127,16 @@ class ResolveTenant
         
         // If the clinic is not active, show an error
         if (!$clinic->is_active) {
-            abort(403, 'This clinic is currently inactive.');
+            return redirect()->to(config('app.url'))->with('error', 
+                'This clinic is currently inactive. Please contact support for assistance.');
+        }
+        
+        // Check if the clinic is enabled
+        if (!$clinic->is_enabled) {
+            return redirect()->to(config('app.url'))->with('error', 
+                'This clinic has been disabled. ' . 
+                ($clinic->disable_reason ? 'Reason: ' . $clinic->disable_reason : 'Please contact the administrator for assistance.')
+            );
         }
         
         // Store the current clinic in the session

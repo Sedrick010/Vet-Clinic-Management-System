@@ -31,6 +31,12 @@ class Clinic extends Model
         'owner_email',
         'owner_name',
         'temp_password',
+        'subscription_plan',
+        'subscription_ends_at',
+        'is_subscription_active',
+        'deactivation_reason',
+        'is_enabled',
+        'disable_reason',
     ];
 
     /**
@@ -40,6 +46,9 @@ class Clinic extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'is_subscription_active' => 'boolean',
+        'subscription_ends_at' => 'datetime',
+        'is_enabled' => 'boolean',
     ];
 
     /**
@@ -56,5 +65,24 @@ class Clinic extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * Check if the clinic has an active premium subscription.
+     */
+    public function hasPremiumAccess(): bool
+    {
+        return $this->is_active && 
+               $this->is_subscription_active && 
+               $this->subscription_plan === 'premium' &&
+               ($this->subscription_ends_at === null || $this->subscription_ends_at->isFuture());
+    }
+    
+    /**
+     * Check if the clinic's subscription is expired.
+     */
+    public function isSubscriptionExpired(): bool
+    {
+        return $this->subscription_ends_at !== null && $this->subscription_ends_at->isPast();
     }
 } 
