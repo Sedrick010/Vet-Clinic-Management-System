@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use PDO;
 use Exception;
+use Illuminate\Support\Facades\Schema;
 
 class TenantDatabaseService
 {
@@ -231,26 +232,75 @@ class TenantDatabaseService
     /**
      * Run tenant migrations
      */
-    private function runTenantMigrations(Clinic $clinic): void
+    public function runTenantMigrations(Clinic $clinic): void
     {
         try {
-            Artisan::call('migrate', [
-                '--database' => 'tenant',
-                '--path' => 'database/migrations/tenant',
-                '--force' => true,
-            ]);
-            
-            Log::info('Tenant migrations completed', [
+            \Log::info('Starting tenant migrations for clinic', [
                 'clinic_id' => $clinic->id,
-                'output' => trim(Artisan::output())
+                'database_name' => $clinic->database_name
             ]);
+
+            // Ensure we're on the tenant database
+            Config::set('database.connections.tenant.database', $clinic->database_name);
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
+            // Check if migrations table exists
+            if (!Schema::connection('tenant')->hasTable('migrations')) {
+                \Log::info('Creating migrations table');
+                Schema::connection('tenant')->create('migrations', function ($table) {
+                    $table->increments('id');
+                    $table->string('migration');
+                    $table->integer('batch');
+                });
+            }
+
+            // Check if subscriptions table exists
+            if (!Schema::connection('tenant')->hasTable('subscriptions')) {
+                \Log::info('Creating subscriptions table');
+                try {
+                    DB::connection('tenant')->statement('
+                        CREATE TABLE IF NOT EXISTS `subscriptions` (
+                            `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+                            `user_id` bigint unsigned NOT NULL,
+                            `clinic_id` bigint unsigned NOT NULL,
+                            `plan_name` varchar(255) NOT NULL,
+                            `amount` decimal(10,2) NOT NULL,
+                            `status` enum("pending","active","cancelled","expired") NOT NULL DEFAULT "pending",
+                            `approval_status` enum("pending","approved","rejected") NOT NULL DEFAULT "pending",
+                            `start_date` timestamp NULL DEFAULT NULL,
+                            `end_date` timestamp NULL DEFAULT NULL,
+                            `payment_method` varchar(255) NOT NULL,
+                            `card_last_four` varchar(255) DEFAULT NULL,
+                            `rejection_reason` varchar(255) DEFAULT NULL,
+                            `created_at` timestamp NULL DEFAULT NULL,
+                            `updated_at` timestamp NULL DEFAULT NULL,
+                            PRIMARY KEY (`id`),
+                            KEY `subscriptions_user_id_foreign` (`user_id`),
+                            CONSTRAINT `subscriptions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                    ');
+
+                    \Log::info('Successfully created subscriptions table');
+                } catch (\Exception $e) {
+                    \Log::error('Error creating subscriptions table: ' . $e->getMessage(), [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw new \Exception('Failed to create subscriptions table: ' . $e->getMessage());
+                }
+            } else {
+                \Log::info('Subscriptions table already exists');
+            }
+
         } catch (\Exception $e) {
-            Log::error('Error running tenant migrations: ' . $e->getMessage(), [
+            \Log::error('Error in tenant database setup: ' . $e->getMessage(), [
                 'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            // Continue even if migrations fail since we created essential tables directly
+            throw $e;
         }
     }
     

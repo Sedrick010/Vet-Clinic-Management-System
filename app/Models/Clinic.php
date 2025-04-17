@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Clinic extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +32,14 @@ class Clinic extends Model
         'owner_email',
         'owner_name',
         'temp_password',
+        'subscription_status',
+        'city',
+        'state',
+        'zip',
+        'country',
+        'current_subscription_id',
+        'subscription_start_date',
+        'subscription_end_date'
     ];
 
     /**
@@ -40,6 +49,10 @@ class Clinic extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'approval_status' => 'string',
+        'subscription_status' => 'string',
+        'subscription_start_date' => 'datetime',
+        'subscription_end_date' => 'datetime'
     ];
 
     /**
@@ -56,5 +69,17 @@ class Clinic extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        return $this->subscription_status === 'active' 
+            && $this->subscription_end_date 
+            && $this->subscription_end_date->isFuture();
     }
 } 

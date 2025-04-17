@@ -55,6 +55,15 @@
                     <span class="nav-link-text ms-1">Database Check</span>
                 </a>
             </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('subscription/approvals*') ? 'active' : '' }}" href="{{ route('subscription.approvals') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-clipboard-check text-dark"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Subscription Approvals</span>
+                </a>
+            </li>
             @endif
             
             <!-- Clinic Functionality - Only show for non-admin users or specific clinic staff -->
@@ -87,11 +96,20 @@
             </li>
             
             <li class="nav-item">
-                <a class="nav-link {{ Request::is('owners*') ? 'active' : '' }}" href="#">
+                <a class="nav-link {{ Request::is('subscription/plans*') ? 'active' : '' }}" href="{{ route('subscription.plans') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-users text-danger"></i>
+                        <i class="fas fa-credit-card text-danger"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Pet Owners</span>
+                    <span class="nav-link-text ms-1">Subscription Plans</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('inventory*') ? 'active' : '' }}" href="{{ route('inventory.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-box text-primary"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Inventory</span>
                 </a>
             </li>
             

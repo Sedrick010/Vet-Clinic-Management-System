@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Middleware\ValidateTenantSubdomain;
 use App\Http\Controllers\TenantThemeController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\InventoryItemController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([ValidateTenantSubdomain::class])->group(function () {
@@ -138,4 +140,29 @@ Route::middleware([ValidateTenantSubdomain::class])->group(function () {
     Route::middleware(['tenant.auth'])->group(function () {
         Route::resource('staff', StaffController::class);
     });
+
+    // Subscription routes
+    Route::prefix('subscription')->name('subscription.')->middleware(['web', \App\Http\Middleware\CheckSessionValid::class])->group(function () {
+        Route::get('/plans', [SubscriptionController::class, 'plans'])->name('plans');
+        Route::post('/subscribe', [SubscriptionController::class, 'subscribe'])->name('subscribe');
+        Route::get('/approvals', [SubscriptionController::class, 'approvals'])->name('approvals');
+        Route::post('/approve/{id}', [SubscriptionController::class, 'approve'])->name('approve');
+        Route::post('/reject/{id}', [SubscriptionController::class, 'reject'])->name('reject');
+        Route::delete('/delete/{id}', [SubscriptionController::class, 'delete'])->name('delete');
+    });
+
+    // Inventory Routes
+    Route::prefix('inventory')
+        ->name('inventory.')
+        ->middleware(['web', 'tenant.auth', \App\Http\Middleware\CheckSubscription::class])
+        ->group(function () {
+            Route::get('/', [InventoryItemController::class, 'index'])->name('index');
+            Route::get('/create', [InventoryItemController::class, 'create'])->name('create');
+            Route::post('/', [InventoryItemController::class, 'store'])->name('store');
+            Route::get('/{item}', [InventoryItemController::class, 'show'])->name('show');
+            Route::get('/{item}/edit', [InventoryItemController::class, 'edit'])->name('edit');
+            Route::put('/{item}', [InventoryItemController::class, 'update'])->name('update');
+            Route::delete('/{item}', [InventoryItemController::class, 'destroy'])->name('destroy');
+            Route::get('/low-stock', [InventoryItemController::class, 'lowStock'])->name('low-stock');
+        });
 });

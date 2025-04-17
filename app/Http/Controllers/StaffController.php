@@ -83,6 +83,9 @@ class StaffController extends Controller
         ]);
 
         try {
+            // Start database transaction
+            DB::connection('tenant')->beginTransaction();
+
             Log::info('Beginning staff member registration process', [
                 'staff_name' => $validatedData['name'],
                 'email' => $validatedData['email'],
@@ -133,19 +136,41 @@ class StaffController extends Controller
                 'login_url' => route('login')
             ];
 
-            // Send email notification
-            $user = new \App\Models\User();
-            $user->email = $validatedData['email'];
-            $user->notify(new StaffCredentials($credentials, $clinicName));
+            try {
+                // Send email notification
+                $user = new \App\Models\User();
+                $user->email = $validatedData['email'];
+                $user->notify(new StaffCredentials($credentials, $clinicName));
 
-            Log::info('Staff credentials email sent', [
-                'email' => $validatedData['email'],
-                'clinic_name' => $clinicName
-            ]);
+                Log::info('Staff credentials email sent', [
+                    'email' => $validatedData['email'],
+                    'clinic_name' => $clinicName
+                ]);
 
-            return redirect()->route('staff.index')
-                ->with('success', "Staff member {$validatedData['name']} added successfully. An email with login credentials has been sent to {$validatedData['email']}.");
+                // If we get here, both database insertion and email sending succeeded
+                DB::connection('tenant')->commit();
+
+                return redirect()->route('staff.index')
+                    ->with('success', "Staff member {$validatedData['name']} added successfully. An email with login credentials has been sent to {$validatedData['email']}.");
+
+            } catch (\Exception $emailError) {
+                // If email sending fails, roll back the database transaction
+                DB::connection('tenant')->rollBack();
+
+                Log::error('Error sending staff credentials email: ' . $emailError->getMessage(), [
+                    'exception' => $emailError,
+                    'email' => $validatedData['email']
+                ]);
+
+                throw new \Exception('Failed to send login credentials email. Staff member was not created. Please try again or contact support.');
+            }
+
         } catch (\Exception $e) {
+            // Ensure transaction is rolled back
+            if (DB::connection('tenant')->transactionLevel() > 0) {
+                DB::connection('tenant')->rollBack();
+            }
+
             Log::error('Error creating staff member: ' . $e->getMessage(), [
                 'exception' => $e,
                 'data' => $validatedData
@@ -153,7 +178,7 @@ class StaffController extends Controller
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error creating staff member: ' . $e->getMessage());
+                ->with('error', $e->getMessage());
         }
     }
 

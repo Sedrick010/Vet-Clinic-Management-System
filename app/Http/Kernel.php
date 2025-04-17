@@ -67,13 +67,15 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'tenant' => \App\Http\Middleware\ResolveTenant::class, // Register the tenant middleware as a route middleware too
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
-        'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
+        'tenant.auth' => \App\Http\Middleware\TenantAuth::class,
         'tenant.validate' => \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate subdomain against registered clinics
         'check.session' => \App\Http\Middleware\CheckSessionValid::class, // Verify session validity
+        'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
     ];
 } 

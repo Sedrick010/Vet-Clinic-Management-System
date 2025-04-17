@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('database_name')->unique();
             $table->boolean('is_active')->default(true);
+            $table->string('subscription_status')->default('inactive');
             $table->timestamps();
         });
     }
