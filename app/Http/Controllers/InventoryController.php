@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryItem;
+use App\Models\InventoryCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,27 +16,23 @@ class InventoryController extends Controller
 
     public function index()
     {
-        $items = InventoryItem::with(['createdBy', 'updatedBy'])->paginate(10);
+        $items = InventoryItem::with(['category', 'creator', 'updater'])->latest()->paginate(10);
         return view('inventory.index', compact('items'));
     }
 
     public function create()
     {
-        return view('inventory.create');
+        $categories = InventoryCategory::all();
+        return view('inventory.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:inventory_items',
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'category' => 'required|string|max:255',
-            'supplier' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'reorder_level' => 'required|integer|min:0'
+            'category_id' => 'required|exists:inventory_categories,id'
         ]);
 
         $validated['created_by'] = Auth::id();
@@ -47,23 +44,25 @@ class InventoryController extends Controller
             ->with('success', 'Item added successfully');
     }
 
+    public function show(InventoryItem $item)
+    {
+        $item->load(['category', 'creator', 'updater']);
+        return view('inventory.show', compact('item'));
+    }
+
     public function edit(InventoryItem $item)
     {
-        return view('inventory.edit', compact('item'));
+        $categories = InventoryCategory::all();
+        return view('inventory.edit', compact('item', 'categories'));
     }
 
     public function update(Request $request, InventoryItem $item)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:inventory_items,sku,' . $item->id,
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'category' => 'required|string|max:255',
-            'supplier' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'reorder_level' => 'required|integer|min:0'
+            'category_id' => 'required|exists:inventory_categories,id'
         ]);
 
         $validated['updated_by'] = Auth::id();

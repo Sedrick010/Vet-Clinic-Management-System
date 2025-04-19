@@ -17,7 +17,7 @@ class InventoryItem extends Model
         'description',
         'quantity',
         'unit_price',
-        'category',
+        'category_id',
         'supplier',
         'location',
         'reorder_level',
@@ -32,6 +32,11 @@ class InventoryItem extends Model
         'reorder_level' => 'integer',
         'last_restock_date' => 'datetime',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(InventoryCategory::class);
+    }
 
     public function creator()
     {

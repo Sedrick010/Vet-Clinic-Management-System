@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app', ['isSidebar' => true])
 
 @section('content')
 <div class="container-fluid">
@@ -11,9 +11,6 @@
                         <a href="{{ route('inventory.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add New Item
                         </a>
-                        <a href="{{ route('inventory.low-stock') }}" class="btn btn-warning ml-2">
-                            <i class="fas fa-exclamation-triangle"></i> Low Stock Items
-                        </a>
                     </div>
                 </div>
                 <div class="card-body">
@@ -21,32 +18,20 @@
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>SKU</th>
                                     <th>Name</th>
                                     <th>Category</th>
                                     <th>Quantity</th>
-                                    <th>Unit Price</th>
-                                    <th>Reorder Level</th>
-                                    <th>Status</th>
+                                    <th>Description</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($items as $item)
                                     <tr>
-                                        <td>{{ $item->sku }}</td>
                                         <td>{{ $item->name }}</td>
-                                        <td>{{ $item->category }}</td>
+                                        <td>{{ $item->category->name }}</td>
                                         <td>{{ $item->quantity }}</td>
-                                        <td>${{ number_format($item->unit_price, 2) }}</td>
-                                        <td>{{ $item->reorder_level }}</td>
-                                        <td>
-                                            @if($item->quantity <= $item->reorder_level)
-                                                <span class="badge badge-danger">Low Stock</span>
-                                            @else
-                                                <span class="badge badge-success">In Stock</span>
-                                            @endif
-                                        </td>
+                                        <td>{{ Str::limit($item->description, 50) }}</td>
                                         <td>
                                             <a href="{{ route('inventory.show', $item) }}" class="btn btn-info btn-sm">
                                                 <i class="fas fa-eye"></i>
@@ -65,7 +50,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center">No inventory items found.</td>
+                                        <td colspan="5" class="text-center">No inventory items found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

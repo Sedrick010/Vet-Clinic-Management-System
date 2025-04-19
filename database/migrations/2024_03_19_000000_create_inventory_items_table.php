@@ -11,15 +11,9 @@ return new class extends Migration
         Schema::create('inventory_items', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('sku')->unique();
             $table->text('description')->nullable();
             $table->integer('quantity')->default(0);
-            $table->decimal('unit_price', 10, 2);
-            $table->string('category');
-            $table->string('supplier')->nullable();
-            $table->string('location')->nullable();
-            $table->integer('reorder_level')->default(10);
-            $table->timestamp('last_restock_date')->nullable();
+            $table->foreignId('category_id')->constrained('inventory_categories');
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->constrained('users');
             $table->timestamps();
