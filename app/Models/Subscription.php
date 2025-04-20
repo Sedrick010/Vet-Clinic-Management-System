@@ -44,6 +44,13 @@ class Subscription extends Model
     const APPROVAL_APPROVED = 'approved';
     const APPROVAL_REJECTED = 'rejected';
 
+    // Define available plans
+    const PLANS = [
+        'Basic',
+        'Standard',
+        'Premium'
+    ];
+
     /**
      * Get the user that owns the subscription.
      */
@@ -58,6 +65,16 @@ class Subscription extends Model
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    /**
+     * Check if the subscription is active
+     */
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE &&
+               $this->approval_status === self::APPROVAL_APPROVED &&
+               $this->end_date > now();
     }
 
     /**

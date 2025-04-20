@@ -205,43 +205,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const processPaymentBtn = document.getElementById('processPayment');
     if (processPaymentBtn) {
         processPaymentBtn.addEventListener('click', async function() {
-            // Show loading
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            try {
+                // Show loading
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
 
-            // Get form data
-            const formData = {
-                plan_name: document.getElementById('plan_name').value,
-                amount: document.getElementById('amount').value,
-                card_name: document.getElementById('card_name').value,
-                card_number: document.getElementById('card_number').value.replace(/\s/g, ''),
-                expiry_date: document.getElementById('expiry_date').value,
-                cvv: document.getElementById('cvv').value,
-                _token: document.querySelector('meta[name="csrf-token"]').content
-            };
+                // Get form data
+                const formData = {
+                    plan_name: document.getElementById('plan_name').value,
+                    amount: document.getElementById('amount').value,
+                    card_name: document.getElementById('card_name').value,
+                    card_number: document.getElementById('card_number').value.replace(/\s/g, ''),
+                    expiry_date: document.getElementById('expiry_date').value,
+                    cvv: document.getElementById('cvv').value,
+                    _token: document.querySelector('meta[name="csrf-token"]').content
+                };
 
-            // Send request
-            const response = await fetch('{{ route("subscription.subscribe") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': formData._token
-                },
-                body: JSON.stringify(formData)
-            });
+                // Send request
+                const response = await fetch('{{ route("subscription.subscribe") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': formData._token
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-            const data = await response.json();
-            
-            // Hide modal and show success message
-            modal.hide();
-            Swal.fire({
-                title: 'Success!',
-                text: data.message,
-                icon: 'success'
-            }).then(() => {
-                window.location.reload();
-            });
+                const data = await response.json();
+                
+                // Hide modal
+                modal.hide();
+
+                // Show appropriate message based on response type
+                const icon = data.type === 'notice' ? 'info' : (data.type === 'error' ? 'error' : 'success');
+                Swal.fire({
+                    title: data.type === 'notice' ? 'Notice' : (data.type === 'error' ? 'Error' : 'Success'),
+                    text: data.message,
+                    icon: icon
+                }).then(() => {
+                    if (data.type === 'success') {
+                        window.location.reload();
+                    }
+                });
+            } catch (error) {
+                console.error('Payment processing error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'An error occurred while processing your payment. Please try again.',
+                    icon: 'error'
+                });
+            } finally {
+                // Reset button state
+                this.disabled = false;
+                this.innerHTML = 'Process Payment';
+            }
         });
     }
 

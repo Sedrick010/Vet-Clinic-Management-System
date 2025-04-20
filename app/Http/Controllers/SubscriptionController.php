@@ -44,6 +44,24 @@ class SubscriptionController extends Controller
                 throw new \Exception('User session invalid. Please try logging in again.');
             }
 
+            // Switch to tenant database to check current subscription
+            $this->tenantDatabaseService->switchToTenant($clinic);
+            
+            // Get current active subscription
+            $currentSubscription = Subscription::where('status', 'active')
+                ->where('approval_status', 'approved')
+                ->where('end_date', '>', now())
+                ->latest()
+                ->first();
+
+            // If trying to subscribe to the same plan that's currently active
+            if ($currentSubscription && $currentSubscription->plan_name === $request->plan_name) {
+                return response()->json([
+                    'type' => 'notice',
+                    'message' => 'You are already subscribed to this plan. Please choose a different plan to switch.'
+                ], 400);
+            }
+
             // Prepare subscription data
             $subscriptionData = [
                 'user_id' => $tenantUser->id,
@@ -64,14 +82,27 @@ class SubscriptionController extends Controller
                 $clinic->database_name
             );
 
+            // Switch back to main database
+            $this->tenantDatabaseService->switchToMain();
+
             // Update clinic status
             $clinic->update([
                 'subscription_status' => 'pending'
             ]);
 
+            // Prepare success message based on plan change
+            $message = 'Subscription request submitted successfully! Please wait for admin approval.';
+            if ($currentSubscription) {
+                $message = sprintf(
+                    'Plan change request from %s to %s submitted successfully! Please wait for admin approval.',
+                    $currentSubscription->plan_name,
+                    $request->plan_name
+                );
+            }
+
             return response()->json([
-                'success' => true,
-                'message' => 'Subscription request submitted successfully! Please wait for admin approval.',
+                'type' => 'notice',
+                'message' => $message,
                 'subscription' => [
                     'id' => $subscription->id,
                     'plan_name' => $subscription->plan_name,
@@ -80,6 +111,9 @@ class SubscriptionController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            // Switch back to main database in case of error
+            $this->tenantDatabaseService->switchToMain();
+
             \Log::error('Error creating subscription', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -88,7 +122,7 @@ class SubscriptionController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
+                'type' => 'notice',
                 'message' => 'Failed to create subscription: ' . $e->getMessage()
             ], 500);
         }
