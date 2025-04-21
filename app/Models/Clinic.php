@@ -85,4 +85,28 @@ class Clinic extends Model
     {
         return $this->subscription_ends_at !== null && $this->subscription_ends_at->isPast();
     }
+
+    /**
+     * Get the subscription requests for the clinic.
+     */
+    public function subscriptionRequests(): HasMany
+    {
+        return $this->hasMany(SubscriptionRequest::class);
+    }
+    
+    /**
+     * Get the clinic's pending subscription request, if any.
+     */
+    public function pendingSubscriptionRequest()
+    {
+        return $this->subscriptionRequests()->where('status', 'pending')->latest()->first();
+    }
+    
+    /**
+     * Check if the clinic has a pending subscription request.
+     */
+    public function hasPendingSubscriptionRequest(): bool
+    {
+        return $this->subscriptionRequests()->where('status', 'pending')->exists();
+    }
 } 

@@ -48,7 +48,7 @@
                                 <p class="text-sm opacity-80 mt-1">Access your clinic dashboard</p>
                             @else
                                 <h2 class="text-2xl font-bold">Login to VetClinic</h2>
-                                <p class="text-sm opacity-80 mt-1">Access your veterinary clinic dashboard</p>
+                                <p class="text-sm opacity-80 mt-1">Main administration portal</p>
                             @endif
                         </div>
                         
@@ -57,6 +57,26 @@
                             @if (session('status'))
                                 <div class="mb-4 px-4 py-2 bg-green-100 border-l-4 border-green-500 text-green-700">
                                     {{ session('status') }}
+                                </div>
+                            @endif
+
+                            <!-- Warning Messages -->
+                            @if (session('warning'))
+                                <div class="mb-4 px-4 py-2 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                                    {{ session('warning') }}
+                                </div>
+                            @endif
+
+                            <!-- Domain-specific instructions -->
+                            @if($is_subdomain)
+                                <div class="mb-4 px-4 py-2 bg-blue-100 border-l-4 border-blue-500 text-blue-700">
+                                    <p class="font-medium">Clinic Staff Login</p>
+                                    <p class="text-sm mt-1">This is the login for {{ $clinic->name }} staff only. Admin users must use the <a href="{{ config('app.url') }}/login" class="underline">main domain</a>.</p>
+                                </div>
+                            @else
+                                <div class="mb-4 px-4 py-2 bg-blue-100 border-l-4 border-blue-500 text-blue-700">
+                                    <p class="font-medium">Admin Portal Login</p>
+                                    <p class="text-sm mt-1">This is for system administrators only. Clinic staff must use their clinic's specific subdomain.</p>
                                 </div>
                             @endif
 
@@ -198,10 +218,8 @@
                 const subdomain = document.getElementById('subdomain').value.trim();
                 if (subdomain) {
                     const protocol = window.location.protocol;
-                    const domain = "{{ Str::after(config('app.url'), 'http://') }}";
-                    window.location.href = `${protocol}//${subdomain}.${domain}/login`;
-                } else {
-                    alert('Please enter your clinic subdomain');
+                    const baseUrl = "{{ Str::after(config('app.url'), 'http://') }}";
+                    window.location.href = protocol + '//' + subdomain + '.' + baseUrl + '/login';
                 }
             }
         </script>

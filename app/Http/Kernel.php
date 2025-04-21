@@ -33,15 +33,18 @@ class Kernel extends HttpKernel
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \App\Http\Middleware\SubdomainSession::class, // Set subdomain-specific session cookie name
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\ValidateTenantSubdomain::class, // Validate tenant subdomain first
+            \App\Http\Middleware\RedirectIfAuthenticatedForWrongDomain::class, // Enforce domain-specific authentication
             ResolveTenant::class, // Then resolve tenant database if subdomain is valid
             \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
             // Combined cache prevention and session validation
             \App\Http\Middleware\CheckSessionValid::class,
+            \App\Http\Middleware\RealTimeSubscriptionCheck::class, // Check subscription status in real-time
         ],
 
         'api' => [
@@ -80,5 +83,7 @@ class Kernel extends HttpKernel
         'auth.tenant.staff' => \App\Http\Middleware\AuthTenantStaff::class, // Auth for both Laravel users and tenant users
         'clinic.active' => \App\Http\Middleware\CheckClinicActive::class,
         'clinic.enabled' => \App\Http\Middleware\CheckClinicEnabled::class, // Check if clinic is enabled
+        'domain.auth' => \App\Http\Middleware\RedirectIfAuthenticatedForWrongDomain::class, // Enforce domain-specific authentication
+        'real.time.subscription' => \App\Http\Middleware\RealTimeSubscriptionCheck::class, // Real-time subscription status checker
     ];
 } 

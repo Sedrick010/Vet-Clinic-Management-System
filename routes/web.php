@@ -147,6 +147,15 @@ Route::middleware([
                 \Illuminate\Support\Facades\Log::error('Failed to get staff count: ' . $e->getMessage());
             }
             
+            // Get inventory stats for the dashboard
+            $inventoryStats = [];
+            try {
+                $inventoryStats = \App\Http\Controllers\InventoryController::getInventoryStats();
+            } catch (\Exception $e) {
+                // Log error but continue
+                \Illuminate\Support\Facades\Log::error('Failed to get inventory stats: ' . $e->getMessage());
+            }
+            
             return view('dashboard', [
                 'isSidebar' => true,
                 'clinicName' => $clinic->name,
@@ -154,6 +163,7 @@ Route::middleware([
                 'userName' => $tenantUser->name,
                 'staffCount' => $staffCount,
                 'clinic' => $clinic,
+                'inventoryStats' => $inventoryStats,
             ]);
         }
         
@@ -241,6 +251,7 @@ Route::middleware([
         \App\Http\Middleware\AuthTenantStaff::class, 
         \App\Http\Middleware\CheckClinicActive::class,
         \App\Http\Middleware\CheckClinicEnabled::class,
+        \App\Http\Middleware\RealTimeSubscriptionCheck::class,
         \App\Http\Middleware\CheckSubscriptionAccess::class
     ])->prefix('premium')->name('premium.')->group(function() {
         Route::get('/reports', [\App\Http\Controllers\PremiumReportsController::class, 'index'])->name('reports');
@@ -260,5 +271,49 @@ Route::middleware([
         Route::put('/subscription', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'update'])->name('subscription.update');
         Route::put('/subscription/toggle-activation', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggleActivation'])->name('subscription.toggle-activation');
         Route::patch('/subscription/toggle', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggle'])->name('subscription.toggle');
+    });
+
+    // Inventory Management Routes - only accessible to tenant users
+    Route::middleware([
+        \App\Http\Middleware\AuthTenantStaff::class, 
+        \App\Http\Middleware\CheckClinicActive::class,
+        \App\Http\Middleware\CheckClinicEnabled::class,
+        \App\Http\Middleware\RealTimeSubscriptionCheck::class,
+        \App\Http\Middleware\CheckSubscriptionAccess::class
+    ])->prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', [App\Http\Controllers\InventoryController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\InventoryController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\InventoryController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\InventoryController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [App\Http\Controllers\InventoryController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\InventoryController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\InventoryController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [App\Http\Controllers\InventoryController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // Public subscription routes for viewing plans and submitting requests
+    Route::get('/subscription', [\App\Http\Controllers\SubscriptionRequestController::class, 'index'])->name('subscription.index');
+    Route::get('/subscription/create', [\App\Http\Controllers\SubscriptionRequestController::class, 'create'])->name('subscription.create');
+    Route::post('/subscription', [\App\Http\Controllers\SubscriptionRequestController::class, 'store'])->name('subscription.store');
+    Route::get('/subscription/thank-you', [\App\Http\Controllers\SubscriptionRequestController::class, 'thankYou'])->name('subscription.thankyou');
+
+    // Authenticated Subscription Routes (protected by middleware)
+    Route::middleware([\App\Http\Middleware\AuthTenantStaff::class])->group(function () {
+        Route::get('/subscription/{id}', [\App\Http\Controllers\SubscriptionRequestController::class, 'show'])->name('subscription.show');
+        Route::get('/subscription/{id}/edit', [\App\Http\Controllers\SubscriptionRequestController::class, 'edit'])->name('subscription.edit');
+        Route::put('/subscription/{id}', [\App\Http\Controllers\SubscriptionRequestController::class, 'update'])->name('subscription.update');
+        Route::post('/subscription/{id}/cancel', [\App\Http\Controllers\SubscriptionRequestController::class, 'cancel'])->name('subscription.cancel');
+        Route::post('/subscription/{id}/cancel-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'cancelRequest'])->name('subscription.cancel-request');
+        
+        // Admin actions (protected by admin role check in the controller)
+        Route::post('/subscription/{id}/approve', [\App\Http\Controllers\SubscriptionRequestController::class, 'approve'])->name('subscription.approve');
+        Route::post('/subscription/{id}/reject', [\App\Http\Controllers\SubscriptionRequestController::class, 'reject'])->name('subscription.reject');
+        Route::post('/subscription/{id}/extend', [\App\Http\Controllers\SubscriptionRequestController::class, 'extend'])->name('subscription.extend');
+    });
+    
+    // Admin Subscription Routes
+    Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/subscription-requests', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'index'])->name('subscription-requests.index');
+        Route::get('/subscription-requests/{id}', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'show'])->name('subscription-requests.show');
     });
 });

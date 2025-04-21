@@ -31,24 +31,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        // Check if user is already logged in
-        if (Auth::check() || session()->has('tenant_user')) {
-            // Log this behavior for debugging
-            Log::warning('User already authenticated but accessed login page', [
-                'auth_check' => Auth::check(),
-                'has_tenant_user' => session()->has('tenant_user'),
-                'session_id' => session()->getId(),
-                'ip' => request()->ip()
-            ]);
-            
-            // Force logout when accessing login page
-            Auth::guard('web')->logout();
-            session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
-            session()->invalidate();
-            session()->regenerateToken();
-        }
-        
-        // Check if accessing from a subdomain
+        // Don't force logout when accessing login page - allow multi-tab logins
+        // Just check if accessing from a subdomain to show appropriate login form
         $subdomain = $this->getSubdomain(request());
         $clinic = null;
         
@@ -94,21 +78,20 @@ class AuthenticatedSessionController extends Controller
                         ])->withInput($request->except('password'));
                     }
                     
-                    // First, let's check if this is an admin user trying to access a tenant subdomain
-                    // This should be prevented as admin users should only access the central app
+                    // Check if this is an admin user trying to access a tenant subdomain
                     $centralUser = User::where('email', $request->email)->first();
-                    if ($centralUser && Hash::check($request->password, $centralUser->password)) {
-                        if ($centralUser->role === 'admin') {
-                            Log::warning('Admin user attempted to login via tenant subdomain', [
-                                'user_id' => $centralUser->id,
-                                'clinic_id' => $clinic->id,
-                                'subdomain' => $subdomain
-                            ]);
-                            
-                            return back()->withErrors([
-                                'email' => 'Admin accounts cannot access tenant subdomains. Please use the main application.',
-                            ])->withInput($request->except('password'));
-                        }
+                    if ($centralUser) {
+                        // Admin users should not log in via clinic subdomains
+                        Log::warning('Admin/central user attempted login via clinic subdomain', [
+                            'user_id' => $centralUser->id,
+                            'clinic_id' => $clinic->id,
+                            'subdomain' => $subdomain
+                        ]);
+                        
+                        // Return an error message - block admin/central users login on subdomain
+                        return back()->withErrors([
+                            'email' => 'You cannot log in to clinic sites with a central account. Please use the main application.',
+                        ])->withInput($request->except('password'));
                     }
                     
                     // Switch to tenant database
@@ -189,6 +172,14 @@ class AuthenticatedSessionController extends Controller
                         }
                         
                         if ($tenantUserExists && $tenantUser) {
+                            // Clear any existing auth sessions
+                            if (Auth::check()) {
+                                Auth::logout();
+                            }
+                            
+                            // Ensure no session data from other clinics
+                            session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
+                            
                             // Tenant user login successful
                             Log::info('Tenant user login successful via subdomain', [
                                 'clinic_id' => $clinic->id, 
@@ -242,92 +233,42 @@ class AuthenticatedSessionController extends Controller
             }
 
             // If not coming from a subdomain, proceed with regular auth flow
+            // Clear any existing tenant sessions
+            if (session()->has('tenant_user')) {
+                session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
+            }
             
             // First, check if this is an admin user in the central database
-            $adminUser = User::where('email', $request->email)->first();
-            if ($adminUser && Hash::check($request->password, $adminUser->password)) {
+            $centralUser = User::where('email', $request->email)->first();
+            if ($centralUser && Hash::check($request->password, $centralUser->password)) {
                 // Admin login successful
-                Auth::login($adminUser, $request->boolean('remember'));
+                Auth::login($centralUser, $request->boolean('remember'));
                 $request->session()->regenerate();
                 
+                Log::info('Central user login successful', [
+                    'user_id' => $centralUser->id,
+                    'role' => $centralUser->role
+                ]);
+                
                 // Check if admin user
-                if ($adminUser->role === 'admin') {
-                    Log::info('Admin login successful', ['user_id' => $adminUser->id]);
+                if ($centralUser->role === 'admin') {
                     return redirect()->route('admin.dashboard');
                 } else {
-                    // Regular central db user
-                    Log::info('Central user login successful', ['user_id' => $adminUser->id]);
-                    return redirect()->route('dashboard');
+                    return redirect()->intended(route('dashboard'));
                 }
             }
-
-            // If not an admin, check for clinic users in tenant databases
-            $matchingClinics = Clinic::where('email', $request->email)
-                ->orWhere('subdomain', 'LIKE', "%{$request->email}%")
-                ->get();
-
-            foreach ($matchingClinics as $clinic) {
-                // Only consider approved clinics
-                if ($clinic->approval_status !== 'approved') {
-                    Log::warning('Attempted login to non-approved clinic', ['clinic_id' => $clinic->id, 'email' => $request->email]);
-                    continue;
-                }
-
-                // Switch to tenant database
-                $this->tenantDatabaseService->switchToTenant($clinic);
-                
-                try {
-                    // Try to find the user in this tenant database
-                    $tenantUser = DB::connection('tenant')->table('users')
-                        ->where('email', $request->email)
-                        ->first();
-
-                    if ($tenantUser && Hash::check($request->password, $tenantUser->password)) {
-                        // Tenant user login successful
-                        Log::info('Tenant user login successful', ['clinic_id' => $clinic->id, 'email' => $request->email]);
-                        
-                        // Since we can't use Auth with the tenant user directly,
-                        // we'll create a session-based authentication for the tenant
-                        $request->session()->put('tenant_user', $tenantUser);
-                        $request->session()->put('current_clinic_id', $clinic->id);
-                        $request->session()->put('current_clinic', $clinic);
-                        $request->session()->regenerate();
-                        
-                        // For local development (localhost/127.0.0.1), redirect directly
-                        if (app()->environment('local') && 
-                            (request()->getHost() === 'localhost' || request()->getHost() === '127.0.0.1')) {
-                            
-                            return redirect()->route('dashboard')
-                                ->with('success', 'Welcome back to your clinic dashboard!');
-                        }
-                        
-                        // For production with subdomains, redirect to the proper subdomain
-                        $protocol = $request->secure() ? 'https://' : 'http://';
-                        $domain = Str::after(config('app.url'), $protocol);
-                        
-                        return redirect($protocol . $clinic->subdomain . '.' . $domain . '/dashboard');
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error checking tenant user: ' . $e->getMessage(), [
-                        'clinic_id' => $clinic->id, 
-                        'email' => $request->email
-                    ]);
-                }
-                
-                // Switch back to main database
-                $this->tenantDatabaseService->switchToMain();
-            }
-
-            // If we reach here, authentication failed
-            Log::warning('Failed login attempt', ['email' => $request->email]);
-            return back()->withErrors([
-                'email' => 'The provided credentials do not match our records.',
-            ])->withInput($request->except('password'));
             
-        } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
+            // No matching central user found
             return back()->withErrors([
-                'login_error' => 'An error occurred during login. Please try again.',
+                'email' => 'These credentials do not match our central system records.',
+            ])->withInput($request->except('password'));
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->withErrors([
+                'email' => 'An error occurred during login. Please try again later.',
             ])->withInput($request->except('password'));
         }
     }

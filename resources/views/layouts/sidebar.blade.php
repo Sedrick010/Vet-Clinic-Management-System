@@ -23,6 +23,7 @@
     
     .sidenav .nav-link.active {
         background-color: {{ $theme['colors']['primary'] ?? '#5e72e4' }};
+        background-image: linear-gradient(310deg, {{ $theme['colors']['primary'] ?? '#5e72e4' }} 0%, {{ $theme['colors']['secondary'] ?? '#825ee4' }} 100%);
         box-shadow: 0 5px 15px rgba(94, 114, 228, 0.3);
     }
     
@@ -37,6 +38,7 @@
     .sidenav .nav-link.active .nav-link-text {
         color: #fff !important;
         font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
     
     .icon-shape {
@@ -48,6 +50,7 @@
         border-radius: 0.5rem;
         background-color: #fff;
         transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     
     /* Custom colors for icons */
@@ -55,11 +58,36 @@
         color: #8b5cf6 !important;
     }
     
+    /* Admin dashboard icon */
+    .admin-icon {
+        background: linear-gradient(310deg, #e14eca 0%, #ba54f5 100%);
+        color: white !important;
+    }
+    
+    .nav-link.active .admin-icon {
+        background: white;
+        color: #e14eca !important;
+    }
+    
+    /* Clinic management icon */
+    .clinics-icon {
+        background: linear-gradient(310deg, #2dce89 0%, #2dcca8 100%);
+        color: white !important;
+    }
+    
+    .nav-link.active .clinics-icon {
+        background: white;
+        color: #2dce89 !important;
+    }
+    
     .nav-item h6.text-uppercase {
         margin-left: 1rem;
         font-size: 0.65rem;
         margin-top: 1.5rem;
         margin-bottom: 0.5rem;
+        color: #8898aa;
+        font-weight: 700;
+        letter-spacing: 0.03em;
     }
     </style>
     
@@ -86,13 +114,31 @@
             @foreach($adminMenu ?? [] as $menuItem)
             <li class="nav-item">
                 <a class="nav-link {{ Request::is($menuItem['matches'][0]) ? 'active' : '' }}" href="{{ route($menuItem['route']) }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="{{ $menuItem['icon'] }} text-{{ $menuItem['color'] }}"></i>
+                    @php
+                        $specialClass = '';
+                        if ($menuItem['route'] === 'admin.dashboard') {
+                            $specialClass = 'admin-icon';
+                        } elseif ($menuItem['route'] === 'admin.clinics.index') {
+                            $specialClass = 'clinics-icon';
+                        }
+                    @endphp
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center {{ $specialClass }}">
+                        <i class="{{ $menuItem['icon'] }} {{ $specialClass ? '' : 'text-'.$menuItem['color'] }}"></i>
                     </div>
                     <span class="nav-link-text ms-1">{{ $menuItem['name'] }}</span>
                 </a>
             </li>
             @endforeach
+            
+            <!-- Admin Subscription Management -->
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ route('subscription.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-gem text-info"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Subscriptions</span>
+                </a>
+            </li>
             @endif
             
             <!-- Clinic Functionality - Only show for non-admin users or specific clinic staff -->
@@ -124,6 +170,18 @@
                 </a>
             </li>
             
+            <!-- Inventory Management - Only visible to clinic staff with active session -->
+            @if(session('tenant_user') && session('current_clinic_id'))
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('inventory') ? 'active' : '' }}" href="{{ route('inventory.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-boxes text-info"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Inventory</span>
+                </a>
+            </li>
+            @endif
+            
             <!-- Staff Management - Only visible to clinic owners or admins -->
             @if(session('current_clinic_id') || (Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'owner')))
             <li class="nav-item">
@@ -135,6 +193,16 @@
                 </a>
             </li>
             @endif
+            
+            <!-- Subscription Management -->
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ route('subscription.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-gem text-warning"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Subscription</span>
+                </a>
+            </li>
             
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('owners*') ? 'active' : '' }}" href="#">
@@ -205,7 +273,7 @@
                 </form>
             </li>
             
-            @if(isset($clinic))
+            @if(isset($clinic) && (!Auth::check() || Auth::user()->role !== 'admin'))
             <li class="nav-item mt-4">
                 <hr class="horizontal dark">
                 <div class="px-3 py-2">
