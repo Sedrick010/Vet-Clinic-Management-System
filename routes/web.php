@@ -250,7 +250,8 @@ Route::middleware([
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
-        Route::get('/appointments/pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets');
+        Route::get('/appointments/get-pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets');
+        Route::get('/appointments/pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets.alt');
         Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status');
     });
 
@@ -281,10 +282,9 @@ Route::middleware([
         Route::patch('/subscription/toggle', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggle'])->name('subscription.toggle');
     });
 
-<<<<<<< HEAD
     // Appointment routes
     Route::resource('appointments', AppointmentController::class);
-=======
+
     // Inventory Management Routes - only accessible to tenant users
     Route::middleware([
         \App\Http\Middleware\AuthTenantStaff::class, 
@@ -328,5 +328,4 @@ Route::middleware([
         Route::get('/subscription-requests', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'index'])->name('subscription-requests.index');
         Route::get('/subscription-requests/{id}', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'show'])->name('subscription-requests.show');
     });
->>>>>>> 2d6c57a0462a7d4d7c8dcc72f01299ea7cde537a
 });

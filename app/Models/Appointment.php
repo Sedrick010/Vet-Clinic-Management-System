@@ -11,9 +11,16 @@ class Appointment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * The connection name for the model.
+     *
+     * @var string
+     */
+    protected $connection = 'tenant';
+
     protected $fillable = [
-        'pet_id',
-        'veterinarian_id',
+        'client_name',
+        'staff_id',
         'start_time',
         'end_time',
         'status',
@@ -26,13 +33,16 @@ class Appointment extends Model
         'end_time' => 'datetime'
     ];
 
-    public function pet(): BelongsTo
+    public function staff(): BelongsTo
     {
-        return $this->belongsTo(Pet::class);
+        return $this->belongsTo(Staff::class);
     }
 
+    /**
+     * For backward compatibility, alias for staff relationship 
+     */
     public function veterinarian(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'veterinarian_id');
+        return $this->staff();
     }
 } 

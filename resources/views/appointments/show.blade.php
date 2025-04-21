@@ -28,14 +28,13 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Pet Information</h6>
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Client Information</h6>
                             <div class="d-flex align-items-center mb-3">
                                 <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-paw text-dark"></i>
+                                    <i class="fas fa-user text-dark"></i>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0">{{ $appointment->pet->name }}</h6>
-                                    <p class="text-xs text-secondary mb-0">Owner: {{ $appointment->pet->owner->name }}</p>
+                                    <h6 class="mb-0">{{ $appointment->client_name }}</h6>
                                 </div>
                             </div>
                         </div>
@@ -46,7 +45,7 @@
                                     <i class="fas fa-user-md text-dark"></i>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0">Dr. {{ $appointment->veterinarian->name }}</h6>
+                                    <h6 class="mb-0">{{ $appointment->staff->name }}</h6>
                                 </div>
                             </div>
                         </div>

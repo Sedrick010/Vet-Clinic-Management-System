@@ -7,6 +7,11 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Console\Commands\MakeTenantMigration;
 use App\Console\Commands\RunTenantMigrations;
 use App\Console\Commands\FixTenantDatabases;
+use App\Console\Commands\SeedClinicTemporaryData;
+use App\Console\Commands\RunSpecificTenantMigration;
+use App\Console\Commands\CheckTenantTableStructure;
+use App\Console\Commands\FixPetsTableTenant;
+use App\Console\Commands\ExecuteSqlForTenant;
 
 class Kernel extends ConsoleKernel
 {
@@ -19,6 +24,11 @@ class Kernel extends ConsoleKernel
         MakeTenantMigration::class,
         RunTenantMigrations::class,
         FixTenantDatabases::class,
+        SeedClinicTemporaryData::class,
+        RunSpecificTenantMigration::class,
+        CheckTenantTableStructure::class,
+        FixPetsTableTenant::class,
+        ExecuteSqlForTenant::class,
     ];
 
     /**

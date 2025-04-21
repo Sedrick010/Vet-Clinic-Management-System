@@ -23,8 +23,8 @@
                         <table class="table align-items-center mb-0">
                             <thead>
                                 <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pet/Owner</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Veterinarian</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Doctor</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date & Time</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
@@ -34,42 +34,36 @@
                                 @forelse($appointments as $appointment)
                                 <tr>
                                     <td>
-                                        <div class="d-flex px-3 py-1">
-                                            <div>
-                                                <img src="{{ asset('img/pet-placeholder.png') }}" class="avatar avatar-sm me-3" alt="pet image">
-                                            </div>
+                                        <div class="d-flex px-2 py-1">
                                             <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">{{ $appointment->pet->name }}</h6>
-                                                <p class="text-xs text-secondary mb-0">Owner: {{ $appointment->pet->owner->name }}</p>
+                                                <h6 class="mb-0 text-sm">{{ $appointment->client_name }}</h6>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ $appointment->veterinarian->name }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ $appointment->staff->name }}</p>
                                     </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <p class="text-xs font-weight-bold mb-0">{{ $appointment->start_time->format('M d, Y') }}</p>
-                                        <p class="text-xs text-secondary mb-0">{{ $appointment->start_time->format('h:i A') }}</p>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-{{ $appointment->status === 'completed' ? 'success' : ($appointment->status === 'cancelled' ? 'danger' : 'info') }}">
-                                            {{ ucfirst($appointment->status) }}
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">
+                                            {{ $appointment->start_time->format('M d, Y h:i A') }}
                                         </span>
                                     </td>
                                     <td class="align-middle text-center text-sm">
-                                        <a href="{{ route('appointments.show', $appointment) }}" class="btn btn-link text-dark px-3 mb-0">
-                                            <i class="fas fa-eye text-dark me-2"></i>View
+                                        <span class="badge badge-sm bg-gradient-{{ 
+                                            $appointment->status === 'completed' ? 'success' : 
+                                            ($appointment->status === 'cancelled' ? 'danger' : 
+                                            ($appointment->status === 'confirmed' ? 'primary' : 'info')) 
+                                        }}">
+                                            {{ ucfirst($appointment->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <a href="{{ route('appointments.show', $appointment) }}" class="btn btn-link text-secondary mb-0">
+                                            <i class="fas fa-eye text-xs"></i>
                                         </a>
-                                        <a href="{{ route('appointments.edit', $appointment) }}" class="btn btn-link text-dark px-3 mb-0">
-                                            <i class="fas fa-pencil-alt text-dark me-2"></i>Edit
+                                        <a href="{{ route('appointments.edit', $appointment) }}" class="btn btn-link text-secondary mb-0">
+                                            <i class="fas fa-edit text-xs"></i>
                                         </a>
-                                        <form action="{{ route('appointments.destroy', $appointment) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-link text-danger text-gradient px-3 mb-0" onclick="return confirm('Are you sure you want to delete this appointment?');">
-                                                <i class="far fa-trash-alt me-2"></i>Delete
-                                            </button>
-                                        </form>
                                     </td>
                                 </tr>
                                 @empty
