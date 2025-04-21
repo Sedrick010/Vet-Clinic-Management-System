@@ -21,6 +21,19 @@ class ValidateTenantSubdomain
         
         // If it's the main domain, proceed
         if ($host === $appDomain) {
+            // Only clear tenant session data if not an admin user
+            if (session()->has('tenant_user')) {
+                // If there's a tenant session on main domain, clear it
+                session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
+                
+                // Don't redirect - just clear the session data from the incorrect domain
+                Log::warning('Cleared tenant session data on main domain', [
+                    'host' => $host,
+                    'path' => $request->path(),
+                    'ip' => $request->ip()
+                ]);
+            }
+            
             return $next($request);
         }
         
@@ -37,14 +50,6 @@ class ValidateTenantSubdomain
         // Check for nested subdomains
         $parts = explode('.', $subdomainPart);
         $subdomain = count($parts) > 1 ? $parts[count($parts) - 1] : $subdomainPart;
-        
-        // Log for debugging
-        Log::info('Subdomain extracted from complex host', [
-            'host' => $host,
-            'subdomain_part' => $subdomainPart,
-            'resolved_subdomain' => $subdomain,
-            'parts' => $parts
-        ]);
         
         // Skip validation for public asset paths
         if ($this->isPublicPath($request->path())) {
@@ -72,6 +77,25 @@ class ValidateTenantSubdomain
         
         // Store clinic info in request
         $request->attributes->set('current_clinic', $clinic);
+        
+        // Strict domain separation - if admin user tries to access a subdomain, redirect to main domain
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            // Admin user trying to access subdomain - redirect to main domain with warning
+            auth()->logout();
+            return redirect()->to(config('app.url') . '/login')
+                ->with('warning', 'Admin accounts must use the main domain. Please log in again.');
+        }
+        
+        // If a tenant session exists but for a different clinic, clear it
+        if (session()->has('current_clinic_id') && session('current_clinic_id') != $clinic->id) {
+            session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
+            Log::warning('Cleared tenant session data due to mismatched clinic', [
+                'subdomain' => $subdomain,
+                'previous_clinic_id' => session('current_clinic_id'),
+                'current_clinic_id' => $clinic->id,
+                'path' => $request->path()
+            ]);
+        }
         
         return $next($request);
     }

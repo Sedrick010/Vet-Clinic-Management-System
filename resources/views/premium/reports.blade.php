@@ -34,11 +34,49 @@
         text-transform: uppercase;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
+    
+    /* Subscription status indicator */
+    .subscription-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 20px;
+        background-color: #4CAF50;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .subscription-indicator i {
+        margin-right: 6px;
+    }
+    
+    #subscription-status-alert {
+        display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 350px;
+    }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid py-4">
+    <!-- Subscription Status Alert - Hidden by default, shown by JavaScript when needed -->
+    <div id="subscription-status-alert" class="alert alert-warning shadow-lg" role="alert">
+        <div class="d-flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle fa-lg"></i>
+            </div>
+            <div class="ms-3">
+                <h5 class="alert-heading">Subscription Status Change</h5>
+                <p>Your subscription status has changed. You will be redirected to the dashboard.</p>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card">
@@ -48,7 +86,9 @@
                             <h6 class="mb-0">Premium Reports</h6>
                             <p class="text-sm mb-0">Access exclusive analytics and insights for your clinic</p>
                         </div>
-                        <span class="badge bg-gradient-warning">Subscription Active</span>
+                        <div class="subscription-indicator">
+                            <i class="fas fa-star"></i> Premium Subscription Active
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">

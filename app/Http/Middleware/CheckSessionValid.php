@@ -27,6 +27,18 @@ class CheckSessionValid
             return $next($request);
         }
         
+        // Get the host and check if we're on the main domain or a subdomain
+        $host = $request->getHost();
+        $appDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? '';
+        $isMainDomain = ($host === $appDomain);
+        
+        // Check for admin routes accessed outside main domain
+        if (!$isMainDomain && $request->is('admin*')) {
+            // Redirect admin routes to main domain
+            return redirect()->to(config('app.url') . '/admin/dashboard')
+                ->with('warning', 'Admin sections should be accessed via the main domain.');
+        }
+        
         // Part 1: Session validation check
         // For regular authenticated routes - check if user is still authenticated
         if (!Auth::check() && !session()->has('tenant_user')) {
@@ -60,6 +72,27 @@ class CheckSessionValid
                 session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
                 session()->flash('error', 'Your clinic session has expired. Please log in again.');
                 return redirect()->route('login');
+            }
+            
+            // Verify we're on the correct subdomain for this clinic session
+            $currentClinicData = session('current_clinic');
+            if (!$isMainDomain && isset($currentClinicData['subdomain'])) {
+                $currentHost = $request->getHost();
+                $expectedHost = $currentClinicData['subdomain'] . '.' . $appDomain;
+                
+                // If we're on a different clinic's subdomain than the one in session
+                if ($currentHost !== $expectedHost && !$request->is('login') && !$request->is('logout')) {
+                    Log::warning('User accessing incorrect clinic subdomain', [
+                        'current_host' => $currentHost,
+                        'expected_host' => $expectedHost,
+                        'session_clinic' => $currentClinicData['subdomain'],
+                        'path' => $request->path()
+                    ]);
+                    
+                    // Redirect to the correct subdomain
+                    return redirect()->to('http://' . $expectedHost . '/dashboard')
+                        ->with('warning', 'You have been redirected to your authorized clinic.');
+                }
             }
         }
         

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -55,5 +56,38 @@ class User extends Authenticatable
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+    
+    /**
+     * Check if the user has a specific role.
+     *
+     * @param string $role
+     * @return bool
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+    
+    /**
+     * Get the user's role.
+     * 
+     * @return string
+     */
+    public function role(): string
+    {
+        return $this->role;
+    }
+    
+    /**
+     * Scope a query to only include users with a specific role.
+     *
+     * @param Builder $query
+     * @param string $role
+     * @return Builder
+     */
+    public static function scopeRole(Builder $query, string $role): Builder
+    {
+        return $query->where('role', $role);
     }
 }

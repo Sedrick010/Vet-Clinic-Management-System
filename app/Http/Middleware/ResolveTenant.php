@@ -60,21 +60,28 @@ class ResolveTenant
         }
         
         // If user is authenticated with the central system and is an admin, 
-        // they should not be allowed to access tenant subdomains
+        // we'll let them view public pages on the tenant site but redirect for protected content
         if (Auth::check() && Auth::user()->role === 'admin') {
-            Log::warning('Admin user attempted to access tenant subdomain', [
+            Log::info('Admin user browsing tenant subdomain', [
                 'user_id' => Auth::id(),
                 'subdomain' => $subdomain,
                 'path' => $request->path()
             ]);
             
-            Auth::logout();
-            session()->forget(['tenant_user', 'current_clinic_id', 'current_clinic']);
-            session()->invalidate();
-            session()->regenerateToken();
-            
-            return redirect()->to(config('app.url'))
-                ->with('error', 'Admin accounts cannot access tenant subdomains. Please use the main application.');
+            // Redirect admin away from protected tenant areas
+            $protectedPaths = ['dashboard', 'profile', 'settings', 'appointments', 'customers', 'staff', 'payments'];
+            foreach ($protectedPaths as $path) {
+                if ($request->is($path) || $request->is($path . '/*')) {
+                    Log::warning('Admin attempted to access protected tenant area', [
+                        'user_id' => Auth::id(),
+                        'path' => $request->path(),
+                        'subdomain' => $subdomain
+                    ]);
+                    
+                    return redirect()->to(config('app.url') . '/admin/dashboard')
+                        ->with('warning', 'Administrators cannot access clinic dashboards. Please manage clinics from the admin panel.');
+                }
+            }
         }
         
         // Block registration routes when accessed from any subdomain
@@ -146,14 +153,41 @@ class ResolveTenant
             // Switch to the tenant database
             app(TenantDatabaseService::class)->switchToTenant($clinic);
             
-            // If user is authenticated with the central database, log them out
-            // They should be authenticated with the tenant database instead
+            // If user is authenticated with the central database
             if (Auth::check()) {
-                // Check if they belong to this clinic
-                if (Auth::user()->clinic_id !== $clinic->id) {
-                    Auth::logout();
+                // Exception for admin users - they can view tenant sites
+                if (Auth::user()->role === 'admin') {
+                    // Admin users can view tenant sites, but should not interact with tenant features
+                    Log::info('Admin user viewing tenant site', [
+                        'user_id' => Auth::id(),
+                        'subdomain' => $subdomain,
+                        'path' => $request->path()
+                    ]);
                     
-                    // If not redirecting to login, ensure the context is cleared
+                    // If admin is trying to access tenant-specific features, redirect them
+                    $tenantOnlyPaths = ['dashboard', 'profile', 'settings', 'appointments', 'customers', 'payments'];
+                    foreach ($tenantOnlyPaths as $path) {
+                        if ($request->is($path) || $request->is("$path/*")) {
+                            // Redirect to main admin dashboard with info message
+                            Log::info('Admin redirected from tenant-specific feature', [
+                                'user_id' => Auth::id(),
+                                'path' => $request->path()
+                            ]);
+                            return redirect()->to(config('app.url') . '/admin/dashboard')
+                                ->with('info', 'Please use the admin panel for management tasks.');
+                        }
+                    }
+                }
+                // For non-admin users, ensure they belong to this clinic
+                else if (Auth::user()->clinic_id !== $clinic->id) {
+                    // Do not log out the user from the main domain, just deny access to this subdomain
+                    Log::warning('User from different clinic attempted to access subdomain', [
+                        'user_id' => Auth::id(),
+                        'user_clinic_id' => Auth::user()->clinic_id,
+                        'subdomain_clinic_id' => $clinic->id
+                    ]);
+                    
+                    // If not already redirecting to login, redirect there with error
                     if (!$request->routeIs('login')) {
                         return redirect()->route('login')
                             ->with('error', 'Please log in with credentials for this clinic.');

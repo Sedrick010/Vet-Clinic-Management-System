@@ -45,7 +45,7 @@ class CheckSubscriptionAccess
             }
 
             // Flash a message for web request
-            return redirect()->route('tenant.dashboard')->with('error', 
+            return redirect()->route('dashboard')->with('error', 
                 'This feature requires an active subscription. Please contact administration to activate your subscription.'
             );
         }

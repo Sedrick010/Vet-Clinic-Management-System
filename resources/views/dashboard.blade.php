@@ -79,6 +79,21 @@
                             </div>
                         </a>
                     </div>
+                    
+                    <!-- Inventory Management Quick Access -->
+                    @if(session('tenant_user') && session('current_clinic_id'))
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{{ route('inventory.index') }}" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-info">
+                                    <i class="fas fa-boxes text-white opacity-10"></i>
+                                </div>
+                                <h6 class="mb-0 text-dark">Inventory</h6>
+                            </div>
+                        </a>
+                    </div>
+                    @endif
+                    
                     <div class="col-md-3 col-sm-6 mb-3">
                         <a href="#" class="card shadow-sm h-100 text-decoration-none">
                             <div class="card-body p-3 text-center">
@@ -166,6 +181,33 @@
             </div>
         </div>
     </div>
+    
+    <!-- Inventory Stats Card -->
+    @if(session('tenant_user') && session('current_clinic_id') && isset($inventoryStats))
+    <div class="col-xl-3 col-sm-6">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-8">
+                        <div class="numbers">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Inventory Items</p>
+                            <h5 class="font-weight-bolder mb-0">
+                                <a href="{{ route('inventory.index') }}" class="text-decoration-none">
+                                    {{ $inventoryStats['total'] ?? 0 }}
+                                </a>
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                            <i class="fas fa-boxes text-lg opacity-10" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @else
     <div class="col-xl-3 col-sm-6">
         <div class="card">
             <div class="card-body p-3">
@@ -188,6 +230,7 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <div class="row mt-4">
