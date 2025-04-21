@@ -107,7 +107,7 @@
             </li>
             
             <li class="nav-item">
-                <a class="nav-link {{ Request::is('appointments*') ? 'active' : '' }}" href="#">
+                <a class="nav-link {{ Request::is('appointments*') ? 'active' : '' }}" href="{{ route('appointments.index') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-calendar-alt text-success"></i>
                     </div>

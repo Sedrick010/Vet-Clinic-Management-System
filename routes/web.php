@@ -12,6 +12,7 @@ use App\Http\Middleware\ValidateTenantSubdomain;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AppointmentController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([
@@ -207,15 +208,15 @@ Route::middleware([
         Route::get('/clinic/{subdomain}/select', [CustomerController::class, 'selectClinic'])->name('clinic.select');
         
         // Subdomain-specific routes
-        Route::get('/customer/register', [CustomerController::class, 'showRegistrationForm'])->name('customer.register');
-        Route::post('/customer/register', [CustomerController::class, 'register']);
-        Route::get('/customer/login', [CustomerController::class, 'showLoginForm'])->name('customer.login');
-        Route::post('/customer/login', [CustomerController::class, 'login']);
+        Route::get('/customer/register/{subdomain?}', [CustomerController::class, 'showRegistrationForm'])->name('customer.register');
+        Route::post('/customer/register/{subdomain}', [CustomerController::class, 'register']);
+        Route::get('/customer/login/{subdomain?}', [CustomerController::class, 'showLoginForm'])->name('customer.login');
+        Route::post('/customer/login/{subdomain}', [CustomerController::class, 'login']);
     });
 
     Route::middleware(['customer.auth'])->group(function () {
-        Route::get('/customer/dashboard', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
-        Route::post('/customer/logout', [CustomerController::class, 'logout'])->name('customer.logout');
+        Route::get('/customer/dashboard/{subdomain}', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
+        Route::post('/customer/logout/{subdomain}', [CustomerController::class, 'logout'])->name('customer.logout');
     });
 
     // Tenant staff management routes - only for authenticated tenant users in active clinics
@@ -224,6 +225,7 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicActive::class,
         \App\Http\Middleware\CheckClinicEnabled::class
     ])->group(function() {
+        // Staff routes
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::get('/staff/create', [StaffController::class, 'create'])->name('staff.create');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
@@ -232,8 +234,14 @@ Route::middleware([
         Route::put('/staff/{id}', [StaffController::class, 'update'])->name('staff.update');
         Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
         Route::post('/staff/{id}/resend-invitation', [StaffController::class, 'resendInvitation'])->name('staff.resend-invitation');
-        // Debug route - only for development
         Route::post('/staff/{id}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
+
+        // Appointment routes
+        Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+        Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+        Route::get('/appointments/pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets');
+        Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status');
     });
 
     // Premium features - requires active subscription
@@ -261,4 +269,7 @@ Route::middleware([
         Route::put('/subscription/toggle-activation', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggleActivation'])->name('subscription.toggle-activation');
         Route::patch('/subscription/toggle', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggle'])->name('subscription.toggle');
     });
+
+    // Appointment routes
+    Route::resource('appointments', AppointmentController::class);
 });
