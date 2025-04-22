@@ -23,6 +23,8 @@ class Clinic extends Model
         'phone',
         'email',
         'logo',
+        'logo_path',
+        'logo_disk',
         'description',
         'database_name',
         'is_active',
@@ -108,5 +110,44 @@ class Clinic extends Model
     public function hasPendingSubscriptionRequest(): bool
     {
         return $this->subscriptionRequests()->where('status', 'pending')->exists();
+    }
+    
+    /**
+     * Get the logo URL if it exists, or a default logo.
+     */
+    public function getLogoUrl(): string
+    {
+        if ($this->logo_path) {
+            return asset('storage/' . $this->logo_path);
+        }
+        
+        // Legacy support for old logo field
+        if ($this->logo) {
+            return $this->logo;
+        }
+        
+        // Default logo
+        return asset('images/default-clinic-logo.png');
+    }
+    
+    /**
+     * Update the clinic logo
+     */
+    public function updateLogo($image)
+    {
+        if ($this->logo_path) {
+            // Delete the old logo if it exists
+            \Storage::disk($this->logo_disk)->delete($this->logo_path);
+        }
+        
+        // Store the new logo
+        $path = $image->store('clinic-logos', 'public');
+        
+        $this->update([
+            'logo_path' => $path,
+            'logo_disk' => 'public',
+        ]);
+        
+        return $path;
     }
 } 

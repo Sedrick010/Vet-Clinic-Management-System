@@ -56,8 +56,8 @@ class ClinicStatusUpdate extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $baseUrl = config('app.url');
-        $protocol = request()->secure() ? 'https://' : 'http://';
-        $domain = str_replace(['http://', 'https://'], '', $baseUrl);
+        $protocol = parse_url($baseUrl, PHP_URL_SCHEME) . '://';
+        $domain = parse_url($baseUrl, PHP_URL_HOST);
         $clinicUrl = $protocol . $this->clinic->subdomain . '.' . $domain;
         
         // Log email preparation
@@ -91,6 +91,7 @@ class ClinicStatusUpdate extends Notification
                 ->line('Email: ' . $this->ownerEmail)
                 ->line('Password: ' . $this->clinic->temp_password)
                 ->line('Please change your password after your first login for security purposes.')
+                ->line('Important: Your clinic subscription is currently inactive. Please contact the administrator to activate your subscription.')
                 ->action('Access Your Clinic', $clinicUrl)
                 ->line('Thank you for choosing our Veterinary Clinic Management System!');
         } elseif ($this->status === 'rejected') {

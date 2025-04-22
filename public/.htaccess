@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Redirect old domain to new domain
+    RewriteCond %{HTTP_HOST} ^(.*\.)?vetclinic\.localhost$ [NC]
+    RewriteRule ^(.*)$ http://%1vetclinic.localtest.me/$1 [R=301,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

@@ -23,6 +23,31 @@
     </div>
 </div>
 
+<!-- Subscription Warning Alert -->
+@if(isset($clinic) && !$clinic->is_subscription_active)
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert bg-gradient-primary alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <div class="icon icon-sm me-3">
+                    <i class="fas fa-crown text-white"></i>
+                </div>
+                <div class="text-white flex-grow-1">
+                    <span class="fw-bold fs-6">Upgrade to Premium!</span>
+                    <p class="mb-0 mt-1">Unlock advanced features including detailed analytics, unlimited appointments, client reminders, and comprehensive inventory management. Boost your clinic's efficiency today!</p>
+                </div>
+                <div>
+                    <a href="mailto:admin@vetclinic.localtest.me?subject=Premium Subscription Request for {{ $clinic->name }}&body=Hello Administrator,%0D%0A%0D%0AI would like to request activation of the premium subscription for our clinic: {{ $clinic->name }} (ID: {{ $clinic->id }}).%0D%0A%0D%0AThank you." class="btn btn-sm btn-outline-light ms-3">
+                        <i class="fas fa-arrow-circle-up me-1"></i> Request Premium Access
+                    </a>
+                    <button type="button" class="btn-close text-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- New Feature Notification -->
 <div class="row mb-4">
     <div class="col-12">

@@ -278,6 +278,8 @@ class ClinicController extends Controller
         
         $clinic->update([
             'approval_status' => 'approved',
+            'is_subscription_active' => false, // Ensure subscription is inactive by default
+            'subscription_plan' => 'free', // Set default plan to free
         ]);
 
         // Update session data for the pending page

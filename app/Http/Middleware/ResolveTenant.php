@@ -24,6 +24,22 @@ class ResolveTenant
         // Get the host from the request
         $host = $request->getHost();
         
+        // Block and redirect old domain to new domain (both exact match and subdomains)
+        if ($host === 'vetclinic.localhost' || str_ends_with($host, '.vetclinic.localhost')) {
+            $newDomain = str_replace('vetclinic.localhost', 'vetclinic.localtest.me', $host);
+            $path = $request->getPathInfo();
+            $query = $request->getQueryString() ? '?' . $request->getQueryString() : '';
+            $newUrl = ($request->secure() ? 'https://' : 'http://') . $newDomain . $path . $query;
+            
+            Log::info('Redirecting from old domain to new domain', [
+                'old_host' => $host,
+                'new_host' => $newDomain,
+                'new_url' => $newUrl
+            ]);
+            
+            return redirect()->to($newUrl);
+        }
+        
         // Skip tenant resolution for direct localhost or IP access
         if ($host === 'localhost' || $host === '127.0.0.1' || filter_var($host, FILTER_VALIDATE_IP)) {
             return $next($request);
@@ -32,7 +48,7 @@ class ResolveTenant
         // Get the app domain from config
         $appDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? '';
         
-        // If the host is exactly our app domain (vetclinic.localhost), proceed normally
+        // If the host is exactly our app domain (vetclinic.localtest.me), proceed normally
         if ($host === $appDomain) {
             // Block access to tenant-only routes from the main domain
             $tenantOnlyRoutes = ['tenant.dashboard'];
@@ -240,7 +256,7 @@ class ResolveTenant
         $subdomainPart = str_replace('.' . $baseDomain, '', $host);
         
         // Handle the case of possible nested subdomains
-        // For example: something.clinic.vetclinic.localhost
+        // For example: something.clinic.vetclinic.localtest.me
         // We want to extract "clinic" as the main subdomain
         $parts = explode('.', $subdomainPart);
         
@@ -252,7 +268,7 @@ class ResolveTenant
             ]);
             
             // Use the first-level subdomain (the one directly before the base domain)
-            // In our example: clinic.vetclinic.localhost -> "clinic"
+            // In our example: clinic.vetclinic.localtest.me -> "clinic"
             $subdomain = $parts[count($parts) - 1];
         } else {
             $subdomain = $subdomainPart;

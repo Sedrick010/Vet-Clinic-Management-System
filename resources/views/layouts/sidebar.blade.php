@@ -141,32 +141,14 @@
             </li>
             @endif
             
-            <!-- Clinic Functionality - Only show for non-admin users or specific clinic staff -->
-            @if(!Auth::check() || Auth::user()->role !== 'admin') 
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('patients*') ? 'active' : '' }}" href="#">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-paw text-info"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Patients</span>
-                </a>
-            </li>
-            
+            <!-- Clinic Functionality - Only show for non-admin users or clinic owners -->
+            @if(!Auth::check() || Auth::user()->role !== 'admin')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('appointments*') ? 'active' : '' }}" href="{{ route('appointments.index') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-calendar-alt text-success"></i>
                     </div>
                     <span class="nav-link-text ms-1">Appointments</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('veterinarians*') ? 'active' : '' }}" href="#">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user-md text-warning"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Veterinarians</span>
                 </a>
             </li>
             
@@ -182,14 +164,26 @@
             </li>
             @endif
             
-            <!-- Staff Management - Only visible to clinic owners or admins -->
-            @if(session('current_clinic_id') || (Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'owner')))
+            <!-- Staff Management - Only visible to clinic owners -->
+            @if(session('current_clinic_id') && Auth::check() && Auth::user()->role === 'owner')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('staff*') ? 'active' : '' }}" href="{{ route('staff.index') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-user-tie text-purple"></i>
                     </div>
                     <span class="nav-link-text ms-1">Staff Management</span>
+                </a>
+            </li>
+            @endif
+            
+            <!-- Clinic Information -->
+            @if(session('current_clinic_id'))
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('clinic-info') ? 'active' : '' }}" href="{{ route('clinic.info') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-hospital text-info"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Clinic Info</span>
                 </a>
             </li>
             @endif
@@ -201,33 +195,6 @@
                         <i class="fas fa-gem text-warning"></i>
                     </div>
                     <span class="nav-link-text ms-1">Subscription</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('owners*') ? 'active' : '' }}" href="#">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-users text-danger"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Pet Owners</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('medications*') ? 'active' : '' }}" href="#">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-pills text-primary"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Medications</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('invoices*') ? 'active' : '' }}" href="#">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-file-invoice-dollar text-info"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Invoices</span>
                 </a>
             </li>
             

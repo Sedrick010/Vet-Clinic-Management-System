@@ -63,7 +63,7 @@
         <p>You can now access our clinic management system using the following credentials:</p>
         
         <div class="credentials">
-            <p><strong>Login URL:</strong> <a href="http://{{ $clinic->subdomain }}.{{ str_replace(['http://', 'https://'], '', config('app.url')) }}">{{ $clinic->name }} Portal</a></p>
+            <p><strong>Login URL:</strong> <a href="{{ parse_url(config('app.url'), PHP_URL_SCHEME) }}://{{ $clinic->subdomain }}.{{ parse_url(config('app.url'), PHP_URL_HOST) }}">{{ $clinic->name }} Portal</a></p>
             <p><strong>Email:</strong> {{ $staff->email }}</p>
             <p><strong>Password:</strong> {{ $password }}</p>
         </div>
@@ -72,7 +72,7 @@
         
         <p>If you have any questions or need assistance, please contact the clinic administrator.</p>
         
-        <a href="http://{{ $clinic->subdomain }}.{{ str_replace(['http://', 'https://'], '', config('app.url')) }}" class="button">Login Now</a>
+        <a href="{{ parse_url(config('app.url'), PHP_URL_SCHEME) }}://{{ $clinic->subdomain }}.{{ parse_url(config('app.url'), PHP_URL_HOST) }}" class="button">Login Now</a>
     </div>
     
     <div class="footer">

@@ -12,6 +12,7 @@ use App\Console\Commands\RunSpecificTenantMigration;
 use App\Console\Commands\CheckTenantTableStructure;
 use App\Console\Commands\FixPetsTableTenant;
 use App\Console\Commands\ExecuteSqlForTenant;
+use App\Console\Commands\FixAppointmentsTable;
 
 class Kernel extends ConsoleKernel
 {
@@ -29,6 +30,7 @@ class Kernel extends ConsoleKernel
         CheckTenantTableStructure::class,
         FixPetsTableTenant::class,
         ExecuteSqlForTenant::class,
+        FixAppointmentsTable::class,
     ];
 
     /**

@@ -19,6 +19,9 @@
                     <x-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')">
                         {{ __('Staff Management') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('clinic.info')" :active="request()->routeIs('clinic.info')">
+                        {{ __('Clinic Info') }}
+                    </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -78,6 +81,9 @@
             @if(session('current_clinic_id'))
             <x-responsive-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')">
                 {{ __('Staff Management') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('clinic.info')" :active="request()->routeIs('clinic.info')">
+                {{ __('Clinic Info') }}
             </x-responsive-nav-link>
             @endif
         </div>
