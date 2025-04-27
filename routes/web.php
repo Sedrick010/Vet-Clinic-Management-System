@@ -14,6 +14,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ClinicProfileController;
+use App\Http\Controllers\TenantProfileController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([
@@ -255,9 +256,14 @@ Route::middleware([
         Route::get('/appointments/pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets.alt');
         Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status');
         
-        // Clinic profile routes
+        // Clinic profile routes - accessible to all staff, but editing is restricted within the controller
         Route::get('/clinic/profile', [ClinicProfileController::class, 'edit'])->name('clinic.profile');
         Route::put('/clinic/profile', [ClinicProfileController::class, 'update'])->name('clinic.profile.update');
+        
+        // Tenant Profile routes
+        Route::get('/tenant/profile', [TenantProfileController::class, 'edit'])->name('tenant.profile.edit');
+        Route::patch('/tenant/profile', [TenantProfileController::class, 'update'])->name('tenant.profile.update');
+        Route::put('/tenant/profile/password', [TenantProfileController::class, 'updatePassword'])->name('tenant.profile.password.update');
     });
 
     // Premium features - requires active subscription
@@ -334,20 +340,10 @@ Route::middleware([
         Route::get('/subscription-requests/{id}', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'show'])->name('subscription-requests.show');
     });
 
-    // Simple route to view clinic profile without complex auth
-    Route::get('/clinic-info', function(Request $request) {
-        $clinicId = session('current_clinic_id');
-        if (!$clinicId) {
-            return redirect()->route('dashboard')
-                ->with('error', 'No clinic selected.');
-        }
-        
-        $clinic = \App\Models\Clinic::findOrFail($clinicId);
-        
-        return view('clinics.profile', [
-            'clinic' => $clinic,
-            'isSidebar' => true,
-            'readOnly' => true // Add a flag to make the form read-only
-        ]);
-    })->name('clinic.info');
+    // Update the clinic info route to use the ClinicProfileController instead of an inline route definition
+    Route::get('/clinic-info', [ClinicProfileController::class, 'edit'])->name('clinic.info')->middleware([
+        \App\Http\Middleware\AuthTenantStaff::class,
+        \App\Http\Middleware\CheckClinicActive::class,
+        \App\Http\Middleware\CheckClinicEnabled::class
+    ]);
 });

@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use App\Services\TenantDatabaseService;
+use Illuminate\Support\Facades\Schema;
 
 class AppointmentController extends Controller
 {
@@ -49,8 +50,22 @@ class AppointmentController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        $appointments = Appointment::with(['staff'])
-            ->orderBy('start_time', 'desc')
+        // Check if deleted_at column exists
+        $hasDeletedAt = false;
+        try {
+            $hasDeletedAt = Schema::connection('tenant')->hasColumn('appointments', 'deleted_at');
+        } catch (\Exception $e) {
+            \Log::error('Error checking for deleted_at column: ' . $e->getMessage());
+        }
+
+        $query = Appointment::with(['staff']);
+        
+        // Only apply the SoftDeletes condition if the column exists
+        if ($hasDeletedAt) {
+            $query->whereNull('deleted_at');
+        }
+        
+        $appointments = $query->orderBy('start_time', 'desc')
             ->paginate(10);
             
         return view('appointments.index', compact('appointments'));
@@ -77,8 +92,16 @@ class AppointmentController extends Controller
             'client_count' => $clients->count()
         ]);
         
-        // Load all pets with proper eager loading for better performance
-        $pets = DB::connection('tenant')
+        // Check if deleted_at column exists in pets table
+        $hasPetsDeletedAt = false;
+        try {
+            $hasPetsDeletedAt = Schema::connection('tenant')->hasColumn('pets', 'deleted_at');
+        } catch (\Exception $e) {
+            \Log::error('Error checking for pets.deleted_at column: ' . $e->getMessage());
+        }
+        
+        // Build the query
+        $petsQuery = DB::connection('tenant')
             ->table('pets')
             ->join('clients', 'pets.owner_id', '=', 'clients.id')
             ->select(
@@ -89,10 +112,15 @@ class AppointmentController extends Controller
                 'pets.gender', 
                 'clients.name as owner_name', 
                 'clients.id as owner_id'
-            )
-            ->whereNull('pets.deleted_at')
-            ->orderBy('pets.name')
-            ->get();
+            );
+            
+        // Only apply the SoftDeletes condition if the column exists
+        if ($hasPetsDeletedAt) {
+            $petsQuery->whereNull('pets.deleted_at');
+        }
+        
+        // Get the results
+        $pets = $petsQuery->orderBy('pets.name')->get();
             
         // Get doctor staff
         $staff = Staff::where('role', 'doctor')->orderBy('name')->get();
@@ -170,8 +198,16 @@ class AppointmentController extends Controller
                 ], 404);
             }
 
+            // Check if deleted_at column exists in pets table
+            $hasPetsDeletedAt = false;
+            try {
+                $hasPetsDeletedAt = Schema::connection('tenant')->hasColumn('pets', 'deleted_at');
+            } catch (\Exception $e) {
+                \Log::error('Error checking for pets.deleted_at column: ' . $e->getMessage());
+            }
+
             // Get pets for the client using direct query
-            $pets = DB::connection('tenant')
+            $petsQuery = DB::connection('tenant')
                 ->table('pets')
                 ->leftJoin('clients', 'pets.owner_id', '=', 'clients.id')
                 ->select(
@@ -183,10 +219,14 @@ class AppointmentController extends Controller
                     'clients.name as owner_name',
                     'clients.id as owner_id'
                 )
-                ->where('pets.owner_id', $clientId)
-                ->whereNull('pets.deleted_at')
-                ->orderBy('pets.name')
-                ->get();
+                ->where('pets.owner_id', $clientId);
+                
+            // Only apply the SoftDeletes condition if the column exists
+            if ($hasPetsDeletedAt) {
+                $petsQuery->whereNull('pets.deleted_at');
+            }
+            
+            $pets = $petsQuery->orderBy('pets.name')->get();
             
             // Force UTC timezone for serialization
             foreach ($pets as $pet) {

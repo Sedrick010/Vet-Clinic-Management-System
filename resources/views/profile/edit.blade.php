@@ -1,29 +1,49 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+@section('title', 'Edit Profile')
+
+@section('content')
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Profile Information</h6>
+                    <p class="text-sm text-secondary mb-0">Update your account's profile information and email address.</p>
+                </div>
+                <div class="card-body px-4 py-4">
                     @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Update Password</h6>
+                    <p class="text-sm text-secondary mb-0">Ensure your account is using a long, random password to stay secure.</p>
+                </div>
+                <div class="card-body px-4 py-4">
                     @include('profile.partials.update-password-form')
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Delete Account</h6>
+                    <p class="text-sm text-secondary mb-0">Once your account is deleted, all of its resources and data will be permanently deleted.</p>
+                </div>
+                <div class="card-body px-4 py-4">
                     @include('profile.partials.delete-user-form')
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

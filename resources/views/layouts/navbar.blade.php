@@ -10,167 +10,80 @@
         
         <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
-                <div class="input-group">
-                    <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                    <input type="text" class="form-control" placeholder="Type here...">
+                <!-- User Info Section -->
+                @if(Auth::check())
+                <div class="d-flex align-items-center">
+                    @if(Auth::user()->role !== 'admin')
+                    <!-- Current Clinic -->
+                    @php
+                        $currentClinicId = session('current_clinic_id', Auth::user()->clinic_id);
+                        $clinic = \App\Models\Clinic::find($currentClinicId);
+                    @endphp
+                    @if($clinic)
+                    <div class="d-flex flex-column me-4">
+                        <p class="mb-0 text-xs text-secondary">Current Clinic</p>
+                        <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                    </div>
+                    @endif
+                    @endif
+                    
+                    <!-- User Info -->
+                    <div class="d-flex flex-column me-3">
+                        <h6 class="mb-0 text-sm">{{ Auth::user()->name }}</h6>
+                        <p class="mb-0 text-xs text-secondary">
+                            @if(Auth::user()->role === 'admin')
+                                Administrator
+                            @elseif(Auth::user()->role === 'owner')
+                                Clinic Owner
+                            @elseif(Auth::user()->role === 'veterinarian')
+                                Veterinarian
+                            @elseif(Auth::user()->role === 'staff')
+                                Staff Member
+                            @elseif(Auth::user()->role === 'receptionist')
+                                Receptionist
+                            @else
+                                {{ ucfirst(Auth::user()->role) }}
+                            @endif
+                        </p>
+                    </div>
                 </div>
+                @elseif(session()->has('tenant_user'))
+                <div class="d-flex align-items-center">
+                    <!-- Current Clinic for Tenant Users -->
+                    @php
+                        $currentClinicId = session('current_clinic_id');
+                        $clinic = \App\Models\Clinic::find($currentClinicId);
+                        $tenantUser = (object)session('tenant_user');
+                    @endphp
+                    @if($clinic)
+                    <div class="d-flex flex-column me-4">
+                        <p class="mb-0 text-xs text-secondary">Current Clinic</p>
+                        <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                    </div>
+                    @endif
+                    
+                    <!-- Tenant User Info -->
+                    <div class="d-flex flex-column me-3">
+                        <h6 class="mb-0 text-sm">{{ $tenantUser->name }}</h6>
+                        <p class="mb-0 text-xs text-secondary">
+                            @if($tenantUser->role === 'owner')
+                                Clinic Owner
+                            @elseif($tenantUser->role === 'veterinarian')
+                                Veterinarian
+                            @elseif($tenantUser->role === 'staff')
+                                Staff Member
+                            @elseif($tenantUser->role === 'receptionist')
+                                Receptionist
+                            @else
+                                {{ ucfirst($tenantUser->role) }}
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                @endif
             </div>
             
             <ul class="navbar-nav justify-content-end">
-                <!-- Admin Links -->
-                @if(Auth::check() && Auth::user()->role === 'admin')
-                <li class="nav-item dropdown pe-2 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body font-weight-bold px-0" id="dropdownAdminMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-shield me-sm-1"></i>
-                        <span class="d-sm-inline d-none">
-                            Admin
-                            <i class="fas fa-chevron-down ms-1 text-xs"></i>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownAdminMenu">
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="{{ route('admin.dashboard') }}">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-tachometer-alt text-primary"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Admin Dashboard
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="{{ route('admin.clinics.index') }}">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-clinic-medical text-success"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Clinic Approvals
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endif
-                
-                <!-- Clinic Selector -->
-                @if(Auth::check())
-                <li class="nav-item dropdown pe-2 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body font-weight-bold px-0" id="dropdownClinicSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-clinic-medical me-sm-1"></i>
-                        <span class="d-sm-inline d-none">
-                            @php
-                                $currentClinicId = session('current_clinic_id', Auth::user()->clinic_id);
-                                $clinic = \App\Models\Clinic::find($currentClinicId);
-                            @endphp
-                            {{ $clinic ? $clinic->name : 'Select Clinic' }}
-                            <i class="fas fa-chevron-down ms-1 text-xs"></i>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownClinicSelector">
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="{{ route('clinics.select') }}">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-exchange-alt text-primary"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Switch Clinic
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="{{ route('clinics.create') }}">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-plus-circle text-success"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Register New Clinic
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endif
-                
-                <!-- Quick Links - Only shown for tenant users -->
-                @if(session('tenant_user') || (Auth::check() && Auth::user()->role !== 'admin'))
-                <li class="nav-item dropdown pe-2 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body font-weight-bold px-0" id="dropdownQuickLinks" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-th me-sm-1"></i>
-                        <span class="d-sm-inline d-none">
-                            Quick Links
-                            <i class="fas fa-chevron-down ms-1 text-xs"></i>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownQuickLinks">
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="{{ route('staff.index') }}">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-user-tie text-primary"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Staff Management
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="#">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-calendar-alt text-success"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Appointments
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="#">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto me-3">
-                                        <i class="fas fa-paw text-info"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Patients
-                                        </h6>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endif
-                
-                <li class="nav-item d-flex align-items-center">
-                    <a href="{{ route('profile.edit') }}" class="nav-link text-body font-weight-bold px-0">
-                        <i class="fa fa-user me-sm-1"></i>
-                        <span class="d-sm-inline d-none">{{ Auth::user()->name ?? 'Profile' }}</span>
-                    </a>
-                </li>
-                
                 <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
                     <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
                         <div class="sidenav-toggler-inner">
@@ -181,87 +94,41 @@
                     </a>
                 </li>
                 
-                <li class="nav-item px-3 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body p-0">
-                        <i class="fa fa-cog fixed-plugin-button-nav cursor-pointer"></i>
+                @if(Auth::check())
+                <!-- Profile Link -->
+                <li class="nav-item d-flex align-items-center ms-2">
+                    <a href="{{ route('profile.edit') }}" class="nav-link text-body p-0">
+                        <i class="fa fa-user me-sm-1"></i>
                     </a>
-                </li>
-                
-                <li class="nav-item dropdown pe-2 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body p-0" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa fa-bell cursor-pointer"></i>
-                    </a>
-                    
-                    <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownMenuButton">
-                        <li class="mb-2">
-                            <a class="dropdown-item border-radius-md" href="javascript:;">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto">
-                                        <i class="fas fa-bell avatar avatar-sm bg-gradient-dark me-3"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            <span class="font-weight-bold">New notification</span>
-                                        </h6>
-                                        <p class="text-xs text-secondary mb-0">
-                                            <i class="fa fa-clock me-1"></i>
-                                            Just now
-                                        </p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        
-                        <li class="mb-2">
-                            <a class="dropdown-item border-radius-md" href="javascript:;">
-                                <div class="d-flex py-1">
-                                    <div class="my-auto">
-                                        <img src="{{ asset('assets/img/small-logos/logo-spotify.svg') }}" class="avatar avatar-sm bg-gradient-dark me-3">
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            <span class="font-weight-bold">Medication reminder</span> for Rex
-                                        </h6>
-                                        <p class="text-xs text-secondary mb-0">
-                                            <i class="fa fa-clock me-1"></i>
-                                            1 day ago
-                                        </p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        
-                        <li>
-                            <a class="dropdown-item border-radius-md" href="javascript:;">
-                                <div class="d-flex py-1">
-                                    <div class="avatar avatar-sm bg-gradient-secondary me-3 my-auto">
-                                        <i class="fa fa-calendar-check"></i>
-                                    </div>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="text-sm font-weight-normal mb-1">
-                                            Follow-up appointment scheduled
-                                        </h6>
-                                        <p class="text-xs text-secondary mb-0">
-                                            <i class="fa fa-clock me-1"></i>
-                                            2 days ago
-                                        </p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
                 
                 <!-- Logout -->
-                <li class="nav-item d-flex align-items-center">
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link text-body font-weight-bold px-0">
-                        <i class="fa fa-sign-out-alt me-sm-1"></i>
-                        <span class="d-sm-inline d-none">Logout</span>
+                <li class="nav-item d-flex align-items-center ms-2">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link text-body p-0">
+                        <i class="fa fa-sign-out-alt"></i>
                     </a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                         @csrf
                     </form>
                 </li>
+                @elseif(session()->has('tenant_user'))
+                <!-- Profile Link -->
+                <li class="nav-item d-flex align-items-center ms-2">
+                    <a href="{{ route('tenant.profile.edit') }}" class="nav-link text-body p-0">
+                        <i class="fa fa-user me-sm-1"></i>
+                    </a>
+                </li>
+                
+                <!-- Logout - For tenant users -->
+                <li class="nav-item d-flex align-items-center ms-2">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('tenant-logout-form').submit();" class="nav-link text-body p-0">
+                        <i class="fa fa-sign-out-alt"></i>
+                    </a>
+                    <form id="tenant-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
+                </li>
+                @endif
             </ul>
         </div>
     </div>

@@ -22,7 +22,7 @@ class ThemeServiceProvider extends ServiceProvider
     {
         // Share theme configurations with all views
         View::share('theme', [
-            'name' => 'VetClinic Admin',
+            'name' => 'Vet Clinic System',
             'version' => '1.0.0',
             'colors' => [
                 'primary' => '#5e72e4',

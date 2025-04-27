@@ -4,11 +4,43 @@
 @section('page_name', isset($readOnly) && $readOnly ? 'Clinic Information' : 'Clinic Profile Settings')
 
 @section('content')
+<style>
+    .logo-preview {
+        transition: all 0.3s ease;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .logo-preview:hover {
+        border-color: #5e72e4;
+        cursor: pointer;
+    }
+    
+    .logo-upload-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .logo-upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+    
+    #logo-preview {
+        transition: all 0.3s ease;
+    }
+</style>
+
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
             <div class="card card-body">
-                <h5 class="mb-4">{{ isset($readOnly) && $readOnly ? 'Clinic Information' : 'Clinic Profile Settings' }}</h5>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">{{ isset($readOnly) && $readOnly ? 'Clinic Information' : 'Clinic Profile Settings' }}</h5>
+                    @if(isset($readOnly) && $readOnly)
+                        <a href="{{ route('clinic.profile') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit me-1"></i> Edit Profile
+                        </a>
+                    @endif
+                </div>
                 
                 @if ($errors->any())
                 <div class="alert alert-danger">
@@ -92,18 +124,23 @@
                         <!-- Logo Upload Section -->
                         <div class="col-md-3 text-center">
                             <div class="mb-3">
-                                <div class="position-relative">
-                                    <img src="{{ $clinic->getLogoUrl() }}" alt="{{ $clinic->name }}" class="img-fluid rounded shadow mb-3" style="max-height: 150px; width: auto;" id="logo-preview">
+                                <div class="logo-container position-relative" style="max-width: 200px; margin: 0 auto;">
+                                    <div class="logo-preview rounded shadow mb-3" style="width: 200px; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa;">
+                                        <img src="{{ $clinic->getLogoUrl() }}" alt="{{ $clinic->name }}" class="img-fluid" id="logo-preview" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                    </div>
                                     
                                     <input type="file" name="logo" id="logo-upload" class="d-none" accept="image/*">
                                     
-                                    <label for="logo-upload" class="btn btn-sm btn-primary position-relative">
+                                    <label for="logo-upload" class="btn btn-sm btn-primary position-relative d-block mx-auto logo-upload-btn">
                                         <i class="fas fa-upload me-1"></i> Change Logo
                                     </label>
                                 </div>
-                                <small class="form-text text-muted">
+                                <small class="form-text text-muted d-block mt-2">
                                     Click to upload a logo. Recommended size: 200x200px.
                                 </small>
+                                <div id="logo-upload-info" class="mt-2 small text-info d-none">
+                                    <i class="fas fa-info-circle"></i> New logo selected
+                                </div>
                             </div>
                         </div>
                         
@@ -165,6 +202,9 @@
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save Changes
                                     </button>
+                                    <a href="{{ route('clinic.info') }}" class="btn btn-secondary ms-2">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -180,13 +220,36 @@
 @push('js')
 @if(!isset($readOnly) || !$readOnly)
 <script>
+    // Make the logo preview area clickable to trigger file selection
+    document.querySelector('.logo-preview').addEventListener('click', function() {
+        document.getElementById('logo-upload').click();
+    });
+    
     // Show image preview when a new logo is selected
     document.getElementById('logo-upload').addEventListener('change', function() {
         const file = this.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById('logo-preview').src = e.target.result;
+                const previewImg = document.getElementById('logo-preview');
+                previewImg.src = e.target.result;
+                
+                // Show the upload info message
+                const infoElement = document.getElementById('logo-upload-info');
+                infoElement.classList.remove('d-none');
+                infoElement.textContent = 'New logo selected: ' + file.name;
+                
+                // Highlight the container
+                const logoContainer = document.querySelector('.logo-preview');
+                logoContainer.style.borderColor = '#5e72e4';
+                logoContainer.style.borderStyle = 'solid';
+                
+                // Add animation effect
+                previewImg.style.transition = 'all 0.3s ease';
+                previewImg.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    previewImg.style.transform = 'scale(1)';
+                }, 300);
             }
             reader.readAsDataURL(file);
         }

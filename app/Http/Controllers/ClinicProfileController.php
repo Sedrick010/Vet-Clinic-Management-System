@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ClinicProfileController extends Controller
 {
@@ -25,9 +28,27 @@ class ClinicProfileController extends Controller
         
         $clinic = Clinic::findOrFail($clinicId);
         
+        // Check if user has edit permissions (must be owner or admin)
+        $canEdit = false;
+        
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            $canEdit = true;
+        } elseif (session()->has('tenant_user')) {
+            $tenantUser = (object)session('tenant_user');
+            $canEdit = ($tenantUser->role === 'owner' || $tenantUser->role === 'admin');
+            
+            // Log permission check
+            Log::info('Clinic profile edit permission check', [
+                'user_role' => $tenantUser->role,
+                'can_edit' => $canEdit,
+                'clinic_id' => $clinicId
+            ]);
+        }
+        
         return view('clinics.profile', [
             'clinic' => $clinic,
-            'isSidebar' => true
+            'isSidebar' => true,
+            'readOnly' => !$canEdit
         ]);
     }
     
@@ -45,6 +66,21 @@ class ClinicProfileController extends Controller
         }
         
         $clinic = Clinic::findOrFail($clinicId);
+        
+        // Check if user has edit permissions (must be owner or admin)
+        $canEdit = false;
+        
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            $canEdit = true;
+        } elseif (session()->has('tenant_user')) {
+            $tenantUser = (object)session('tenant_user');
+            $canEdit = ($tenantUser->role === 'owner' || $tenantUser->role === 'admin');
+        }
+        
+        if (!$canEdit) {
+            return redirect()->route('clinic.profile')
+                ->with('error', 'You do not have permission to edit clinic settings.');
+        }
         
         // Validate the request
         $validator = Validator::make($request->all(), [
@@ -80,6 +116,24 @@ class ClinicProfileController extends Controller
         // Handle logo upload
         if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
             $clinic->updateLogo($request->file('logo'));
+        }
+        
+        // If this is a tenant user (clinic owner), update the clinic name in the tenant database
+        if (session()->has('tenant_user')) {
+            try {
+                DB::connection('tenant')->table('clinic_settings')
+                    ->where('id', 1)
+                    ->update([
+                        'clinic_name' => $request->name,
+                        'clinic_address' => $request->address,
+                        'clinic_phone' => $request->phone,
+                        'clinic_email' => $request->email,
+                        'updated_at' => now()
+                    ]);
+            } catch (\Exception $e) {
+                // Log error but continue
+                Log::error('Failed to update clinic settings in tenant database: ' . $e->getMessage());
+            }
         }
         
         return redirect()->route('clinic.profile')

@@ -6,6 +6,9 @@ use Illuminate\Support\ServiceProvider;
 use App\Services\TenantDatabaseService;
 use App\Http\Middleware\CheckClinicActive;
 use App\Services\SubdomainService;
+use Illuminate\Support\Facades\View;
+use App\Models\Clinic;
+use App\Providers\ThemeServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CheckClinicActive::class, function ($app) {
             return new CheckClinicActive($app->make(SubdomainService::class));
         });
+        
+        // Register ThemeServiceProvider
+        $this->app->register(ThemeServiceProvider::class);
     }
 
     /**
@@ -35,6 +41,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Share the current clinic with all views
+        View::composer('*', function ($view) {
+            if (session()->has('current_clinic_id')) {
+                $clinicId = session('current_clinic_id');
+                $clinic = Clinic::find($clinicId);
+                if ($clinic) {
+                    $view->with('clinic', $clinic);
+                }
+            }
+        });
     }
 }

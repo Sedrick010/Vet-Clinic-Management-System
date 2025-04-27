@@ -127,7 +127,7 @@ class Clinic extends Model
         }
         
         // Default logo
-        return asset('images/default-clinic-logo.png');
+        return asset('images/logos/default-clinic-logo.png');
     }
     
     /**

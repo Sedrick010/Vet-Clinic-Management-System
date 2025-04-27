@@ -2,8 +2,13 @@
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand m-0" href="{{ route('dashboard') }}">
-            <img src="{{ asset('favicon.ico') }}" class="navbar-brand-img h-100" alt="main_logo">
-            <span class="ms-1 font-weight-bold">{{ $theme['name'] ?? 'Vet Clinic System' }}</span>
+            @if(session('current_clinic_id') && isset($clinic))
+                <img src="{{ $clinic->getLogoUrl() }}" class="navbar-brand-img h-100" alt="{{ $clinic->name }} logo" style="max-height: 40px; object-fit: contain;">
+                <span class="ms-1 font-weight-bold">{{ $clinic->name }}</span>
+            @else
+                <img src="{{ asset('favicon.ico') }}" class="navbar-brand-img h-100" alt="main_logo">
+                <span class="ms-1 font-weight-bold">Vet Clinic System</span>
+            @endif
         </a>
     </div>
     
@@ -219,13 +224,23 @@
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account</h6>
             </li>
             
+            <!-- Profile link -->
             <li class="nav-item">
+                @if(Auth::check())
                 <a class="nav-link {{ Request::is('profile') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user text-dark"></i>
+                        <i class="fas fa-user-circle text-dark"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Profile</span>
+                    <span class="nav-link-text ms-1">My Profile</span>
                 </a>
+                @elseif(session()->has('tenant_user'))
+                <a class="nav-link {{ Request::is('tenant/profile') ? 'active' : '' }}" href="{{ route('tenant.profile.edit') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-circle text-dark"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">My Profile</span>
+                </a>
+                @endif
             </li>
             
             <li class="nav-item">

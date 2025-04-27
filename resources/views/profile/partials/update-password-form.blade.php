@@ -9,54 +9,60 @@
         </p>
     </header>
 
-    <form method="post" action="{{ route('password.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('password.update') }}" class="mt-3">
         @csrf
         @method('put')
 
-        <div>
-            <x-input-label for="update_password_current_password" :value="__('Current Password')" />
-            <div class="relative">
-                <x-text-input id="update_password_current_password" name="current_password" type="password" class="mt-1 block w-full pr-10" autocomplete="current-password" />
-                <button type="button" onclick="togglePasswordVisibility('update_password_current_password')" class="absolute inset-y-0 right-0 px-3 flex items-center mt-1" tabindex="-1">
-                    <i id="update_password_current_password-toggle-icon" class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
-                </button>
+        <div class="form-group mb-3">
+            <label for="update_password_current_password" class="form-control-label">Current Password</label>
+            <div class="input-group">
+                <input id="update_password_current_password" name="current_password" type="password" class="form-control @error('current_password', 'updatePassword') is-invalid @enderror" autocomplete="current-password">
+                <span class="input-group-text">
+                    <button type="button" onclick="togglePasswordVisibility('update_password_current_password')" class="btn btn-link p-0 m-0 text-dark" tabindex="-1">
+                        <i id="update_password_current_password-toggle-icon" class="fas fa-eye"></i>
+                    </button>
+                </span>
+                @error('current_password', 'updatePassword')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
-            <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
         </div>
 
-        <div>
-            <x-input-label for="update_password_password" :value="__('New Password')" />
-            <div class="relative">
-                <x-text-input id="update_password_password" name="password" type="password" class="mt-1 block w-full pr-10" autocomplete="new-password" />
-                <button type="button" onclick="togglePasswordVisibility('update_password_password')" class="absolute inset-y-0 right-0 px-3 flex items-center mt-1" tabindex="-1">
-                    <i id="update_password_password-toggle-icon" class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
-                </button>
+        <div class="form-group mb-3">
+            <label for="update_password_password" class="form-control-label">New Password</label>
+            <div class="input-group">
+                <input id="update_password_password" name="password" type="password" class="form-control @error('password', 'updatePassword') is-invalid @enderror" autocomplete="new-password">
+                <span class="input-group-text">
+                    <button type="button" onclick="togglePasswordVisibility('update_password_password')" class="btn btn-link p-0 m-0 text-dark" tabindex="-1">
+                        <i id="update_password_password-toggle-icon" class="fas fa-eye"></i>
+                    </button>
+                </span>
+                @error('password', 'updatePassword')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
-            <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
         </div>
 
-        <div>
-            <x-input-label for="update_password_password_confirmation" :value="__('Confirm Password')" />
-            <div class="relative">
-                <x-text-input id="update_password_password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full pr-10" autocomplete="new-password" />
-                <button type="button" onclick="togglePasswordVisibility('update_password_password_confirmation')" class="absolute inset-y-0 right-0 px-3 flex items-center mt-1" tabindex="-1">
-                    <i id="update_password_password_confirmation-toggle-icon" class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
-                </button>
+        <div class="form-group mb-3">
+            <label for="update_password_password_confirmation" class="form-control-label">Confirm Password</label>
+            <div class="input-group">
+                <input id="update_password_password_confirmation" name="password_confirmation" type="password" class="form-control @error('password_confirmation', 'updatePassword') is-invalid @enderror" autocomplete="new-password">
+                <span class="input-group-text">
+                    <button type="button" onclick="togglePasswordVisibility('update_password_password_confirmation')" class="btn btn-link p-0 m-0 text-dark" tabindex="-1">
+                        <i id="update_password_password_confirmation-toggle-icon" class="fas fa-eye"></i>
+                    </button>
+                </span>
+                @error('password_confirmation', 'updatePassword')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
-            <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+        <div class="d-flex align-items-center gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Save</button>
 
             @if (session('status') === 'password-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600 dark:text-gray-400"
-                >{{ __('Saved.') }}</p>
+                <p class="text-sm text-success">Saved.</p>
             @endif
         </div>
     </form>
