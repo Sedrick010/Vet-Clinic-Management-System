@@ -47,4 +47,27 @@ class Appointment extends Model
     {
         return $this->staff();
     }
+    
+    /**
+     * Get the pet associated with this appointment
+     */
+    public function pet(): BelongsTo
+    {
+        return $this->belongsTo(Pet::class);
+    }
+    
+    /**
+     * Get the appropriate color class for the appointment status
+     */
+    public function getStatusColor(): string
+    {
+        return match($this->status) {
+            'completed' => 'success',
+            'cancelled' => 'danger',
+            'confirmed' => 'primary',
+            'no-show' => 'warning',
+            'scheduled' => 'info',
+            default => 'secondary',
+        };
+    }
 } 

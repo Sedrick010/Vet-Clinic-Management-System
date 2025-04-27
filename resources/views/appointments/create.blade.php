@@ -35,12 +35,36 @@
                     <form id="appointmentForm" method="POST" action="{{ route('appointments.store') }}">
                         @csrf
                         
-                        <!-- Client Information -->
+                        <!-- Client Selection -->
                         <div class="form-group mb-4">
-                            <label for="client_name" class="form-label fw-bold">Client Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('client_name') is-invalid @enderror" 
-                                   id="client_name" name="client_name" value="{{ old('client_name') }}" required>
-                            @error('client_name')
+                            <label for="client_id" class="form-label fw-bold">Select Client <span class="text-danger">*</span></label>
+                            <select class="form-control @error('client_id') is-invalid @enderror" 
+                                   id="client_id" name="client_id" required>
+                                <option value="">-- Select a Client --</option>
+                                @foreach($clients as $client)
+                                    <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                                        {{ $client->name }} {{ $client->email ? '('.$client->email.')' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">If the client is not listed, please <a href="{{ route('clients.create') }}" target="_blank">add a new client</a> first.</small>
+                            @error('client_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <!-- Hidden client name field to maintain compatibility -->
+                            <input type="hidden" id="client_name" name="client_name" value="{{ old('client_name') }}">
+                        </div>
+                        
+                        <!-- Pet Selection -->
+                        <div class="form-group mb-4">
+                            <label for="pet_id" class="form-label fw-bold">Select Pet <span class="text-danger">*</span></label>
+                            <select class="form-control @error('pet_id') is-invalid @enderror" 
+                                   id="pet_id" name="pet_id" required>
+                                <option value="">-- Select a Client First --</option>
+                            </select>
+                            <small class="form-text text-muted">If the pet is not listed, please <a href="{{ route('pets.create') }}" target="_blank">add a new pet</a> first.</small>
+                            @error('pet_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -114,7 +138,7 @@
 </div>
 @endsection
 
-@push('scripts')
+@push('js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Set minimum dates for appointment times
@@ -129,6 +153,79 @@
                 document.getElementById('end_time').value = this.value;
             }
         });
+        
+        // Client selection change handler
+        const clientSelect = document.getElementById('client_id');
+        const petSelect = document.getElementById('pet_id');
+        const clientNameInput = document.getElementById('client_name');
+        
+        clientSelect.addEventListener('change', function() {
+            const clientId = this.value;
+            
+            // Update the hidden client_name field with the selected client's name
+            if (clientId) {
+                const selectedOption = this.options[this.selectedIndex];
+                const clientName = selectedOption.text.split(' (')[0]; // Get just the name part
+                clientNameInput.value = clientName;
+                
+                // Fetch pets for the selected client
+                fetchPetsForClient(clientId);
+            } else {
+                // Clear the pet dropdown if no client is selected
+                petSelect.innerHTML = '<option value="">-- Select a Client First --</option>';
+                clientNameInput.value = '';
+            }
+        });
+        
+        // Function to fetch pets for a selected client
+        function fetchPetsForClient(clientId) {
+            petSelect.innerHTML = '<option value="">Loading pets...</option>';
+            
+            console.log(`Fetching pets for client ID: ${clientId}`);
+            
+            fetch(`/appointments/get-pets/${clientId}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`Network response error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Clear existing options
+                    petSelect.innerHTML = '';
+                    
+                    console.log('Pet data received:', data);
+                    
+                    // Check for pets in either data.data (new format) or data.pets (old format)
+                    const petsData = data.data || data.pets || [];
+                    
+                    if (data.success && petsData && petsData.length > 0) {
+                        // Add default option
+                        petSelect.innerHTML = '<option value="">-- Select a Pet --</option>';
+                        
+                        // Add the pets
+                        petsData.forEach(pet => {
+                            const option = document.createElement('option');
+                            option.value = pet.id;
+                            option.textContent = `${pet.name} (${pet.species}${pet.breed ? ' - ' + pet.breed : ''})`;
+                            petSelect.appendChild(option);
+                        });
+                    } else {
+                        console.log('No pets found or empty data:', data);
+                        petSelect.innerHTML = '<option value="">No pets found for this client</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching pets:', error);
+                    petSelect.innerHTML = '<option value="">Error loading pets. Please check console.</option>';
+                });
+        }
+        
+        // Initialize pets if a client is already selected (e.g., on form validation error)
+        if (clientSelect.value) {
+            fetchPetsForClient(clientSelect.value);
+        }
     });
 </script>
 @endpush 

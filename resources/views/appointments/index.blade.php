@@ -49,11 +49,7 @@
                                         </span>
                                     </td>
                                     <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-{{ 
-                                            $appointment->status === 'completed' ? 'success' : 
-                                            ($appointment->status === 'cancelled' ? 'danger' : 
-                                            ($appointment->status === 'confirmed' ? 'primary' : 'info')) 
-                                        }}">
+                                        <span class="badge badge-sm bg-gradient-{{ $appointment->getStatusColor() }}">
                                             {{ ucfirst($appointment->status) }}
                                         </span>
                                     </td>

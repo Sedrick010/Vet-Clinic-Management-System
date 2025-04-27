@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Client;
+use App\Models\Appointment;
 
 class Pet extends Model
 {
@@ -38,7 +40,7 @@ class Pet extends Model
      */
     public function owner()
     {
-        return $this->belongsTo(\App\Models\Client::class, 'owner_id')->on('tenant');
+        return $this->belongsTo(Client::class, 'owner_id');
     }
 
     /**
@@ -46,7 +48,7 @@ class Pet extends Model
      */
     public function client()
     {
-        return $this->belongsTo(\App\Models\Client::class, 'owner_id')->on('tenant');
+        return $this->belongsTo(Client::class, 'owner_id');
     }
 
     /**
@@ -54,6 +56,6 @@ class Pet extends Model
      */
     public function appointments()
     {
-        return $this->hasMany(\App\Models\Appointment::class)->on('tenant');
+        return $this->hasMany(Appointment::class);
     }
 } 

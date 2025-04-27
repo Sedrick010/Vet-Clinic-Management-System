@@ -166,6 +166,16 @@
                 </a>
             </li>
             
+            <!-- Clients Management -->
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('clients*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user text-primary"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Clients</span>
+                </a>
+            </li>
+            
             <!-- Pets Management -->
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('pets*') ? 'active' : '' }}" href="{{ route('pets.index') }}">

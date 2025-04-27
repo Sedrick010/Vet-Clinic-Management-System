@@ -215,12 +215,7 @@
                                                                 <p class="text-xs font-weight-bold mb-0">{{ $appointment->reason }}</p>
                                                             </td>
                                                             <td>
-                                                                <span class="badge bg-{{ 
-                                                                    $appointment->status === 'completed' ? 'success' : 
-                                                                    ($appointment->status === 'cancelled' ? 'danger' : 
-                                                                    ($appointment->status === 'confirmed' ? 'info' : 
-                                                                    ($appointment->status === 'no-show' ? 'warning' : 'secondary'))) 
-                                                                }}">
+                                                                <span class="badge bg-{{ $appointment->getStatusColor() }}">
                                                                     {{ ucfirst($appointment->status) }}
                                                                 </span>
                                                             </td>

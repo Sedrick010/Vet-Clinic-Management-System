@@ -257,6 +257,15 @@ Route::middleware([
         Route::put('/pets/{id}', [\App\Http\Controllers\PetController::class, 'update'])->name('pets.update');
         Route::delete('/pets/{id}', [\App\Http\Controllers\PetController::class, 'destroy'])->name('pets.destroy');
 
+        // Client routes
+        Route::get('/clients', [\App\Http\Controllers\ClientController::class, 'index'])->name('clients.index');
+        Route::get('/clients/create', [\App\Http\Controllers\ClientController::class, 'create'])->name('clients.create');
+        Route::post('/clients', [\App\Http\Controllers\ClientController::class, 'store'])->name('clients.store');
+        Route::get('/clients/{id}', [\App\Http\Controllers\ClientController::class, 'show'])->name('clients.show');
+        Route::get('/clients/{id}/edit', [\App\Http\Controllers\ClientController::class, 'edit'])->name('clients.edit');
+        Route::put('/clients/{id}', [\App\Http\Controllers\ClientController::class, 'update'])->name('clients.update');
+        Route::delete('/clients/{id}', [\App\Http\Controllers\ClientController::class, 'destroy'])->name('clients.destroy');
+
         // Appointment routes
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
@@ -355,4 +364,9 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicActive::class,
         \App\Http\Middleware\CheckClinicEnabled::class
     ]);
+
+    // Debug routes - only available in local environment
+    if (app()->environment('local')) {
+        Route::get('/debug/pets-check', [AppointmentController::class, 'debugPetsCheck'])->name('debug.pets-check');
+    }
 });

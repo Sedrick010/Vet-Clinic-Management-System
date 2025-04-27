@@ -52,6 +52,53 @@
                     </div>
 
                     <hr class="horizontal dark">
+                    
+                    <!-- Pet Information -->
+                    @if($appointment->pet)
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Pet Information</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="icon icon-shape icon-sm shadow border-radius-md text-white text-center me-2 d-flex align-items-center justify-content-center" 
+                                    style="background-color: 
+                                        @if($appointment->pet->species == 'Dog') #3498db
+                                        @elseif($appointment->pet->species == 'Cat') #f39c12
+                                        @elseif($appointment->pet->species == 'Bird') #2ecc71
+                                        @elseif($appointment->pet->species == 'Reptile') #27ae60
+                                        @else #95a5a6
+                                        @endif
+                                    ">
+                                    <i class="fas 
+                                        @if($appointment->pet->species == 'Dog') fa-dog
+                                        @elseif($appointment->pet->species == 'Cat') fa-cat
+                                        @elseif($appointment->pet->species == 'Bird') fa-dove
+                                        @elseif($appointment->pet->species == 'Reptile') fa-dragon
+                                        @else fa-paw
+                                        @endif
+                                        text-white">
+                                    </i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ $appointment->pet->name }}</h6>
+                                    <p class="text-sm mb-0">
+                                        {{ $appointment->pet->species }} 
+                                        @if($appointment->pet->breed)
+                                            - {{ $appointment->pet->breed }}
+                                        @endif
+                                        ({{ ucfirst($appointment->pet->gender ?? 'Unknown') }})
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <a href="{{ route('pets.show', $appointment->pet_id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View Pet Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <hr class="horizontal dark">
 
                     <div class="row">
                         <div class="col-md-6">
@@ -67,7 +114,7 @@
                         </div>
                         <div class="col-md-6">
                             <h6 class="text-uppercase text-body text-xs font-weight-bolder">Status</h6>
-                            <span class="badge badge-sm bg-gradient-{{ $appointment->status === 'completed' ? 'success' : ($appointment->status === 'cancelled' ? 'danger' : 'info') }}">
+                            <span class="badge badge-sm bg-gradient-{{ $appointment->getStatusColor() }}">
                                 {{ ucfirst($appointment->status) }}
                             </span>
                         </div>

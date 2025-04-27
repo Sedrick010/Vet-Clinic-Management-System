@@ -228,6 +228,14 @@ class AppointmentController extends Controller
             
             $pets = $petsQuery->orderBy('pets.name')->get();
             
+            // Log detailed information about the query and results
+            \Log::info("Pet data for client {$clientId}", [
+                'raw_sql' => $petsQuery->toSql(),
+                'bindings' => $petsQuery->getBindings(),
+                'pets_count' => $pets->count(),
+                'pet_data' => $pets->toArray()
+            ]);
+            
             // Force UTC timezone for serialization
             foreach ($pets as $pet) {
                 if (isset($pet->birthdate)) {
@@ -252,9 +260,14 @@ class AppointmentController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $pets,
+                'pets' => $pets,
                 'count' => $pets->count(),
                 'clientId' => $clientId,
-                'clinic' => $clinic->name
+                'clinic' => $clinic->name,
+                'debug' => [
+                    'hasPetsDeletedAt' => $hasPetsDeletedAt,
+                    'query' => 'SELECT pets.* FROM pets WHERE owner_id = ' . $clientId . ($hasPetsDeletedAt ? ' AND deleted_at IS NULL' : '')
+                ]
             ]);
             
         } catch (\Exception $e) {
@@ -290,7 +303,9 @@ class AppointmentController extends Controller
 
             // Validate basic fields
             $validated = $request->validate([
-                'client_name' => 'required|string|max:255',
+                'client_id' => 'required|exists:tenant.clients,id',
+                'client_name' => 'nullable|string|max:255',
+                'pet_id' => 'required|exists:tenant.pets,id',
                 'staff_id' => 'required|exists:tenant.staff,id',
                 'start_time' => 'required|date',
                 'end_time' => 'required|date|after:start_time',
@@ -298,11 +313,30 @@ class AppointmentController extends Controller
                 'notes' => 'nullable|string'
             ]);
 
+            // Get client name if not provided
+            if (empty($validated['client_name']) && isset($validated['client_id'])) {
+                $client = Client::find($validated['client_id']);
+                if ($client) {
+                    $validated['client_name'] = $client->name;
+                }
+            }
+
             // Set appointment status
             $validated['status'] = 'scheduled';
 
             // Create the appointment
             $appointment = Appointment::create($validated);
+
+            // Log successful appointment creation with pet information
+            $pet = Pet::find($request->pet_id);
+            \Log::info('Appointment created successfully', [
+                'appointment_id' => $appointment->id,
+                'client_id' => $validated['client_id'],
+                'client_name' => $validated['client_name'],
+                'pet_id' => $request->pet_id,
+                'pet_name' => $pet ? $pet->name : 'Unknown',
+                'start_time' => $validated['start_time']
+            ]);
 
             DB::commit();
 
@@ -312,12 +346,21 @@ class AppointmentController extends Controller
 
         } catch (ValidationException $e) {
             DB::rollBack();
+            \Log::error('Appointment validation failed', [
+                'errors' => $e->errors(),
+                'input' => $request->except(['_token'])
+            ]);
             return back()
                 ->withErrors($e->errors())
                 ->withInput()
                 ->with('error', 'Please check the form for errors.');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Appointment creation failed: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create appointment: ' . $e->getMessage());
@@ -334,7 +377,7 @@ class AppointmentController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        $appointment = Appointment::with(['staff'])->findOrFail($id);
+        $appointment = Appointment::with(['staff', 'pet'])->findOrFail($id);
         
         return view('appointments.show', compact('appointment'));
     }
@@ -350,9 +393,49 @@ class AppointmentController extends Controller
         $this->tenantDatabaseService->switchToTenant($clinic);
 
         $appointment = Appointment::findOrFail($id);
+        
+        // Get all clients
+        $clients = Client::orderBy('name')->get();
+        
+        // Get list of pets for dropdown
+        $hasPetsDeletedAt = false;
+        try {
+            $hasPetsDeletedAt = Schema::connection('tenant')->hasColumn('pets', 'deleted_at');
+        } catch (\Exception $e) {
+            \Log::error('Error checking for pets.deleted_at column: ' . $e->getMessage());
+        }
+        
+        // Build the query for pets
+        $petsQuery = DB::connection('tenant')
+            ->table('pets')
+            ->join('clients', 'pets.owner_id', '=', 'clients.id')
+            ->select(
+                'pets.id', 
+                'pets.name', 
+                'pets.species', 
+                'pets.breed', 
+                'pets.gender', 
+                'clients.name as owner_name', 
+                'clients.id as owner_id'
+            );
+            
+        // Only apply the SoftDeletes condition if the column exists
+        if ($hasPetsDeletedAt) {
+            $petsQuery->whereNull('pets.deleted_at');
+        }
+        
+        // Get the results
+        $pets = $petsQuery->orderBy('pets.name')->get();
+        
+        // Get the selected pet if available
+        $selectedPet = null;
+        if (isset($appointment->pet_id)) {
+            $selectedPet = $petsQuery->where('pets.id', $appointment->pet_id)->first();
+        }
+        
         $staff = Staff::where('role', 'doctor')->orderBy('name')->get();
         
-        return view('appointments.edit', compact('appointment', 'staff'));
+        return view('appointments.edit', compact('appointment', 'staff', 'pets', 'selectedPet', 'clients'));
     }
 
     public function update(Request $request, $id)
@@ -372,12 +455,22 @@ class AppointmentController extends Controller
 
             // Validate basic fields
             $validated = $request->validate([
-                'client_name' => 'required|string|max:255',
+                'client_id' => 'required|exists:tenant.clients,id',
+                'client_name' => 'nullable|string|max:255',
+                'pet_id' => 'required|exists:tenant.pets,id',
                 'start_time' => 'required|date',
                 'end_time' => 'required|date|after:start_time',
                 'reason' => 'required|string',
                 'notes' => 'nullable|string',
             ]);
+
+            // Get client name if not provided
+            if (empty($validated['client_name']) && isset($validated['client_id'])) {
+                $client = Client::find($validated['client_id']);
+                if ($client) {
+                    $validated['client_name'] = $client->name;
+                }
+            }
 
             // Update the staff if specified
             if ($request->has('staff_id')) {
@@ -388,6 +481,17 @@ class AppointmentController extends Controller
             }
 
             $appointment->update($validated);
+            
+            // Log successful appointment update with pet information
+            $pet = Pet::find($request->pet_id);
+            \Log::info('Appointment updated successfully', [
+                'appointment_id' => $appointment->id,
+                'client_id' => $validated['client_id'],
+                'client_name' => $validated['client_name'],
+                'pet_id' => $request->pet_id,
+                'pet_name' => $pet ? $pet->name : 'Unknown',
+                'start_time' => $validated['start_time']
+            ]);
 
             DB::commit();
 
@@ -397,12 +501,23 @@ class AppointmentController extends Controller
 
         } catch (ValidationException $e) {
             DB::rollBack();
+            \Log::error('Appointment update validation failed', [
+                'appointment_id' => $id,
+                'errors' => $e->errors(),
+                'input' => $request->except(['_token', '_method'])
+            ]);
             return back()
                 ->withErrors($e->errors())
                 ->withInput()
                 ->with('error', 'Please check the form for errors.');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Appointment update failed: ' . $e->getMessage(), [
+                'appointment_id' => $id,
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             return back()
                 ->withInput()
                 ->with('error', 'Failed to update appointment: ' . $e->getMessage());
@@ -448,5 +563,59 @@ class AppointmentController extends Controller
         return redirect()
             ->route('appointments.index')
             ->with('success', 'Appointment deleted successfully.');
+    }
+
+    public function debugPetsCheck(Request $request)
+    {
+        $clinic = $this->getClinic($request);
+        if (!$clinic) {
+            return redirect()->route('login')
+                ->with('error', 'No clinic selected. Please login again.');
+        }
+
+        $this->tenantDatabaseService->switchToTenant($clinic);
+        
+        // Get all clients
+        $clients = Client::orderBy('name')->get();
+        
+        // Initialize array to store pets for each client
+        $clientPets = [];
+        
+        // Get pets for each client
+        foreach ($clients as $client) {
+            // Using the Pet model relationship
+            $clientPets[$client->id] = $client->pets()->get();
+        }
+        
+        // Also check with direct DB query
+        $query_results = [];
+        
+        foreach ($clients as $client) {
+            // Check if deleted_at column exists in pets table
+            $hasPetsDeletedAt = Schema::connection('tenant')->hasColumn('pets', 'deleted_at');
+            
+            // Get pets for the client using direct query
+            $petsQuery = DB::connection('tenant')
+                ->table('pets')
+                ->select('*')
+                ->where('owner_id', $client->id);
+                
+            // Only apply the SoftDeletes condition if the column exists
+            if ($hasPetsDeletedAt) {
+                $petsQuery->whereNull('deleted_at');
+            }
+            
+            $pets = $petsQuery->get();
+            
+            $query_results[$client->id] = [
+                'client_name' => $client->name,
+                'pets_count' => $pets->count(),
+                'pets' => $pets->toArray(),
+                'has_deleted_at' => $hasPetsDeletedAt,
+                'connection' => config('database.connections.tenant.database')
+            ];
+        }
+        
+        return view('debug.pets-check', compact('clients', 'clientPets', 'query_results'));
     }
 } 

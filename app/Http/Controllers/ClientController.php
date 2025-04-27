@@ -1,13 +1,13 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\Pet;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Services\TenantDatabaseService;
 use Illuminate\Support\Facades\Log;
 
-class PetController extends Controller
+class ClientController extends Controller
 {
     protected $tenantDatabaseService;
 
@@ -43,29 +43,14 @@ class PetController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        // Check if deleted_at column exists
-        $hasDeletedAt = false;
-        try {
-            $hasDeletedAt = \Illuminate\Support\Facades\Schema::connection('tenant')->hasColumn('pets', 'deleted_at');
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error checking for deleted_at column: ' . $e->getMessage());
-        }
-
-        $query = Pet::with('owner');
-        
-        // Only apply the SoftDeletes condition if the column exists
-        if ($hasDeletedAt) {
-            $query->whereNull('deleted_at');
-        }
-        
-        $pets = $query->orderBy('name')->paginate(10);
+        $clients = Client::orderBy('name')->paginate(10);
         
         // Get theme from clinic settings
         $theme = [];
         if (isset($clinic->settings['theme'])) {
             $theme = $clinic->settings['theme'];
         } else {
-            // Use the clinic's theme property instead of hardcoding 'light'
+            // Use the clinic's theme property
             $clinicTheme = $clinic->theme ?? 'default';
             $theme = [
                 'name' => $clinicTheme,
@@ -105,7 +90,7 @@ class PetController extends Controller
             }
         }
         
-        // Get tenant user data for the sidebar (from session)
+        // Get tenant user data for the sidebar
         $tenantUser = null;
         $userRole = 'staff';
         $userName = '';
@@ -116,10 +101,10 @@ class PetController extends Controller
             $userName = $tenantUser->name;
         }
         
-        // Set up admin menu if needed (for sidebar)
+        // Set up admin menu if needed
         $adminMenu = [];
         
-        return view('pets.index', compact('pets', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
+        return view('clients.index', compact('clients', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
             ->with('isSidebar', true);
     }
 
@@ -132,15 +117,13 @@ class PetController extends Controller
         }
 
         $this->tenantDatabaseService->switchToTenant($clinic);
-
-        $clients = Client::orderBy('name')->get();
         
         // Get theme from clinic settings
         $theme = [];
         if (isset($clinic->settings['theme'])) {
             $theme = $clinic->settings['theme'];
         } else {
-            // Use the clinic's theme property instead of hardcoding 'light'
+            // Use the clinic's theme property
             $clinicTheme = $clinic->theme ?? 'default';
             $theme = [
                 'name' => $clinicTheme,
@@ -180,7 +163,7 @@ class PetController extends Controller
             }
         }
         
-        // Get tenant user data for the sidebar (from session)
+        // Get tenant user data for the sidebar
         $tenantUser = null;
         $userRole = 'staff';
         $userName = '';
@@ -191,15 +174,26 @@ class PetController extends Controller
             $userName = $tenantUser->name;
         }
         
-        // Set up admin menu if needed (for sidebar)
+        // Set up admin menu if needed
         $adminMenu = [];
         
-        return view('pets.create', compact('clients', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
+        return view('clients.create', compact('clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
             ->with('isSidebar', true);
     }
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'notes' => 'nullable|string'
+        ]);
+
         $clinic = $this->getClinic($request);
         if (!$clinic) {
             return redirect()->route('login')
@@ -208,23 +202,13 @@ class PetController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'owner_id' => 'required|exists:tenant.clients,id',
-            'species' => 'required|string|max:255',
-            'breed' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date',
-            'gender' => 'nullable|string|in:male,female,unknown',
-            'notes' => 'nullable|string'
-        ]);
-
         try {
-            Pet::create($validated);
-            return redirect()->route('pets.index')
-                ->with('success', 'Pet created successfully.');
+            Client::create($validated);
+            return redirect()->route('clients.index')
+                ->with('success', 'Client created successfully.');
         } catch (\Exception $e) {
-            Log::error('Failed to create pet: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Failed to create pet. Please try again.');
+            Log::error('Failed to create client: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to create client. Please try again.');
         }
     }
 
@@ -238,14 +222,14 @@ class PetController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        $pet = Pet::with(['owner', 'appointments'])->findOrFail($id);
+        $client = Client::with('pets')->findOrFail($id);
         
         // Get theme from clinic settings
         $theme = [];
         if (isset($clinic->settings['theme'])) {
             $theme = $clinic->settings['theme'];
         } else {
-            // Use the clinic's theme property instead of hardcoding 'light'
+            // Use the clinic's theme property
             $clinicTheme = $clinic->theme ?? 'default';
             $theme = [
                 'name' => $clinicTheme,
@@ -285,7 +269,7 @@ class PetController extends Controller
             }
         }
         
-        // Get tenant user data for the sidebar (from session)
+        // Get tenant user data for the sidebar
         $tenantUser = null;
         $userRole = 'staff';
         $userName = '';
@@ -296,10 +280,10 @@ class PetController extends Controller
             $userName = $tenantUser->name;
         }
         
-        // Set up admin menu if needed (for sidebar)
+        // Set up admin menu if needed
         $adminMenu = [];
         
-        return view('pets.show', compact('pet', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
+        return view('clients.show', compact('client', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
             ->with('isSidebar', true);
     }
 
@@ -313,15 +297,14 @@ class PetController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        $pet = Pet::findOrFail($id);
-        $clients = Client::orderBy('name')->get();
+        $client = Client::findOrFail($id);
         
         // Get theme from clinic settings
         $theme = [];
         if (isset($clinic->settings['theme'])) {
             $theme = $clinic->settings['theme'];
         } else {
-            // Use the clinic's theme property instead of hardcoding 'light'
+            // Use the clinic's theme property
             $clinicTheme = $clinic->theme ?? 'default';
             $theme = [
                 'name' => $clinicTheme,
@@ -361,7 +344,7 @@ class PetController extends Controller
             }
         }
         
-        // Get tenant user data for the sidebar (from session)
+        // Get tenant user data for the sidebar
         $tenantUser = null;
         $userRole = 'staff';
         $userName = '';
@@ -372,15 +355,26 @@ class PetController extends Controller
             $userName = $tenantUser->name;
         }
         
-        // Set up admin menu if needed (for sidebar)
+        // Set up admin menu if needed
         $adminMenu = [];
         
-        return view('pets.edit', compact('pet', 'clients', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
+        return view('clients.edit', compact('client', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
             ->with('isSidebar', true);
     }
 
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'notes' => 'nullable|string'
+        ]);
+
         $clinic = $this->getClinic($request);
         if (!$clinic) {
             return redirect()->route('login')
@@ -389,25 +383,15 @@ class PetController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'owner_id' => 'required|exists:tenant.clients,id',
-            'species' => 'required|string|max:255',
-            'breed' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date',
-            'gender' => 'nullable|string|in:male,female,unknown',
-            'notes' => 'nullable|string'
-        ]);
-
         try {
-            $pet = Pet::findOrFail($id);
-            $pet->update($validated);
+            $client = Client::findOrFail($id);
+            $client->update($validated);
             
-            return redirect()->route('pets.index')
-                ->with('success', 'Pet updated successfully.');
+            return redirect()->route('clients.index')
+                ->with('success', 'Client updated successfully.');
         } catch (\Exception $e) {
-            Log::error('Failed to update pet: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Failed to update pet. Please try again.');
+            Log::error('Failed to update client: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to update client. Please try again.');
         }
     }
 
@@ -422,14 +406,20 @@ class PetController extends Controller
         $this->tenantDatabaseService->switchToTenant($clinic);
 
         try {
-            $pet = Pet::findOrFail($id);
-            $pet->delete();
+            $client = Client::findOrFail($id);
             
-            return redirect()->route('pets.index')
-                ->with('success', 'Pet deleted successfully.');
+            // Check if client has pets
+            if ($client->pets()->count() > 0) {
+                return back()->with('error', 'Cannot delete client. Please remove all associated pets first.');
+            }
+            
+            $client->delete();
+            
+            return redirect()->route('clients.index')
+                ->with('success', 'Client deleted successfully.');
         } catch (\Exception $e) {
-            Log::error('Failed to delete pet: ' . $e->getMessage());
-            return back()->with('error', 'Failed to delete pet. Please try again.');
+            Log::error('Failed to delete client: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete client. Please try again.');
         }
     }
 } 

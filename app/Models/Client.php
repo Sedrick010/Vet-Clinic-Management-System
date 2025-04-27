@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Pet;
+use App\Models\Appointment;
 
 class Client extends Model
 {
@@ -29,11 +31,11 @@ class Client extends Model
     ];
 
     /**
-     * Get the pets that belong to this client.
+     * Get the pets for this client.
      */
-    public function pets(): HasMany
+    public function pets()
     {
-        return $this->hasMany(Pet::class, 'owner_id')->on($this->getConnectionName());
+        return $this->hasMany(Pet::class, 'owner_id');
     }
 
     /**
@@ -41,6 +43,6 @@ class Client extends Model
      */
     public function appointments(): HasMany
     {
-        return $this->hasMany(Appointment::class)->on($this->getConnectionName());
+        return $this->hasMany(Appointment::class);
     }
 } 
