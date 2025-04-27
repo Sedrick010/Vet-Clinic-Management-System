@@ -39,6 +39,7 @@ class Clinic extends Model
         'deactivation_reason',
         'is_enabled',
         'disable_reason',
+        'theme',
     ];
 
     /**
@@ -149,5 +150,51 @@ class Clinic extends Model
         ]);
         
         return $path;
+    }
+    
+    /**
+     * Get the theme configuration for the clinic
+     */
+    public function getThemeConfig(): array
+    {
+        $defaultTheme = [
+            'name' => 'default',
+            'colors' => [
+                'primary' => '#5e72e4',
+                'secondary' => '#8392ab',
+                'success' => '#2dce89',
+                'info' => '#11cdef',
+                'warning' => '#fb6340',
+                'danger' => '#f5365c',
+                'background' => '#f8f9fe',
+                'card' => '#ffffff',
+                'text' => '#344767',
+                'textSecondary' => '#67748e'
+            ]
+        ];
+        
+        $darkTheme = [
+            'name' => 'dark',
+            'colors' => [
+                'primary' => '#6f42c1',
+                'secondary' => '#4c566a',
+                'success' => '#40b983',
+                'info' => '#3498db',
+                'warning' => '#f39c12',
+                'danger' => '#e74c3c',
+                'background' => '#1e1e2d',
+                'card' => '#2a2a3c',
+                'cardSecondary' => '#323248',
+                'cardAccent' => '#252536',
+                'text' => '#e6e6e6',
+                'textSecondary' => '#b5b5c3'
+            ]
+        ];
+        
+        if ($this->theme === 'dark') {
+            return $darkTheme;
+        }
+        
+        return $defaultTheme;
     }
 } 

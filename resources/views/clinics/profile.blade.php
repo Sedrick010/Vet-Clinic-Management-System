@@ -107,9 +107,17 @@
                             
                             <!-- Description -->
                             <div class="col-md-12">
-                                <div class="form-group mb-4">
+                                <div class="form-group mb-3">
                                     <label class="form-control-label fw-bold">Description</label>
                                     <p>{{ $clinic->description ?: 'No description available.' }}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Theme -->
+                            <div class="col-md-12">
+                                <div class="form-group mb-4">
+                                    <label class="form-control-label fw-bold">Theme</label>
+                                    <p>{{ ucfirst($clinic->theme ?: 'Default') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -135,7 +143,7 @@
                                         <i class="fas fa-upload me-1"></i> Change Logo
                                     </label>
                                 </div>
-                                <small class="form-text text-muted d-block mt-2">
+                                <small class="form-text {{ $theme['name'] == 'dark' ? 'text-light opacity-75' : 'text-muted' }} d-block mt-2">
                                     Click to upload a logo. Recommended size: 200x200px.
                                 </small>
                                 <div id="logo-upload-info" class="mt-2 small text-info d-none">
@@ -176,9 +184,9 @@
                                         <label for="subdomain" class="form-control-label">Clinic URL</label>
                                         <div class="input-group">
                                             <span class="input-group-text">https://</span>
-                                            <input type="text" id="subdomain" class="form-control" value="{{ $clinic->subdomain }}.{{ parse_url(config('app.url'), PHP_URL_HOST) }}" readonly>
+                                            <input type="text" id="subdomain" class="form-control" value="{{ $clinic->subdomain }}.{{ parse_url(config('app.url'), PHP_URL_HOST) }}" readonly style="background-color: var(--card-secondary-color); color: var(--text-color);">
                                         </div>
-                                        <small class="form-text text-muted">Your clinic's custom URL cannot be changed.</small>
+                                        <small class="form-text {{ $theme['name'] == 'dark' ? 'text-light opacity-75' : 'text-muted' }}">Your clinic's custom URL cannot be changed.</small>
                                     </div>
                                 </div>
                                 
@@ -195,6 +203,61 @@
                                     <div class="form-group mb-4">
                                         <label for="description" class="form-control-label">Description</label>
                                         <textarea name="description" id="description" class="form-control" rows="4">{{ old('description', $clinic->description) }}</textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- Theme Selection -->
+                                <div class="col-md-12">
+                                    <div class="form-group mb-4">
+                                        <label class="form-control-label">Theme</label>
+                                        <div class="mt-2">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'default' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-default" value="default" {{ old('theme', $clinic->theme) == 'default' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-default">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Default Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #5e72e4;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f8f9fe; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #344767;"></span>
+                                                                </div>
+                                                                <div style="height: 60px; background-color: #f8f9fe; border-radius: 5px;" class="mb-2 d-flex align-items-center justify-content-center">
+                                                                    <div style="width: 80%; height: 30px; background-color: #ffffff; border-radius: 3px;">
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'dark' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-dark" value="dark" {{ old('theme', $clinic->theme) == 'dark' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-dark">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Dark Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #6f42c1;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #2a2a3c;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #1e1e2d;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #e6e6e6;"></span>
+                                                                </div>
+                                                                <div style="height: 60px; background-color: #1e1e2d; border-radius: 5px;" class="mb-2 d-flex align-items-center justify-content-center">
+                                                                    <div style="width: 80%; height: 30px; background-color: #2a2a3c; border-radius: 3px;">
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 

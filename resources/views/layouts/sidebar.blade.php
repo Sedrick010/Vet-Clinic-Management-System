@@ -1,18 +1,18 @@
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3" id="sidenav-main">
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3" id="sidenav-main" style="background-color: var(--card-color); box-shadow: {{ $theme['name'] == 'dark' ? '0 20px 27px 0 rgba(0,0,0,0.3)' : '0 20px 27px 0 rgba(0,0,0,0.05)' }};">
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand m-0" href="{{ route('dashboard') }}">
             @if(session('current_clinic_id') && isset($clinic))
                 <img src="{{ $clinic->getLogoUrl() }}" class="navbar-brand-img h-100" alt="{{ $clinic->name }} logo" style="max-height: 40px; object-fit: contain;">
-                <span class="ms-1 font-weight-bold">{{ $clinic->name }}</span>
+                <span class="ms-1 font-weight-bold" style="color: var(--text-color);">{{ $clinic->name }}</span>
             @else
                 <img src="{{ asset('favicon.ico') }}" class="navbar-brand-img h-100" alt="main_logo">
-                <span class="ms-1 font-weight-bold">Vet Clinic System</span>
+                <span class="ms-1 font-weight-bold" style="color: var(--text-color);">Vet Clinic System</span>
             @endif
         </a>
     </div>
     
-    <hr class="horizontal dark mt-0">
+    <hr class="horizontal {{ $theme['name'] == 'dark' ? 'light opacity-2' : 'dark' }} mt-0">
     
     <style>
     /* Custom styling for sidebar to maintain consistency */
@@ -20,16 +20,17 @@
         border-radius: 0.5rem;
         transition: all 0.3s ease;
         margin: 0.2rem 1rem;
+        color: var(--text-color);
     }
     
     .sidenav .nav-link:hover {
-        background-color: rgba(94, 114, 228, 0.1);
+        background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(94, 114, 228, 0.1)' }};
     }
     
     .sidenav .nav-link.active {
         background-color: {{ $theme['colors']['primary'] ?? '#5e72e4' }};
         background-image: linear-gradient(310deg, {{ $theme['colors']['primary'] ?? '#5e72e4' }} 0%, {{ $theme['colors']['secondary'] ?? '#825ee4' }} 100%);
-        box-shadow: 0 5px 15px rgba(94, 114, 228, 0.3);
+        box-shadow: 0 5px 15px {{ $theme['name'] == 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(94, 114, 228, 0.3)' }};
     }
     
     .sidenav .nav-link.active .icon-shape {
@@ -53,20 +54,28 @@
         align-items: center;
         justify-content: center;
         border-radius: 0.5rem;
-        background-color: #fff;
+        background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#fff' }};
         transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: {{ $theme['name'] == 'dark' ? '0 2px 5px rgba(0, 0, 0, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)' }};
+    }
+    
+    .sidenav .nav-link:not(.active) .icon-shape i {
+        color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'inherit' }} !important;
     }
     
     /* Custom colors for icons */
+    .text-primary, .text-info, .text-success, .text-warning, .text-danger, .text-dark, .text-purple {
+        color: {{ $theme['name'] == 'dark' ? '#ffffff' : 'inherit' }} !important;
+    }
+    
     .text-purple {
-        color: #8b5cf6 !important;
+        color: {{ $theme['name'] == 'dark' ? '#a78bfa' : '#8b5cf6' }} !important;
     }
     
     /* Admin dashboard icon */
     .admin-icon {
-        background: linear-gradient(310deg, #e14eca 0%, #ba54f5 100%);
-        color: white !important;
+        background: {{ $theme['name'] == 'dark' ? 'rgba(225, 78, 202, 0.2)' : 'linear-gradient(310deg, #e14eca 0%, #ba54f5 100%)' }};
+        color: {{ $theme['name'] == 'dark' ? '#e14eca' : 'white' }} !important;
     }
     
     .nav-link.active .admin-icon {
@@ -76,8 +85,8 @@
     
     /* Clinic management icon */
     .clinics-icon {
-        background: linear-gradient(310deg, #2dce89 0%, #2dcca8 100%);
-        color: white !important;
+        background: {{ $theme['name'] == 'dark' ? 'rgba(45, 206, 137, 0.2)' : 'linear-gradient(310deg, #2dce89 0%, #2dcca8 100%)' }};
+        color: {{ $theme['name'] == 'dark' ? '#2dce89' : 'white' }} !important;
     }
     
     .nav-link.active .clinics-icon {
@@ -90,7 +99,7 @@
         font-size: 0.65rem;
         margin-top: 1.5rem;
         margin-bottom: 0.5rem;
-        color: #8898aa;
+        color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#8898aa' }};
         font-weight: 700;
         letter-spacing: 0.03em;
     }
@@ -102,7 +111,7 @@
             @if(!Auth::check() || Auth::user()->role !== 'admin')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-tachometer-alt text-primary"></i>
                     </div>
                     <span class="nav-link-text ms-1">Dashboard</span>
@@ -127,7 +136,7 @@
                             $specialClass = 'clinics-icon';
                         }
                     @endphp
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center {{ $specialClass }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center {{ $specialClass }}">
                         <i class="{{ $menuItem['icon'] }} {{ $specialClass ? '' : 'text-'.$menuItem['color'] }}"></i>
                     </div>
                     <span class="nav-link-text ms-1">{{ $menuItem['name'] }}</span>
@@ -138,7 +147,7 @@
             <!-- Admin Subscription Management -->
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ route('subscription.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-gem text-info"></i>
                     </div>
                     <span class="nav-link-text ms-1">Subscriptions</span>
@@ -150,7 +159,7 @@
             @if(!Auth::check() || Auth::user()->role !== 'admin')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('appointments*') ? 'active' : '' }}" href="{{ route('appointments.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-calendar-alt text-success"></i>
                     </div>
                     <span class="nav-link-text ms-1">Appointments</span>
@@ -161,7 +170,7 @@
             @if(session('tenant_user') && session('current_clinic_id'))
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('inventory') ? 'active' : '' }}" href="{{ route('inventory.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-boxes text-info"></i>
                     </div>
                     <span class="nav-link-text ms-1">Inventory</span>
@@ -173,7 +182,7 @@
             @if(session('current_clinic_id') && Auth::check() && Auth::user()->role === 'owner')
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('staff*') ? 'active' : '' }}" href="{{ route('staff.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-user-tie text-purple"></i>
                     </div>
                     <span class="nav-link-text ms-1">Staff Management</span>
@@ -185,7 +194,7 @@
             @if(session('current_clinic_id'))
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('clinic-info') ? 'active' : '' }}" href="{{ route('clinic.info') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-hospital text-info"></i>
                     </div>
                     <span class="nav-link-text ms-1">Clinic Info</span>
@@ -196,7 +205,7 @@
             <!-- Subscription Management -->
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ route('subscription.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-gem text-warning"></i>
                     </div>
                     <span class="nav-link-text ms-1">Subscription</span>
@@ -210,7 +219,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('premium*') ? 'active' : '' }}" href="{{ route('premium.reports') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-chart-bar text-warning"></i>
                     </div>
                     <span class="nav-link-text ms-1">Premium Reports</span>
@@ -228,15 +237,15 @@
             <li class="nav-item">
                 @if(Auth::check())
                 <a class="nav-link {{ Request::is('profile') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user-circle text-dark"></i>
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-circle {{ $theme['name'] == 'dark' ? 'text-white' : 'text-dark' }}"></i>
                     </div>
                     <span class="nav-link-text ms-1">My Profile</span>
                 </a>
                 @elseif(session()->has('tenant_user'))
                 <a class="nav-link {{ Request::is('tenant/profile') ? 'active' : '' }}" href="{{ route('tenant.profile.edit') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user-circle text-dark"></i>
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user-circle {{ $theme['name'] == 'dark' ? 'text-white' : 'text-dark' }}"></i>
                     </div>
                     <span class="nav-link-text ms-1">My Profile</span>
                 </a>
@@ -245,7 +254,7 @@
             
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fas fa-sign-out-alt text-danger"></i>
                     </div>
                     <span class="nav-link-text ms-1">Logout</span>

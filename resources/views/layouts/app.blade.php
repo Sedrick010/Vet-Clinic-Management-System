@@ -17,6 +17,165 @@
         <!-- CSS Files -->
         <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
         
+        <!-- Theme styles -->
+        <style>
+            :root {
+                --primary-color: {{ $theme['colors']['primary'] }};
+                --secondary-color: {{ $theme['colors']['secondary'] }};
+                --success-color: {{ $theme['colors']['success'] }};
+                --info-color: {{ $theme['colors']['info'] }};
+                --warning-color: {{ $theme['colors']['warning'] }};
+                --danger-color: {{ $theme['colors']['danger'] }};
+                --background-color: {{ $theme['colors']['background'] ?? '#f8f9fe' }};
+                --card-color: {{ $theme['colors']['card'] ?? '#ffffff' }};
+                --card-secondary-color: {{ $theme['colors']['cardSecondary'] ?? '#f8f9fa' }};
+                --card-accent-color: {{ $theme['colors']['cardAccent'] ?? '#f0f2f5' }};
+                --text-color: {{ $theme['colors']['text'] ?? '#344767' }};
+                --text-secondary-color: {{ $theme['colors']['textSecondary'] ?? '#67748e' }};
+                --primary-gradient: {{ $theme['gradients']['primary'] }};
+                --success-gradient: {{ $theme['gradients']['success'] }};
+                --info-gradient: {{ $theme['gradients']['info'] }};
+                --warning-gradient: {{ $theme['gradients']['warning'] }};
+                --danger-gradient: {{ $theme['gradients']['danger'] }};
+            }
+            
+            body {
+                background-color: var(--background-color);
+                color: var(--text-color);
+            }
+            
+            .bg-primary {
+                background-color: var(--primary-color) !important;
+            }
+            
+            .bg-secondary {
+                background-color: var(--secondary-color) !important;
+            }
+            
+            .bg-success {
+                background-color: var(--success-color) !important;
+            }
+            
+            .bg-info {
+                background-color: var(--info-color) !important;
+            }
+            
+            .bg-warning {
+                background-color: var(--warning-color) !important;
+            }
+            
+            .bg-danger {
+                background-color: var(--danger-color) !important;
+            }
+            
+            .text-primary {
+                color: var(--primary-color) !important;
+            }
+            
+            .text-info {
+                color: {{ $theme['name'] == 'dark' ? '#5dd6ff' : 'var(--info-color)' }} !important;
+            }
+            
+            .text-success {
+                color: {{ $theme['name'] == 'dark' ? '#4ade80' : 'var(--success-color)' }} !important;
+            }
+            
+            .text-warning {
+                color: {{ $theme['name'] == 'dark' ? '#fbbf24' : 'var(--warning-color)' }} !important;
+            }
+            
+            .text-danger {
+                color: {{ $theme['name'] == 'dark' ? '#f87171' : 'var(--danger-color)' }} !important;
+            }
+            
+            .border-primary {
+                border-color: var(--primary-color) !important;
+            }
+            
+            .btn-primary {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+            
+            .btn-primary:hover {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+                opacity: 0.9;
+            }
+            
+            .card {
+                background-color: var(--card-color);
+                color: var(--text-color);
+            }
+            
+            .card-header {
+                background-color: var(--card-accent-color);
+            }
+            
+            .table {
+                color: var(--text-color);
+            }
+            
+            .navbar-light {
+                background-color: var(--card-color);
+            }
+            
+            .sidenav {
+                background-color: var(--card-color);
+            }
+            
+            .sidenav .nav-link {
+                color: var(--text-color);
+            }
+            
+            .sidenav .nav-link.active {
+                background-image: var(--primary-gradient);
+                color: white;
+            }
+            
+            .form-control {
+                background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'white' }};
+                color: var(--text-color);
+                border-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#d2d6da' }};
+            }
+            
+            .form-control:focus {
+                background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.07)' : 'white' }};
+                color: var(--text-color);
+            }
+            
+            .input-group-text {
+                background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f8f9fa' }};
+                color: var(--text-color);
+                border-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#d2d6da' }};
+            }
+            
+            .modal-content {
+                background-color: var(--card-color);
+                color: var(--text-color);
+            }
+            
+            .dropdown-menu {
+                background-color: var(--card-color);
+            }
+            
+            .dropdown-item {
+                color: var(--text-color);
+            }
+            
+            .dropdown-item:hover {
+                background-color: var(--card-accent-color);
+            }
+            
+            .footer {
+                background-color: var(--card-color);
+            }
+            
+            .form-text.text-muted {
+                color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6c757d' }} !important;
+            }
+        </style>
+        
         <!-- Custom CSS -->
         @stack('css')
         
@@ -31,7 +190,7 @@
         @endif
     </head>
 
-    <body class="g-sidenav-show bg-gray-100" @if(session('just_logged_out')) onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="" @endif>
+    <body class="g-sidenav-show {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-gray-100' }}" @if(session('just_logged_out')) onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="" @endif>
         @if(isset($isSidebar) && $isSidebar)
             @include('layouts.sidebar')
         @endif

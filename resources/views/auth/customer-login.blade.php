@@ -2,7 +2,11 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <div class="mb-4 text-center">
+    <!-- Clinic Logo -->
+    <div class="mb-6 text-center">
+        <div class="flex justify-center mb-4">
+            <img src="{{ $clinic->getLogoUrl() }}" alt="{{ $clinic->name }} Logo" class="max-w-[200px] max-h-[150px] object-contain rounded-lg shadow-md p-3 bg-white hover:shadow-lg transition-all duration-300" />
+        </div>
         <h2 class="text-2xl font-bold text-gray-900">{{ $clinic->name }}</h2>
         <p class="text-gray-600">Customer Login</p>
     </div>

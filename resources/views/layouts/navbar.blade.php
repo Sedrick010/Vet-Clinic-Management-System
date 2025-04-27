@@ -1,11 +1,11 @@
-<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true" style="background-color: var(--card-color);">
     <div class="container-fluid py-1 px-3">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
-                <li class="breadcrumb-item text-sm text-dark active" aria-current="page">@yield('page_name', 'Dashboard')</li>
+                <li class="breadcrumb-item text-sm"><a class="opacity-5" style="color: var(--text-color);" href="javascript:;">Pages</a></li>
+                <li class="breadcrumb-item text-sm active" style="color: var(--text-color);" aria-current="page">@yield('page_name', 'Dashboard')</li>
             </ol>
-            <h6 class="font-weight-bolder mb-0">@yield('page_name', 'Dashboard')</h6>
+            <h6 class="font-weight-bolder mb-0" style="color: var(--text-color);">@yield('page_name', 'Dashboard')</h6>
         </nav>
         
         <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
@@ -21,16 +21,16 @@
                     @endphp
                     @if($clinic)
                     <div class="d-flex flex-column me-4">
-                        <p class="mb-0 text-xs text-secondary">Current Clinic</p>
-                        <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                        <p class="mb-0 text-xs" style="color: var(--text-secondary-color);">Current Clinic</p>
+                        <h6 class="mb-0 text-sm" style="color: var(--text-color);">{{ $clinic->name }}</h6>
                     </div>
                     @endif
                     @endif
                     
                     <!-- User Info -->
                     <div class="d-flex flex-column me-3">
-                        <h6 class="mb-0 text-sm">{{ Auth::user()->name }}</h6>
-                        <p class="mb-0 text-xs text-secondary">
+                        <h6 class="mb-0 text-sm" style="color: var(--text-color);">{{ Auth::user()->name }}</h6>
+                        <p class="mb-0 text-xs" style="color: var(--text-secondary-color);">
                             @if(Auth::user()->role === 'admin')
                                 Administrator
                             @elseif(Auth::user()->role === 'owner')
@@ -57,15 +57,15 @@
                     @endphp
                     @if($clinic)
                     <div class="d-flex flex-column me-4">
-                        <p class="mb-0 text-xs text-secondary">Current Clinic</p>
-                        <h6 class="mb-0 text-sm">{{ $clinic->name }}</h6>
+                        <p class="mb-0 text-xs" style="color: var(--text-secondary-color);">Current Clinic</p>
+                        <h6 class="mb-0 text-sm" style="color: var(--text-color);">{{ $clinic->name }}</h6>
                     </div>
                     @endif
                     
                     <!-- Tenant User Info -->
                     <div class="d-flex flex-column me-3">
-                        <h6 class="mb-0 text-sm">{{ $tenantUser->name }}</h6>
-                        <p class="mb-0 text-xs text-secondary">
+                        <h6 class="mb-0 text-sm" style="color: var(--text-color);">{{ $tenantUser->name }}</h6>
+                        <p class="mb-0 text-xs" style="color: var(--text-secondary-color);">
                             @if($tenantUser->role === 'owner')
                                 Clinic Owner
                             @elseif($tenantUser->role === 'veterinarian')
@@ -85,11 +85,11 @@
             
             <ul class="navbar-nav justify-content-end">
                 <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                    <a href="javascript:;" class="nav-link p-0" id="iconNavbarSidenav" style="color: var(--text-color);">
                         <div class="sidenav-toggler-inner">
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line" style="background-color: var(--text-color);"></i>
+                            <i class="sidenav-toggler-line" style="background-color: var(--text-color);"></i>
+                            <i class="sidenav-toggler-line" style="background-color: var(--text-color);"></i>
                         </div>
                     </a>
                 </li>
@@ -97,14 +97,14 @@
                 @if(Auth::check())
                 <!-- Profile Link -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('profile.edit') }}" class="nav-link text-body p-0">
+                    <a href="{{ route('profile.edit') }}" class="nav-link p-0" style="color: var(--text-color);">
                         <i class="fa fa-user me-sm-1"></i>
                     </a>
                 </li>
                 
                 <!-- Logout -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link text-body p-0">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link p-0" style="color: var(--text-color);">
                         <i class="fa fa-sign-out-alt"></i>
                     </a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -114,14 +114,14 @@
                 @elseif(session()->has('tenant_user'))
                 <!-- Profile Link -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('tenant.profile.edit') }}" class="nav-link text-body p-0">
+                    <a href="{{ route('tenant.profile.edit') }}" class="nav-link p-0" style="color: var(--text-color);">
                         <i class="fa fa-user me-sm-1"></i>
                     </a>
                 </li>
                 
                 <!-- Logout - For tenant users -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('tenant-logout-form').submit();" class="nav-link text-body p-0">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('tenant-logout-form').submit();" class="nav-link p-0" style="color: var(--text-color);">
                         <i class="fa fa-sign-out-alt"></i>
                     </a>
                     <form id="tenant-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

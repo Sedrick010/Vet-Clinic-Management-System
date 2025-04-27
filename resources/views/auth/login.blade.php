@@ -14,6 +14,30 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <style>
+            .clinic-logo {
+                max-width: 200px;
+                max-height: 150px;
+                margin: 0 auto;
+                transition: all 0.3s ease;
+                object-fit: contain;
+            }
+            
+            .clinic-logo:hover {
+                transform: scale(1.05);
+            }
+            
+            .logo-container {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background-color: white;
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+        </style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
@@ -51,6 +75,15 @@
                                 <p class="text-sm opacity-80 mt-1">Main administration portal</p>
                             @endif
                         </div>
+                        
+                        <!-- Clinic Logo Section -->
+                        @if($clinic && $is_subdomain)
+                        <div class="px-6 pt-6">
+                            <div class="logo-container">
+                                <img src="{{ $clinic->getLogoUrl() }}" alt="{{ $clinic->name }} Logo" class="clinic-logo" />
+                            </div>
+                        </div>
+                        @endif
                         
                         <div class="p-6">
                             <!-- Session Status -->

@@ -1,5 +1,9 @@
 <x-guest-layout>
-    <div class="text-center mb-6">
+    <!-- Clinic Logo -->
+    <div class="mb-6 text-center">
+        <div class="flex justify-center mb-4">
+            <img src="{{ $clinic->getLogoUrl() }}" alt="{{ $clinic->name }} Logo" class="max-w-[200px] max-h-[150px] object-contain rounded-lg shadow-md p-3 bg-white hover:shadow-lg transition-all duration-300" />
+        </div>
         <h2 class="text-2xl font-bold text-gray-900">Register at {{ $clinic->name }}</h2>
     </div>
 

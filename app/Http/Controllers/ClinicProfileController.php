@@ -96,6 +96,7 @@ class ClinicProfileController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'theme' => ['required', 'string', 'in:default,dark'],
         ]);
         
         if ($validator->fails()) {
@@ -111,6 +112,7 @@ class ClinicProfileController extends Controller
             'phone' => $request->phone,
             'email' => $request->email,
             'description' => $request->description,
+            'theme' => $request->theme,
         ]);
         
         // Handle logo upload

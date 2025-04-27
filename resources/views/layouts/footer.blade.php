@@ -1,8 +1,8 @@
-<footer class="footer pt-3">
+<footer class="footer pt-3" style="background-color: var(--card-color);">
     <div class="container-fluid">
         <div class="row align-items-center justify-content-lg-between">
             <div class="col-lg-6 mb-lg-0 mb-4">
-                <div class="copyright text-center text-sm text-muted text-lg-start">
+                <div class="copyright text-center text-sm text-lg-start" style="color: var(--text-secondary-color);">
                     © <script>
                         document.write(new Date().getFullYear())
                     </script>,
@@ -12,16 +12,16 @@
             <div class="col-lg-6">
                 <ul class="nav nav-footer justify-content-center justify-content-lg-end">
                     <li class="nav-item">
-                        <a href="#" class="nav-link text-muted">Home</a>
+                        <a href="#" class="nav-link" style="color: var(--text-secondary-color);">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link text-muted">About Us</a>
+                        <a href="#" class="nav-link" style="color: var(--text-secondary-color);">About Us</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link text-muted">Services</a>
+                        <a href="#" class="nav-link" style="color: var(--text-secondary-color);">Services</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link text-muted">Contact</a>
+                        <a href="#" class="nav-link" style="color: var(--text-secondary-color);">Contact</a>
                     </li>
                 </ul>
             </div>
