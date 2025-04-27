@@ -166,6 +166,16 @@
                 </a>
             </li>
             
+            <!-- Pets Management -->
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('pets*') ? 'active' : '' }}" href="{{ route('pets.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-paw text-danger"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Pets</span>
+                </a>
+            </li>
+            
             <!-- Inventory Management - Only visible to clinic staff with active session -->
             @if(session('tenant_user') && session('current_clinic_id'))
             <li class="nav-item">

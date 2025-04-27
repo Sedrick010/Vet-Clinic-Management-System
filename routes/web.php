@@ -248,6 +248,15 @@ Route::middleware([
         Route::post('/staff/{id}/resend-invitation', [StaffController::class, 'resendInvitation'])->name('staff.resend-invitation');
         Route::post('/staff/{id}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
 
+        // Pet routes
+        Route::get('/pets', [\App\Http\Controllers\PetController::class, 'index'])->name('pets.index');
+        Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
+        Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');
+        Route::get('/pets/{id}', [\App\Http\Controllers\PetController::class, 'show'])->name('pets.show');
+        Route::get('/pets/{id}/edit', [\App\Http\Controllers\PetController::class, 'edit'])->name('pets.edit');
+        Route::put('/pets/{id}', [\App\Http\Controllers\PetController::class, 'update'])->name('pets.update');
+        Route::delete('/pets/{id}', [\App\Http\Controllers\PetController::class, 'destroy'])->name('pets.destroy');
+
         // Appointment routes
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');

@@ -39,9 +39,40 @@
                 --danger-gradient: {{ $theme['gradients']['danger'] }};
             }
             
+            /* Sticky Footer Setup */
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            
             body {
                 background-color: var(--background-color);
                 color: var(--text-color);
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .main-content {
+                flex: 1 0 auto;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .container-fluid.py-4 {
+                flex: 1 0 auto;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .content-wrapper {
+                flex: 1 0 auto;
+            }
+            
+            .footer {
+                flex-shrink: 0;
+                background-color: var(--card-color);
+                margin-top: auto;
+                width: 100%;
             }
             
             .bg-primary {
@@ -167,10 +198,6 @@
                 background-color: var(--card-accent-color);
             }
             
-            .footer {
-                background-color: var(--card-color);
-            }
-            
             .form-text.text-muted {
                 color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6c757d' }} !important;
             }
@@ -199,7 +226,9 @@
             @include('layouts.navbar')
             
             <div class="container-fluid py-4">
-                @yield('content')
+                <div class="content-wrapper">
+                    @yield('content')
+                </div>
                 
                 @include('layouts.footer')
             </div>

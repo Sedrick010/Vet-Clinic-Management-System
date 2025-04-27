@@ -319,7 +319,6 @@ class TenantDatabaseService
                 'database' => $clinic->database_name
             ]);
             
-            // Always throw the exception - we need ResolveTenant to catch it
             throw $e;
         }
     }
