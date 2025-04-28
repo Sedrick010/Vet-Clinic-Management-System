@@ -2,7 +2,7 @@
     <div class="container-fluid py-1 px-3">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                <li class="breadcrumb-item text-sm"><a class="opacity-5" style="color: var(--text-color);" href="javascript:;">Pages</a></li>
+                <li class="breadcrumb-item text-sm"><a class="opacity-5 text-decoration-none" style="color: var(--text-secondary-color);" href="javascript:;">Pages</a></li>
                 <li class="breadcrumb-item text-sm active" style="color: var(--text-color);" aria-current="page">@yield('page_name', 'Dashboard')</li>
             </ol>
             <h6 class="font-weight-bolder mb-0" style="color: var(--text-color);">@yield('page_name', 'Dashboard')</h6>
@@ -97,14 +97,14 @@
                 @if(Auth::check())
                 <!-- Profile Link -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('profile.edit') }}" class="nav-link p-0" style="color: var(--text-color);">
+                    <a href="{{ route('profile.edit') }}" class="nav-link p-0" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
                         <i class="fa fa-user me-sm-1"></i>
                     </a>
                 </li>
                 
                 <!-- Logout -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link p-0" style="color: var(--text-color);">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link p-0" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
                         <i class="fa fa-sign-out-alt"></i>
                     </a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -114,14 +114,14 @@
                 @elseif(session()->has('tenant_user'))
                 <!-- Profile Link -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('tenant.profile.edit') }}" class="nav-link p-0" style="color: var(--text-color);">
+                    <a href="{{ route('tenant.profile.edit') }}" class="nav-link p-0" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
                         <i class="fa fa-user me-sm-1"></i>
                     </a>
                 </li>
                 
                 <!-- Logout - For tenant users -->
                 <li class="nav-item d-flex align-items-center ms-2">
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('tenant-logout-form').submit();" class="nav-link p-0" style="color: var(--text-color);">
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('tenant-logout-form').submit();" class="nav-link p-0" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
                         <i class="fa fa-sign-out-alt"></i>
                     </a>
                     <form id="tenant-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

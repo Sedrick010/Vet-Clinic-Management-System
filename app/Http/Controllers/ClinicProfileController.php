@@ -96,7 +96,7 @@ class ClinicProfileController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'theme' => ['required', 'string', 'in:default,dark'],
+            'theme' => ['required', 'string', 'in:default,dark,forest,sunset,vintage,blossom,lagoon,amber'],
         ]);
         
         if ($validator->fails()) {

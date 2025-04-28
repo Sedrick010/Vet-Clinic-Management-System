@@ -11,11 +11,11 @@
 
 <style>
     :root {
-        --primary-gradient: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
-        --success-gradient: linear-gradient(310deg, #2dce89 0%, #4fd1c5 100%);
-        --warning-gradient: linear-gradient(310deg, #fb6340 0%, #fbb140 100%);
-        --danger-gradient: linear-gradient(310deg, #f5365c 0%, #f56036 100%);
-        --info-gradient: linear-gradient(310deg, #11cdef 0%, #1171ef 100%);
+        --primary-gradient: var(--primary-gradient);
+        --success-gradient: var(--success-gradient);
+        --warning-gradient: var(--warning-gradient);
+        --danger-gradient: var(--danger-gradient);
+        --info-gradient: var(--info-gradient);
     }
     
     .card {
@@ -127,12 +127,12 @@
     }
     .numbers .card-subtitle {
         font-size: 0.875rem;
-        color: #8898aa;
+        color: var(--text-secondary-color);
         margin-top: -5px;
     }
     .text-capitalize {
         font-weight: 600;
-        color: #8392ab;
+        color: var(--text-color);
         letter-spacing: 0.3px;
     }
     
@@ -166,14 +166,14 @@
         justify-content: center;
     }
     .btn-icon-only:hover {
-        background-color: #f6f9fc;
+        background-color: var(--card-secondary-color);
         transform: translateX(5px);
     }
     
     .page-header {
         padding: 1.75rem;
         border-radius: 18px;
-        background-color: #fff;
+        background-color: var(--card-color);
         margin-bottom: 28px;
         position: relative;
         overflow: hidden;
@@ -197,7 +197,7 @@
     .page-header h1 {
         font-size: 1.85rem;
         font-weight: 700;
-        color: #344767;
+        color: var(--text-color);
         margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
@@ -209,7 +209,7 @@
         -webkit-text-fill-color: transparent;
     }
     .page-header p {
-        color: #8392ab;
+        color: var(--text-secondary-color);
         font-weight: 400;
         max-width: 70%;
     }
@@ -251,23 +251,23 @@
         letter-spacing: 0.8px;
         font-weight: 700;
         padding: 12px 24px;
-        background-color: #f8f9fa;
+        background-color: var(--card-secondary-color);
     }
     .table td {
         padding: 14px 24px;
         vertical-align: middle;
     }
     .table tr {
-        border-bottom: 1px solid #f1f1f1;
+        border-bottom: 1px solid var(--card-secondary-color);
     }
     .table tbody tr:hover {
-        background-color: #f9fafc;
+        background-color: var(--card-accent-color);
     }
     
     .progress-container {
         height: 7px;
         margin-top: 5px;
-        background-color: #f1f3f9;
+        background-color: var(--card-secondary-color);
         border-radius: 10px;
         overflow: hidden;
     }
@@ -284,8 +284,8 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background-color: #f5365c;
-        color: white;
+        background-color: var(--danger-color);
+        color: var(--card-color);
         font-size: 0.7rem;
         display: flex;
         align-items: center;
@@ -299,7 +299,7 @@
         position: absolute;
         opacity: 0.1;
         z-index: 0;
-        color: #5e72e4;
+        color: var(--primary-color);
         animation: float 8s ease-in-out infinite;
     }
     
@@ -321,7 +321,7 @@
         height: 60px;
         border-radius: 50%;
         background-image: var(--primary-gradient);
-        color: white;
+        color: var(--card-color);
         display: flex;
         align-items: center;
         justify-content: center;

@@ -226,10 +226,6 @@
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f8f9fe; border: 1px solid #dee2e6;"></span>
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #344767;"></span>
                                                                 </div>
-                                                                <div style="height: 60px; background-color: #f8f9fe; border-radius: 5px;" class="mb-2 d-flex align-items-center justify-content-center">
-                                                                    <div style="width: 80%; height: 30px; background-color: #ffffff; border-radius: 3px;">
-                                                                    </div>
-                                                                </div>
                                                             </label>
                                                         </div>
                                                     </div>
@@ -248,9 +244,113 @@
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #1e1e2d;"></span>
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #e6e6e6;"></span>
                                                                 </div>
-                                                                <div style="height: 60px; background-color: #1e1e2d; border-radius: 5px;" class="mb-2 d-flex align-items-center justify-content-center">
-                                                                    <div style="width: 80%; height: 30px; background-color: #2a2a3c; border-radius: 3px;">
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'forest' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-forest" value="forest" {{ old('theme', $clinic->theme) == 'forest' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-forest">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Forest Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #2e7d32;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f1f8e9; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #1b5e20;"></span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'sunset' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-sunset" value="sunset" {{ old('theme', $clinic->theme) == 'sunset' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-sunset">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Sunset Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ff6b6b;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fff5f5; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #2b2d42;"></span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'vintage' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-vintage" value="vintage" {{ old('theme', $clinic->theme) == 'vintage' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-vintage">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Vintage Theme</strong>
                                                                     </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #8b4513;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fef3c7; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #422006;"></span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'blossom' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-blossom" value="blossom" {{ old('theme', $clinic->theme) == 'blossom' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-blossom">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Blossom Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #e75480;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fff0f6; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #b983ff;"></span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'lagoon' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-lagoon" value="lagoon" {{ old('theme', $clinic->theme) == 'lagoon' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-lagoon">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Lagoon Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #14b8a6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #cffafe; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ecfeff; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #134e4a;"></span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'amber' ? 'border border-primary' : 'border' }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-amber" value="amber" {{ old('theme', $clinic->theme) == 'amber' ? 'checked' : '' }}>
+                                                            <label class="form-check-label d-block" for="theme-amber">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <strong>Amber Theme</strong>
+                                                                </div>
+                                                                <div class="d-flex mb-3">
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f59e42;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fffbea; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fef3c7; border: 1px solid #dee2e6;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #78350f;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>

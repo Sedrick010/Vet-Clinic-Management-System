@@ -60,7 +60,13 @@ class ClientController extends Controller
                     'success' => '#2dce89',
                     'info' => '#11cdef',
                     'warning' => '#fb6340',
-                    'danger' => '#f5365c'
+                    'danger' => '#f5365c',
+                    'background' => '#f8f9fe',
+                    'card' => '#ffffff',
+                    'cardSecondary' => '#f8f9fa',
+                    'cardAccent' => '#f0f2f5',
+                    'text' => '#344767',
+                    'textSecondary' => '#67748e'
                 ],
                 'gradients' => [
                     'primary' => 'linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)',
@@ -71,22 +77,141 @@ class ClientController extends Controller
                 ]
             ];
             
-            // If the theme is dark, use dark mode colors
-            if ($clinicTheme === 'dark') {
-                $theme['colors'] = [
-                    'primary' => '#6f42c1',
-                    'secondary' => '#4c566a',
-                    'success' => '#40b983',
-                    'info' => '#3498db',
-                    'warning' => '#f39c12',
-                    'danger' => '#e74c3c',
-                    'background' => '#1e1e2d',
-                    'card' => '#2a2a3c',
-                    'cardSecondary' => '#323248',
-                    'cardAccent' => '#252536',
-                    'text' => '#e6e6e6',
-                    'textSecondary' => '#b5b5c3'
-                ];
+            // Apply theme-specific colors
+            switch ($clinicTheme) {
+                case 'dark':
+                    $theme['colors'] = [
+                        'primary' => '#6f42c1',
+                        'secondary' => '#4c566a',
+                        'success' => '#40b983',
+                        'info' => '#3498db',
+                        'warning' => '#f39c12',
+                        'danger' => '#e74c3c',
+                        'background' => '#1e1e2d',
+                        'card' => '#2a2a3c',
+                        'cardSecondary' => '#323248',
+                        'cardAccent' => '#252536',
+                        'text' => '#e6e6e6',
+                        'textSecondary' => '#b5b5c3'
+                    ];
+                    break;
+                case 'forest':
+                    $theme['colors'] = [
+                        'primary' => '#059669',
+                        'secondary' => '#4b5563',
+                        'success' => '#10b981',
+                        'info' => '#3b82f6',
+                        'warning' => '#f59e0b',
+                        'danger' => '#ef4444',
+                        'background' => '#f0fdf4',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ecfdf5',
+                        'cardAccent' => '#d1fae5',
+                        'text' => '#1f2937',
+                        'textSecondary' => '#4b5563'
+                    ];
+                    break;
+                case 'sunset':
+                    $theme['colors'] = [
+                        'primary' => '#ff6b6b',
+                        'secondary' => '#4a4a4a',
+                        'success' => '#4ecdc4',
+                        'info' => '#45b7d1',
+                        'warning' => '#ffbe0b',
+                        'danger' => '#ff4d6d',
+                        'background' => '#fff5f5',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe3e3',
+                        'cardAccent' => '#ffc9c9',
+                        'text' => '#2b2d42',
+                        'textSecondary' => '#4a4a4a'
+                    ];
+                    break;
+                case 'vintage':
+                    $theme['colors'] = [
+                        'primary' => '#8b4513',
+                        'secondary' => '#6b7280',
+                        'success' => '#059669',
+                        'info' => '#0ea5e9',
+                        'warning' => '#d97706',
+                        'danger' => '#b91c1c',
+                        'background' => '#fef3c7',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef9c3',
+                        'cardAccent' => '#fef08a',
+                        'text' => '#422006',
+                        'textSecondary' => '#78350f'
+                    ];
+                    break;
+                case 'blossom':
+                    $theme['colors'] = [
+                        'primary' => '#e75480',
+                        'secondary' => '#b983ff',
+                        'success' => '#a3e635',
+                        'info' => '#b983ff',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fff0f6',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe4fa',
+                        'cardAccent' => '#f3c4fb',
+                        'text' => '#7c2d12',
+                        'textSecondary' => '#a21caf'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #e75480 0%, #b983ff 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #b983ff 0%, #e75480 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'lagoon':
+                    $theme['colors'] = [
+                        'primary' => '#14b8a6',
+                        'secondary' => '#38bdf8',
+                        'success' => '#22d3ee',
+                        'info' => '#0ea5e9',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#ecfeff',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#cffafe',
+                        'cardAccent' => '#a7f3d0',
+                        'text' => '#134e4a',
+                        'textSecondary' => '#0e7490'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #14b8a6 0%, #38bdf8 100%)',
+                        'success' => 'linear-gradient(310deg, #22d3ee 0%, #0ea5e9 100%)',
+                        'info' => 'linear-gradient(310deg, #0ea5e9 0%, #38bdf8 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'amber':
+                    $theme['colors'] = [
+                        'primary' => '#f59e42',
+                        'secondary' => '#fbbf24',
+                        'success' => '#a3e635',
+                        'info' => '#fde68a',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fffbea',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef3c7',
+                        'cardAccent' => '#fde68a',
+                        'text' => '#78350f',
+                        'textSecondary' => '#b45309'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #f59e42 0%, #fbbf24 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #fde68a 0%, #fbbf24 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
             }
         }
         
@@ -133,7 +258,13 @@ class ClientController extends Controller
                     'success' => '#2dce89',
                     'info' => '#11cdef',
                     'warning' => '#fb6340',
-                    'danger' => '#f5365c'
+                    'danger' => '#f5365c',
+                    'background' => '#f8f9fe',
+                    'card' => '#ffffff',
+                    'cardSecondary' => '#f8f9fa',
+                    'cardAccent' => '#f0f2f5',
+                    'text' => '#344767',
+                    'textSecondary' => '#67748e'
                 ],
                 'gradients' => [
                     'primary' => 'linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)',
@@ -144,22 +275,141 @@ class ClientController extends Controller
                 ]
             ];
             
-            // If the theme is dark, use dark mode colors
-            if ($clinicTheme === 'dark') {
-                $theme['colors'] = [
-                    'primary' => '#6f42c1',
-                    'secondary' => '#4c566a',
-                    'success' => '#40b983',
-                    'info' => '#3498db',
-                    'warning' => '#f39c12',
-                    'danger' => '#e74c3c',
-                    'background' => '#1e1e2d',
-                    'card' => '#2a2a3c',
-                    'cardSecondary' => '#323248',
-                    'cardAccent' => '#252536',
-                    'text' => '#e6e6e6',
-                    'textSecondary' => '#b5b5c3'
-                ];
+            // Apply theme-specific colors
+            switch ($clinicTheme) {
+                case 'dark':
+                    $theme['colors'] = [
+                        'primary' => '#6f42c1',
+                        'secondary' => '#4c566a',
+                        'success' => '#40b983',
+                        'info' => '#3498db',
+                        'warning' => '#f39c12',
+                        'danger' => '#e74c3c',
+                        'background' => '#1e1e2d',
+                        'card' => '#2a2a3c',
+                        'cardSecondary' => '#323248',
+                        'cardAccent' => '#252536',
+                        'text' => '#e6e6e6',
+                        'textSecondary' => '#b5b5c3'
+                    ];
+                    break;
+                case 'forest':
+                    $theme['colors'] = [
+                        'primary' => '#059669',
+                        'secondary' => '#4b5563',
+                        'success' => '#10b981',
+                        'info' => '#3b82f6',
+                        'warning' => '#f59e0b',
+                        'danger' => '#ef4444',
+                        'background' => '#f0fdf4',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ecfdf5',
+                        'cardAccent' => '#d1fae5',
+                        'text' => '#1f2937',
+                        'textSecondary' => '#4b5563'
+                    ];
+                    break;
+                case 'sunset':
+                    $theme['colors'] = [
+                        'primary' => '#ff6b6b',
+                        'secondary' => '#4a4a4a',
+                        'success' => '#4ecdc4',
+                        'info' => '#45b7d1',
+                        'warning' => '#ffbe0b',
+                        'danger' => '#ff4d6d',
+                        'background' => '#fff5f5',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe3e3',
+                        'cardAccent' => '#ffc9c9',
+                        'text' => '#2b2d42',
+                        'textSecondary' => '#4a4a4a'
+                    ];
+                    break;
+                case 'vintage':
+                    $theme['colors'] = [
+                        'primary' => '#8b4513',
+                        'secondary' => '#6b7280',
+                        'success' => '#059669',
+                        'info' => '#0ea5e9',
+                        'warning' => '#d97706',
+                        'danger' => '#b91c1c',
+                        'background' => '#fef3c7',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef9c3',
+                        'cardAccent' => '#fef08a',
+                        'text' => '#422006',
+                        'textSecondary' => '#78350f'
+                    ];
+                    break;
+                case 'blossom':
+                    $theme['colors'] = [
+                        'primary' => '#e75480',
+                        'secondary' => '#b983ff',
+                        'success' => '#a3e635',
+                        'info' => '#b983ff',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fff0f6',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe4fa',
+                        'cardAccent' => '#f3c4fb',
+                        'text' => '#7c2d12',
+                        'textSecondary' => '#a21caf'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #e75480 0%, #b983ff 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #b983ff 0%, #e75480 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'lagoon':
+                    $theme['colors'] = [
+                        'primary' => '#14b8a6',
+                        'secondary' => '#38bdf8',
+                        'success' => '#22d3ee',
+                        'info' => '#0ea5e9',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#ecfeff',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#cffafe',
+                        'cardAccent' => '#a7f3d0',
+                        'text' => '#134e4a',
+                        'textSecondary' => '#0e7490'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #14b8a6 0%, #38bdf8 100%)',
+                        'success' => 'linear-gradient(310deg, #22d3ee 0%, #0ea5e9 100%)',
+                        'info' => 'linear-gradient(310deg, #0ea5e9 0%, #38bdf8 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'amber':
+                    $theme['colors'] = [
+                        'primary' => '#f59e42',
+                        'secondary' => '#fbbf24',
+                        'success' => '#a3e635',
+                        'info' => '#fde68a',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fffbea',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef3c7',
+                        'cardAccent' => '#fde68a',
+                        'text' => '#78350f',
+                        'textSecondary' => '#b45309'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #f59e42 0%, #fbbf24 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #fde68a 0%, #fbbf24 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
             }
         }
         
@@ -239,7 +489,13 @@ class ClientController extends Controller
                     'success' => '#2dce89',
                     'info' => '#11cdef',
                     'warning' => '#fb6340',
-                    'danger' => '#f5365c'
+                    'danger' => '#f5365c',
+                    'background' => '#f8f9fe',
+                    'card' => '#ffffff',
+                    'cardSecondary' => '#f8f9fa',
+                    'cardAccent' => '#f0f2f5',
+                    'text' => '#344767',
+                    'textSecondary' => '#67748e'
                 ],
                 'gradients' => [
                     'primary' => 'linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)',
@@ -250,22 +506,141 @@ class ClientController extends Controller
                 ]
             ];
             
-            // If the theme is dark, use dark mode colors
-            if ($clinicTheme === 'dark') {
-                $theme['colors'] = [
-                    'primary' => '#6f42c1',
-                    'secondary' => '#4c566a',
-                    'success' => '#40b983',
-                    'info' => '#3498db',
-                    'warning' => '#f39c12',
-                    'danger' => '#e74c3c',
-                    'background' => '#1e1e2d',
-                    'card' => '#2a2a3c',
-                    'cardSecondary' => '#323248',
-                    'cardAccent' => '#252536',
-                    'text' => '#e6e6e6',
-                    'textSecondary' => '#b5b5c3'
-                ];
+            // Apply theme-specific colors
+            switch ($clinicTheme) {
+                case 'dark':
+                    $theme['colors'] = [
+                        'primary' => '#6f42c1',
+                        'secondary' => '#4c566a',
+                        'success' => '#40b983',
+                        'info' => '#3498db',
+                        'warning' => '#f39c12',
+                        'danger' => '#e74c3c',
+                        'background' => '#1e1e2d',
+                        'card' => '#2a2a3c',
+                        'cardSecondary' => '#323248',
+                        'cardAccent' => '#252536',
+                        'text' => '#e6e6e6',
+                        'textSecondary' => '#b5b5c3'
+                    ];
+                    break;
+                case 'forest':
+                    $theme['colors'] = [
+                        'primary' => '#059669',
+                        'secondary' => '#4b5563',
+                        'success' => '#10b981',
+                        'info' => '#3b82f6',
+                        'warning' => '#f59e0b',
+                        'danger' => '#ef4444',
+                        'background' => '#f0fdf4',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ecfdf5',
+                        'cardAccent' => '#d1fae5',
+                        'text' => '#1f2937',
+                        'textSecondary' => '#4b5563'
+                    ];
+                    break;
+                case 'sunset':
+                    $theme['colors'] = [
+                        'primary' => '#ff6b6b',
+                        'secondary' => '#4a4a4a',
+                        'success' => '#4ecdc4',
+                        'info' => '#45b7d1',
+                        'warning' => '#ffbe0b',
+                        'danger' => '#ff4d6d',
+                        'background' => '#fff5f5',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe3e3',
+                        'cardAccent' => '#ffc9c9',
+                        'text' => '#2b2d42',
+                        'textSecondary' => '#4a4a4a'
+                    ];
+                    break;
+                case 'vintage':
+                    $theme['colors'] = [
+                        'primary' => '#8b4513',
+                        'secondary' => '#6b7280',
+                        'success' => '#059669',
+                        'info' => '#0ea5e9',
+                        'warning' => '#d97706',
+                        'danger' => '#b91c1c',
+                        'background' => '#fef3c7',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef9c3',
+                        'cardAccent' => '#fef08a',
+                        'text' => '#422006',
+                        'textSecondary' => '#78350f'
+                    ];
+                    break;
+                case 'blossom':
+                    $theme['colors'] = [
+                        'primary' => '#e75480',
+                        'secondary' => '#b983ff',
+                        'success' => '#a3e635',
+                        'info' => '#b983ff',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fff0f6',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe4fa',
+                        'cardAccent' => '#f3c4fb',
+                        'text' => '#7c2d12',
+                        'textSecondary' => '#a21caf'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #e75480 0%, #b983ff 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #b983ff 0%, #e75480 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'lagoon':
+                    $theme['colors'] = [
+                        'primary' => '#14b8a6',
+                        'secondary' => '#38bdf8',
+                        'success' => '#22d3ee',
+                        'info' => '#0ea5e9',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#ecfeff',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#cffafe',
+                        'cardAccent' => '#a7f3d0',
+                        'text' => '#134e4a',
+                        'textSecondary' => '#0e7490'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #14b8a6 0%, #38bdf8 100%)',
+                        'success' => 'linear-gradient(310deg, #22d3ee 0%, #0ea5e9 100%)',
+                        'info' => 'linear-gradient(310deg, #0ea5e9 0%, #38bdf8 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'amber':
+                    $theme['colors'] = [
+                        'primary' => '#f59e42',
+                        'secondary' => '#fbbf24',
+                        'success' => '#a3e635',
+                        'info' => '#fde68a',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fffbea',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef3c7',
+                        'cardAccent' => '#fde68a',
+                        'text' => '#78350f',
+                        'textSecondary' => '#b45309'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #f59e42 0%, #fbbf24 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #fde68a 0%, #fbbf24 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
             }
         }
         
@@ -314,7 +689,13 @@ class ClientController extends Controller
                     'success' => '#2dce89',
                     'info' => '#11cdef',
                     'warning' => '#fb6340',
-                    'danger' => '#f5365c'
+                    'danger' => '#f5365c',
+                    'background' => '#f8f9fe',
+                    'card' => '#ffffff',
+                    'cardSecondary' => '#f8f9fa',
+                    'cardAccent' => '#f0f2f5',
+                    'text' => '#344767',
+                    'textSecondary' => '#67748e'
                 ],
                 'gradients' => [
                     'primary' => 'linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)',
@@ -325,22 +706,141 @@ class ClientController extends Controller
                 ]
             ];
             
-            // If the theme is dark, use dark mode colors
-            if ($clinicTheme === 'dark') {
-                $theme['colors'] = [
-                    'primary' => '#6f42c1',
-                    'secondary' => '#4c566a',
-                    'success' => '#40b983',
-                    'info' => '#3498db',
-                    'warning' => '#f39c12',
-                    'danger' => '#e74c3c',
-                    'background' => '#1e1e2d',
-                    'card' => '#2a2a3c',
-                    'cardSecondary' => '#323248',
-                    'cardAccent' => '#252536',
-                    'text' => '#e6e6e6',
-                    'textSecondary' => '#b5b5c3'
-                ];
+            // Apply theme-specific colors
+            switch ($clinicTheme) {
+                case 'dark':
+                    $theme['colors'] = [
+                        'primary' => '#6f42c1',
+                        'secondary' => '#4c566a',
+                        'success' => '#40b983',
+                        'info' => '#3498db',
+                        'warning' => '#f39c12',
+                        'danger' => '#e74c3c',
+                        'background' => '#1e1e2d',
+                        'card' => '#2a2a3c',
+                        'cardSecondary' => '#323248',
+                        'cardAccent' => '#252536',
+                        'text' => '#e6e6e6',
+                        'textSecondary' => '#b5b5c3'
+                    ];
+                    break;
+                case 'forest':
+                    $theme['colors'] = [
+                        'primary' => '#059669',
+                        'secondary' => '#4b5563',
+                        'success' => '#10b981',
+                        'info' => '#3b82f6',
+                        'warning' => '#f59e0b',
+                        'danger' => '#ef4444',
+                        'background' => '#f0fdf4',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ecfdf5',
+                        'cardAccent' => '#d1fae5',
+                        'text' => '#1f2937',
+                        'textSecondary' => '#4b5563'
+                    ];
+                    break;
+                case 'sunset':
+                    $theme['colors'] = [
+                        'primary' => '#ff6b6b',
+                        'secondary' => '#4a4a4a',
+                        'success' => '#4ecdc4',
+                        'info' => '#45b7d1',
+                        'warning' => '#ffbe0b',
+                        'danger' => '#ff4d6d',
+                        'background' => '#fff5f5',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe3e3',
+                        'cardAccent' => '#ffc9c9',
+                        'text' => '#2b2d42',
+                        'textSecondary' => '#4a4a4a'
+                    ];
+                    break;
+                case 'vintage':
+                    $theme['colors'] = [
+                        'primary' => '#8b4513',
+                        'secondary' => '#6b7280',
+                        'success' => '#059669',
+                        'info' => '#0ea5e9',
+                        'warning' => '#d97706',
+                        'danger' => '#b91c1c',
+                        'background' => '#fef3c7',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef9c3',
+                        'cardAccent' => '#fef08a',
+                        'text' => '#422006',
+                        'textSecondary' => '#78350f'
+                    ];
+                    break;
+                case 'blossom':
+                    $theme['colors'] = [
+                        'primary' => '#e75480',
+                        'secondary' => '#b983ff',
+                        'success' => '#a3e635',
+                        'info' => '#b983ff',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fff0f6',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe4fa',
+                        'cardAccent' => '#f3c4fb',
+                        'text' => '#7c2d12',
+                        'textSecondary' => '#a21caf'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #e75480 0%, #b983ff 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #b983ff 0%, #e75480 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'lagoon':
+                    $theme['colors'] = [
+                        'primary' => '#14b8a6',
+                        'secondary' => '#38bdf8',
+                        'success' => '#22d3ee',
+                        'info' => '#0ea5e9',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#ecfeff',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#cffafe',
+                        'cardAccent' => '#a7f3d0',
+                        'text' => '#134e4a',
+                        'textSecondary' => '#0e7490'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #14b8a6 0%, #38bdf8 100%)',
+                        'success' => 'linear-gradient(310deg, #22d3ee 0%, #0ea5e9 100%)',
+                        'info' => 'linear-gradient(310deg, #0ea5e9 0%, #38bdf8 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
+                case 'amber':
+                    $theme['colors'] = [
+                        'primary' => '#f59e42',
+                        'secondary' => '#fbbf24',
+                        'success' => '#a3e635',
+                        'info' => '#fde68a',
+                        'warning' => '#fbbf24',
+                        'danger' => '#f43f5e',
+                        'background' => '#fffbea',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef3c7',
+                        'cardAccent' => '#fde68a',
+                        'text' => '#78350f',
+                        'textSecondary' => '#b45309'
+                    ];
+                    $theme['gradients'] = [
+                        'primary' => 'linear-gradient(310deg, #f59e42 0%, #fbbf24 100%)',
+                        'success' => 'linear-gradient(310deg, #a3e635 0%, #bef264 100%)',
+                        'info' => 'linear-gradient(310deg, #fde68a 0%, #fbbf24 100%)',
+                        'warning' => 'linear-gradient(310deg, #fbbf24 0%, #f59e42 100%)',
+                        'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
+                    ];
+                    break;
             }
         }
         

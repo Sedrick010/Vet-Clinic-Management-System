@@ -20,23 +20,23 @@
         <!-- Theme styles -->
         <style>
             :root {
-                --primary-color: {{ $theme['colors']['primary'] }};
-                --secondary-color: {{ $theme['colors']['secondary'] }};
-                --success-color: {{ $theme['colors']['success'] }};
-                --info-color: {{ $theme['colors']['info'] }};
-                --warning-color: {{ $theme['colors']['warning'] }};
-                --danger-color: {{ $theme['colors']['danger'] }};
-                --background-color: {{ $theme['colors']['background'] ?? '#f8f9fe' }};
-                --card-color: {{ $theme['colors']['card'] ?? '#ffffff' }};
-                --card-secondary-color: {{ $theme['colors']['cardSecondary'] ?? '#f8f9fa' }};
-                --card-accent-color: {{ $theme['colors']['cardAccent'] ?? '#f0f2f5' }};
-                --text-color: {{ $theme['colors']['text'] ?? '#344767' }};
-                --text-secondary-color: {{ $theme['colors']['textSecondary'] ?? '#67748e' }};
-                --primary-gradient: {{ $theme['gradients']['primary'] }};
-                --success-gradient: {{ $theme['gradients']['success'] }};
-                --info-gradient: {{ $theme['gradients']['info'] }};
-                --warning-gradient: {{ $theme['gradients']['warning'] }};
-                --danger-gradient: {{ $theme['gradients']['danger'] }};
+                --primary-color: {{ isset($theme['colors']['primary']) ? $theme['colors']['primary'] : (isset($theme->colors->primary) ? $theme->colors->primary : '#5e72e4') }};
+                --secondary-color: {{ isset($theme['colors']['secondary']) ? $theme['colors']['secondary'] : (isset($theme->colors->secondary) ? $theme->colors->secondary : '#8392ab') }};
+                --success-color: {{ isset($theme['colors']['success']) ? $theme['colors']['success'] : (isset($theme->colors->success) ? $theme->colors->success : '#2dce89') }};
+                --info-color: {{ isset($theme['colors']['info']) ? $theme['colors']['info'] : (isset($theme->colors->info) ? $theme->colors->info : '#11cdef') }};
+                --warning-color: {{ isset($theme['colors']['warning']) ? $theme['colors']['warning'] : (isset($theme->colors->warning) ? $theme->colors->warning : '#fb6340') }};
+                --danger-color: {{ isset($theme['colors']['danger']) ? $theme['colors']['danger'] : (isset($theme->colors->danger) ? $theme->colors->danger : '#f5365c') }};
+                --background-color: {{ isset($theme['colors']['background']) ? $theme['colors']['background'] : (isset($theme->colors->background) ? $theme->colors->background : '#f8f9fe') }};
+                --card-color: {{ isset($theme['colors']['card']) ? $theme['colors']['card'] : (isset($theme->colors->card) ? $theme->colors->card : '#ffffff') }};
+                --card-secondary-color: {{ isset($theme['colors']['cardSecondary']) ? $theme['colors']['cardSecondary'] : (isset($theme->colors->cardSecondary) ? $theme->colors->cardSecondary : '#f8f9fa') }};
+                --card-accent-color: {{ isset($theme['colors']['cardAccent']) ? $theme['colors']['cardAccent'] : (isset($theme->colors->cardAccent) ? $theme->colors->cardAccent : '#f0f2f5') }};
+                --text-color: {{ isset($theme['colors']['text']) ? $theme['colors']['text'] : (isset($theme->colors->text) ? $theme->colors->text : '#344767') }};
+                --text-secondary-color: {{ isset($theme['colors']['textSecondary']) ? $theme['colors']['textSecondary'] : (isset($theme->colors->textSecondary) ? $theme->colors->textSecondary : '#67748e') }};
+                --primary-gradient: {{ isset($theme['gradients']['primary']) ? $theme['gradients']['primary'] : (isset($theme->gradients->primary) ? $theme->gradients->primary : 'linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)') }};
+                --success-gradient: {{ isset($theme['gradients']['success']) ? $theme['gradients']['success'] : (isset($theme->gradients->success) ? $theme->gradients->success : 'linear-gradient(310deg, #2dce89 0%, #4fd1c5 100%)') }};
+                --info-gradient: {{ isset($theme['gradients']['info']) ? $theme['gradients']['info'] : (isset($theme->gradients->info) ? $theme->gradients->info : 'linear-gradient(310deg, #11cdef 0%, #1171ef 100%)') }};
+                --warning-gradient: {{ isset($theme['gradients']['warning']) ? $theme['gradients']['warning'] : (isset($theme->gradients->warning) ? $theme->gradients->warning : 'linear-gradient(310deg, #fb6340 0%, #fbb140 100%)') }};
+                --danger-gradient: {{ isset($theme['gradients']['danger']) ? $theme['gradients']['danger'] : (isset($theme->gradients->danger) ? $theme->gradients->danger : 'linear-gradient(310deg, #f5365c 0%, #f56036 100%)') }};
             }
             
             /* Sticky Footer Setup */
@@ -46,8 +46,8 @@
             }
             
             body {
-                background-color: var(--background-color);
-                color: var(--text-color);
+                background-color: var(--background-color) !important;
+                color: var(--text-color) !important;
                 display: flex;
                 flex-direction: column;
             }
@@ -56,16 +56,19 @@
                 flex: 1 0 auto;
                 display: flex;
                 flex-direction: column;
+                background: var(--background-color) !important;
             }
             
             .container-fluid.py-4 {
                 flex: 1 0 auto;
                 display: flex;
                 flex-direction: column;
+                background: transparent !important;
             }
             
             .content-wrapper {
                 flex: 1 0 auto;
+                background: transparent !important;
             }
             
             .footer {
@@ -104,19 +107,19 @@
             }
             
             .text-info {
-                color: {{ $theme['name'] == 'dark' ? '#5dd6ff' : 'var(--info-color)' }} !important;
+                color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? '#5dd6ff' : 'var(--info-color)' }} !important;
             }
             
             .text-success {
-                color: {{ $theme['name'] == 'dark' ? '#4ade80' : 'var(--success-color)' }} !important;
+                color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? '#4ade80' : 'var(--success-color)' }} !important;
             }
             
             .text-warning {
-                color: {{ $theme['name'] == 'dark' ? '#fbbf24' : 'var(--warning-color)' }} !important;
+                color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? '#fbbf24' : 'var(--warning-color)' }} !important;
             }
             
             .text-danger {
-                color: {{ $theme['name'] == 'dark' ? '#f87171' : 'var(--danger-color)' }} !important;
+                color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? '#f87171' : 'var(--danger-color)' }} !important;
             }
             
             .border-primary {
@@ -124,8 +127,9 @@
             }
             
             .btn-primary {
-                background-color: var(--primary-color);
-                border-color: var(--primary-color);
+                background-color: var(--primary-color) !important;
+                border-color: var(--primary-color) !important;
+                color: white !important;
             }
             
             .btn-primary:hover {
@@ -135,16 +139,29 @@
             }
             
             .card {
-                background-color: var(--card-color);
-                color: var(--text-color);
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--card-secondary-color) !important;
             }
             
             .card-header {
-                background-color: var(--card-accent-color);
+                background-color: var(--card-accent-color) !important;
+                color: var(--text-color) !important;
+                border-bottom-color: var(--card-secondary-color) !important;
             }
             
             .table {
-                color: var(--text-color);
+                color: var(--text-color) !important;
+            }
+            
+            .table thead th {
+                background-color: var(--card-accent-color) !important;
+                color: var(--text-color) !important;
+                border-bottom-color: var(--card-secondary-color) !important;
+            }
+            
+            .table tbody td {
+                border-bottom-color: var(--card-secondary-color) !important;
             }
             
             .navbar-light {
@@ -165,20 +182,20 @@
             }
             
             .form-control {
-                background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'white' }};
+                background-color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'white' }};
                 color: var(--text-color);
-                border-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#d2d6da' }};
+                border-color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#d2d6da' }};
             }
             
             .form-control:focus {
-                background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.07)' : 'white' }};
+                background-color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'rgba(255, 255, 255, 0.07)' : 'white' }};
                 color: var(--text-color);
             }
             
             .input-group-text {
-                background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f8f9fa' }};
+                background-color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f8f9fa' }};
                 color: var(--text-color);
-                border-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#d2d6da' }};
+                border-color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#d2d6da' }};
             }
             
             .modal-content {
@@ -199,7 +216,197 @@
             }
             
             .form-text.text-muted {
-                color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6c757d' }} !important;
+                color: {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6c757d' }} !important;
+            }
+
+            .bg-gray-100 {
+                background-color: var(--background-color) !important;
+            }
+
+            .bg-dark {
+                background-color: var(--background-color) !important;
+            }
+
+            .text-secondary {
+                color: var(--secondary-color) !important;
+            }
+            
+            .text-info {
+                color: var(--info-color) !important;
+            }
+            
+            .text-success {
+                color: var(--success-color) !important;
+            }
+            
+            .text-warning {
+                color: var(--warning-color) !important;
+            }
+            
+            .text-danger {
+                color: var(--danger-color) !important;
+            }
+            
+            .border-primary {
+                border-color: var(--primary-color) !important;
+            }
+            
+            .btn-primary {
+                background-color: var(--primary-color) !important;
+                border-color: var(--primary-color) !important;
+                color: white !important;
+            }
+            
+            .btn-primary:hover {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+                opacity: 0.9;
+            }
+            
+            .card {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--card-secondary-color) !important;
+            }
+            
+            .card-header {
+                background-color: var(--card-accent-color) !important;
+                color: var(--text-color) !important;
+                border-bottom-color: var(--card-secondary-color) !important;
+            }
+            
+            .table {
+                color: var(--text-color) !important;
+            }
+            
+            .table thead th {
+                background-color: var(--card-accent-color) !important;
+                color: var(--text-color) !important;
+                border-bottom-color: var(--card-secondary-color) !important;
+            }
+            
+            .table tbody td {
+                border-bottom-color: var(--card-secondary-color) !important;
+            }
+            
+            .navbar-light {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+            }
+            
+            .sidenav {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+            }
+            
+            .sidenav .nav-link {
+                color: var(--text-color) !important;
+            }
+            
+            .sidenav .nav-link.active {
+                background-image: var(--primary-gradient);
+                color: white !important;
+            }
+            
+            .form-control {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--card-secondary-color) !important;
+            }
+            
+            .form-control:focus {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--primary-color) !important;
+            }
+            
+            .input-group-text {
+                background-color: var(--card-accent-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--card-secondary-color) !important;
+            }
+            
+            .modal-content {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+            }
+            
+            .dropdown-menu {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+            }
+            
+            .dropdown-item {
+                color: var(--text-color) !important;
+            }
+            
+            .dropdown-item:hover {
+                background-color: var(--card-accent-color) !important;
+            }
+            
+            .form-text.text-muted {
+                color: var(--text-secondary-color) !important;
+            }
+
+            .nav-tabs .nav-link {
+                color: var(--text-color) !important;
+            }
+
+            .nav-tabs .nav-link.active {
+                background-color: var(--card-color) !important;
+                color: var(--primary-color) !important;
+                border-color: var(--card-secondary-color) var(--card-secondary-color) var(--card-color) !important;
+            }
+
+            .nav-tabs {
+                border-bottom-color: var(--card-secondary-color) !important;
+            }
+
+            .pagination .page-link {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--card-secondary-color) !important;
+            }
+
+            .pagination .page-item.active .page-link {
+                background-color: var(--primary-color) !important;
+                border-color: var(--primary-color) !important;
+            }
+
+            .alert {
+                background-color: var(--card-color) !important;
+                color: var(--text-color) !important;
+                border-color: var(--card-secondary-color) !important;
+            }
+
+            .alert-primary {
+                background-color: var(--card-accent-color) !important;
+                color: var(--primary-color) !important;
+                border-color: var(--primary-color) !important;
+            }
+
+            .alert-success {
+                background-color: var(--card-accent-color) !important;
+                color: var(--success-color) !important;
+                border-color: var(--success-color) !important;
+            }
+
+            .alert-info {
+                background-color: var(--card-accent-color) !important;
+                color: var(--info-color) !important;
+                border-color: var(--info-color) !important;
+            }
+
+            .alert-warning {
+                background-color: var(--card-accent-color) !important;
+                color: var(--warning-color) !important;
+                border-color: var(--warning-color) !important;
+            }
+
+            .alert-danger {
+                background-color: var(--card-accent-color) !important;
+                color: var(--danger-color) !important;
+                border-color: var(--danger-color) !important;
             }
         </style>
         
@@ -217,7 +424,7 @@
         @endif
     </head>
 
-    <body class="g-sidenav-show {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-gray-100' }}" @if(session('just_logged_out')) onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="" @endif>
+    <body class="g-sidenav-show {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'bg-dark' : 'bg-gray-100' }}" @if(session('just_logged_out')) onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="" @endif>
         @if(isset($isSidebar) && $isSidebar)
             @include('layouts.sidebar')
         @endif
@@ -352,9 +559,6 @@
                 @endif
             });
         </script>
-        
-        <!-- Chart.js -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         
         @stack('js')
     </body>
