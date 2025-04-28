@@ -62,12 +62,14 @@
                                 <tr>
                                     <th class="ps-0">Plan:</th>
                                     <td>
-                                        @if($subscription->plan == 'basic')
+                                        @if($subscription->plan == 'free')
+                                            <span class="fw-bold">Free Plan</span>
+                                        @elseif($subscription->plan == 'basic')
                                             <span class="fw-bold">Basic Plan</span>
                                         @elseif($subscription->plan == 'standard')
                                             <span class="fw-bold">Standard Plan</span>
-                                        @elseif($subscription->plan == 'premium')
-                                            <span class="fw-bold">Premium Plan</span>
+                                        @elseif($subscription->plan == 'business' || $subscription->plan == 'premium')
+                                            <span class="fw-bold">Business Plan</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -300,7 +302,7 @@
                                     Vet Accounts
                                     <span class="badge bg-primary rounded-pill">3</span>
                                 </li>
-                            @elseif($subscription->plan == 'premium')
+                            @elseif($subscription->plan == 'business' || $subscription->plan == 'premium')
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Patient Records
                                     <span class="badge bg-primary rounded-pill">Unlimited</span>
@@ -329,15 +331,33 @@
                     <table class="table table-borderless">
                         <tr>
                             <th class="ps-0">User:</th>
-                            <td>{{ $subscription->user->name }}</td>
+                            <td>
+                                @if($subscription->user)
+                                    {{ $subscription->user->name }}
+                                @else
+                                    {{ $subscription->guest_clinic_name ?? 'Guest' }}
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th class="ps-0">Email:</th>
-                            <td>{{ $subscription->user->email }}</td>
+                            <td>
+                                @if($subscription->user)
+                                    {{ $subscription->user->email }}
+                                @else
+                                    {{ $subscription->guest_email ?? 'N/A' }}
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th class="ps-0">Clinic:</th>
-                            <td>{{ $subscription->user->clinic->name ?? 'N/A' }}</td>
+                            <td>
+                                @if($subscription->user && $subscription->user->clinic)
+                                    {{ $subscription->user->clinic->name }}
+                                @else
+                                    {{ $subscription->guest_clinic_name ?? 'N/A' }}
+                                @endif
+                            </td>
                         </tr>
                     </table>
                 </div>

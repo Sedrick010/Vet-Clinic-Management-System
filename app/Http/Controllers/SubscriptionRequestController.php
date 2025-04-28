@@ -17,58 +17,149 @@ class SubscriptionRequestController extends Controller
      */
     public function index()
     {
-        // Handle case when user is not logged in
+        // For tenant users
+        if (session()->has('tenant_user') && session()->has('current_clinic_id')) {
+            $tenantUser = (object)session('tenant_user');
+            $clinicId = session('current_clinic_id');
+            
+            // Get the clinic
+            $clinic = \App\Models\Clinic::find($clinicId);
+            if (!$clinic) {
+                \Illuminate\Support\Facades\Log::error('Tenant subscription index: Clinic not found', [
+                    'tenant_user' => $tenantUser,
+                    'clinic_id' => $clinicId
+                ]);
+                
+                return view('subscription.index', [
+                    'subscriptions' => [],
+                    'activeSubscription' => null,
+                    'pendingSubscription' => null,
+                    'isSidebar' => true,
+                    'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
+                    'monthlyRequests' => ['labels' => [], 'data' => []],
+                    'monthlyRevenue' => ['labels' => [], 'data' => []],
+                    'stats' => [
+                        'totalActive' => 0,
+                        'totalPending' => 0,
+                        'totalRejected' => 0,
+                        'totalRevenue' => 0,
+                        'averageRevenue' => 0
+                    ]
+                ]);
+            }
+            
+            // Explicitly query subscriptions using the clinic's user_id
+            $ownerId = $clinic->user_id;
+            
+            \Illuminate\Support\Facades\Log::info('Tenant subscription index: Querying subscriptions', [
+                'tenant_user' => $tenantUser,
+                'clinic_id' => $clinicId,
+                'owner_id' => $ownerId
+            ]);
+            
+            // Direct query to the subscriptions table
+            $subscriptions = \App\Models\Subscription::where(function($query) use ($ownerId, $clinic) {
+                $query->where('user_id', $ownerId)
+                      ->orWhere('guest_clinic_name', $clinic->name);
+            })->latest()->get();
+            
+            $activeSubscription = $subscriptions->where('status', 'active')->first();
+            $pendingSubscription = $subscriptions->where('status', 'pending')->first();
+            
+            \Illuminate\Support\Facades\Log::info('Tenant subscription results', [
+                'subscription_count' => $subscriptions->count(),
+                'has_active' => !is_null($activeSubscription),
+                'has_pending' => !is_null($pendingSubscription)
+            ]);
+            
+            return view('subscription.index', [
+                'subscriptions' => $subscriptions,
+                'activeSubscription' => $activeSubscription,
+                'pendingSubscription' => $pendingSubscription,
+                'isSidebar' => true,
+                'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
+                'monthlyRequests' => ['labels' => [], 'data' => []],
+                'monthlyRevenue' => ['labels' => [], 'data' => []],
+                'stats' => [
+                    'totalActive' => 0,
+                    'totalPending' => 0,
+                    'totalRejected' => 0,
+                    'totalRevenue' => 0,
+                    'averageRevenue' => 0
+                ]
+            ]);
+        }
+        
+        // Handle case when user is not logged in and not a tenant
         if (!auth()->check()) {
             return view('subscription.index', [
                 'subscriptions' => [],
                 'activeSubscription' => null,
                 'pendingSubscription' => null,
                 'isSidebar' => true,
-                'planDistribution' => ['basic' => 0, 'standard' => 0, 'premium' => 0],
-                'monthlyRequests' => ['labels' => [], 'data' => []]
+                'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
+                'monthlyRequests' => ['labels' => [], 'data' => []],
+                'monthlyRevenue' => ['labels' => [], 'data' => []],
+                'stats' => [
+                    'totalActive' => 0,
+                    'totalPending' => 0,
+                    'totalRejected' => 0,
+                    'totalRevenue' => 0,
+                    'averageRevenue' => 0
+                ]
             ]);
         }
         
+        // For regular users (not tenants)
         $user = Auth::user();
         
         // Check if the user has an associated clinic
-        if (!$user->clinic) {
-            // For admin users or users without a clinic association
+        if (!$user->clinic && !$user->hasRole('admin')) {
+            // For users without a clinic association
             return view('subscription.index', [
                 'subscriptions' => [],
                 'activeSubscription' => null,
                 'pendingSubscription' => null,
                 'isSidebar' => true,
-                'planDistribution' => ['basic' => 0, 'standard' => 0, 'premium' => 0],
-                'monthlyRequests' => ['labels' => [], 'data' => []]
+                'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
+                'monthlyRequests' => ['labels' => [], 'data' => []],
+                'monthlyRevenue' => ['labels' => [], 'data' => []],
+                'stats' => [
+                    'totalActive' => 0,
+                    'totalPending' => 0,
+                    'totalRejected' => 0,
+                    'totalRevenue' => 0,
+                    'averageRevenue' => 0
+                ]
             ]);
         }
         
         $clinic = $user->clinic;
-        $activeSubscription = null;
-        $pendingSubscription = null;
         
-        // Get subscription data
+        // Get subscription data for admin or regular user
         $subscriptions = $user->hasRole('admin') 
             ? \App\Models\Subscription::with('user')->latest()->get()
             : \App\Models\Subscription::where('user_id', $user->id)->latest()->get();
-            
+        
         // Find active and pending subscriptions
-        foreach ($subscriptions as $subscription) {
-            if ($subscription->status == 'active') {
-                $activeSubscription = $subscription;
-            } elseif ($subscription->status == 'pending') {
-                $pendingSubscription = $subscription;
-            }
-        }
+        $activeSubscription = $subscriptions->where('status', 'active')->first();
+        $pendingSubscription = $subscriptions->where('status', 'pending')->first();
         
         // For admin users, prepare stats data
-        $planDistribution = ['basic' => 0, 'standard' => 0, 'premium' => 0];
+        $planDistribution = ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0];
         $monthlyRequests = ['labels' => [], 'data' => []];
+        $monthlyRevenue = ['labels' => [], 'data' => []];
+        $stats = [
+            'totalActive' => 0,
+            'totalPending' => 0,
+            'totalRejected' => 0,
+            'totalRevenue' => 0,
+            'averageRevenue' => 0
+        ];
         
         if ($user->hasRole('admin')) {
             // Get plan distribution
-            foreach ($subscriptions as $subscription) {
+            foreach ($subscriptions->where('status', 'active') as $subscription) {
                 if (isset($planDistribution[$subscription->plan])) {
                     $planDistribution[$subscription->plan]++;
                 }
@@ -76,18 +167,53 @@ class SubscriptionRequestController extends Controller
             
             // Get monthly subscription requests (last 6 months)
             $labels = [];
-            $data = [];
-            for ($i = 5; $i >= 0; $i--) {
-                $month = now()->subMonths($i);
-                $labels[] = $month->format('M Y');
-                $count = \App\Models\Subscription::whereYear('created_at', $month->year)
-                    ->whereMonth('created_at', $month->month)
-                    ->count();
-                $data[] = $count;
+            $requestData = [];
+            $revenueData = [];
+            $startDate = \Carbon\Carbon::now()->subMonths(5)->startOfMonth();
+            
+            for ($i = 0; $i < 6; $i++) {
+                $currentDate = clone $startDate;
+                $currentDate->addMonths($i);
+                $nextMonth = clone $currentDate;
+                $nextMonth->addMonth();
+                
+                $labels[] = $currentDate->format('M Y');
+                
+                // Count of new subscriptions for the month
+                $count = \App\Models\Subscription::whereBetween('created_at', [
+                    $currentDate->format('Y-m-d'),
+                    $nextMonth->format('Y-m-d')
+                ])->count();
+                
+                $requestData[] = $count;
+                
+                // Revenue from approved subscriptions for the month
+                $revenue = \App\Models\Subscription::whereBetween('approved_at', [
+                    $currentDate->format('Y-m-d'),
+                    $nextMonth->format('Y-m-d')
+                ])->where('status', 'active')
+                  ->sum('amount_paid');
+                
+                $revenueData[] = $revenue;
             }
+            
             $monthlyRequests = [
                 'labels' => $labels,
-                'data' => $data
+                'data' => $requestData
+            ];
+            
+            $monthlyRevenue = [
+                'labels' => $labels,
+                'data' => $revenueData
+            ];
+            
+            // Calculate total statistics
+            $stats = [
+                'totalActive' => \App\Models\Subscription::where('status', 'active')->count(),
+                'totalPending' => \App\Models\Subscription::where('status', 'pending')->count(),
+                'totalRejected' => \App\Models\Subscription::where('status', 'rejected')->count(),
+                'totalRevenue' => \App\Models\Subscription::where('status', 'active')->sum('amount_paid'),
+                'averageRevenue' => \App\Models\Subscription::where('status', 'active')->avg('amount_paid') ?? 0
             ];
         }
         
@@ -97,7 +223,9 @@ class SubscriptionRequestController extends Controller
             'pendingSubscription' => $pendingSubscription,
             'isSidebar' => true,
             'planDistribution' => $planDistribution,
-            'monthlyRequests' => $monthlyRequests
+            'monthlyRequests' => $monthlyRequests,
+            'monthlyRevenue' => $monthlyRevenue,
+            'stats' => $stats
         ]);
     }
     
@@ -121,7 +249,7 @@ class SubscriptionRequestController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plan' => 'required|string|in:basic,standard,premium',
+            'plan' => 'required|string|in:free,basic,standard,business',
             'duration' => 'required|integer|min:1|max:12',
             'payment_method' => 'required|string|in:bank_transfer,gcash,credit_card',
             'payment_reference' => 'nullable|string|max:255',
@@ -136,9 +264,10 @@ class SubscriptionRequestController extends Controller
         try {
             // Calculate amount based on plan and duration
             $planPrices = [
-                'basic' => 4999,
-                'standard' => 4999,
-                'premium' => 4999
+                'free' => 0,
+                'basic' => 599,
+                'standard' => 1599,
+                'business' => 3599
             ];
             
             $discounts = [
@@ -152,9 +281,31 @@ class SubscriptionRequestController extends Controller
             $discount = $discounts[$validated['duration']] ?? 0;
             $amount = $basePrice * $validated['duration'] * (1 - $discount);
             
+            // Determine the user_id based on who is making the request
+            $userId = null;
+            
+            // For authenticated users
+            if (auth()->check()) {
+                $userId = auth()->id();
+            } 
+            // For tenant users, use the clinic owner's ID
+            elseif (session()->has('tenant_user') && session()->has('current_clinic_id')) {
+                $clinicId = session('current_clinic_id');
+                $clinic = \App\Models\Clinic::find($clinicId);
+                
+                if ($clinic && $clinic->user_id) {
+                    $userId = $clinic->user_id;
+                    \Illuminate\Support\Facades\Log::info('Tenant user creating subscription for clinic owner', [
+                        'tenant_user' => session('tenant_user'),
+                        'clinic_id' => $clinicId,
+                        'owner_id' => $userId
+                    ]);
+                }
+            }
+            
             // Create the subscription without requiring a user_id
             $subscription = new \App\Models\Subscription([
-                'user_id' => auth()->check() ? auth()->id() : null, // Explicitly set to null for guests
+                'user_id' => $userId, // Will be null for guests, set for authenticated or tenant users
                 'plan' => $validated['plan'],
                 'duration' => $validated['duration'],
                 'payment_method' => $validated['payment_method'],
@@ -217,29 +368,83 @@ class SubscriptionRequestController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-        
-        // Check if the user exists
-        if (!$user) {
-            return redirect()->route('login');
+        // Handle case for tenant users
+        if (session()->has('tenant_user') && session()->has('current_clinic_id')) {
+            $tenantUser = (object)session('tenant_user');
+            $clinicId = session('current_clinic_id');
+            
+            // Get the clinic
+            $clinic = \App\Models\Clinic::find($clinicId);
+            if (!$clinic) {
+                \Illuminate\Support\Facades\Log::error('Tenant subscription show: Clinic not found', [
+                    'tenant_user' => $tenantUser,
+                    'clinic_id' => $clinicId,
+                    'subscription_id' => $id
+                ]);
+                
+                return redirect()->route('subscription.index')
+                    ->with('error', 'Clinic not found.');
+            }
+            
+            // Get subscription directly by ID
+            $subscription = \App\Models\Subscription::find($id);
+            
+            if (!$subscription) {
+                \Illuminate\Support\Facades\Log::error('Tenant subscription show: Subscription not found', [
+                    'tenant_user' => $tenantUser,
+                    'clinic_id' => $clinicId,
+                    'subscription_id' => $id
+                ]);
+                
+                return redirect()->route('subscription.index')
+                    ->with('error', 'Subscription not found.');
+            }
+            
+            // Log the subscription details for debugging
+            \Illuminate\Support\Facades\Log::info('Tenant subscription show: Found subscription', [
+                'tenant_user_role' => $tenantUser->role,
+                'clinic_id' => $clinicId,
+                'clinic_user_id' => $clinic->user_id,
+                'subscription_id' => $id,
+                'subscription_user_id' => $subscription->user_id,
+                'subscription_status' => $subscription->status
+            ]);
+            
+            // Allow tenant staff to view the subscription if it's linked to their clinic
+            return view('subscription.show', [
+                'subscription' => $subscription,
+                'isSidebar' => true,
+            ]);
         }
         
-        // Get the subscription
-        $subscription = null;
-        
-        if ($user->hasRole('admin')) {
-            // Admin can view any subscription
-            $subscription = \App\Models\Subscription::with('user')->findOrFail($id);
-        } else {
-            // Regular users can only view their own subscriptions
-            $subscription = \App\Models\Subscription::where('user_id', $user->id)
-                ->findOrFail($id);
+        // Handle case for authenticated users
+        if (auth()->check()) {
+            $user = Auth::user();
+            
+            // Check if the user exists
+            if (!$user) {
+                return redirect()->route('login');
+            }
+            
+            // Get the subscription
+            $subscription = null;
+            
+            if ($user->hasRole('admin')) {
+                // Admin can view any subscription
+                $subscription = \App\Models\Subscription::with('user')->findOrFail($id);
+            } else {
+                // Regular users can only view their own subscriptions
+                $subscription = \App\Models\Subscription::where('user_id', $user->id)
+                    ->findOrFail($id);
+            }
+            
+            return view('subscription.show', [
+                'subscription' => $subscription,
+                'isSidebar' => true,
+            ]);
         }
         
-        return view('subscription.show', [
-            'subscription' => $subscription,
-            'isSidebar' => true,
-        ]);
+        return redirect()->route('login');
     }
     
     /**
@@ -446,7 +651,7 @@ class SubscriptionRequestController extends Controller
         
         // Validate the request data
         $validated = $request->validate([
-            'plan' => 'required|string|in:basic,standard,premium',
+            'plan' => 'required|string|in:free,basic,standard,business',
             'duration' => 'required|integer|min:1|max:12',
             'payment_method' => 'required|string|in:bank_transfer,gcash,credit_card,maya',
             'payment_reference' => 'nullable|string|max:255',
@@ -458,9 +663,10 @@ class SubscriptionRequestController extends Controller
         try {
             // Calculate amount based on plan and duration
             $planPrices = [
-                'basic' => 4999,
-                'standard' => 4999,
-                'premium' => 4999
+                'free' => 0,
+                'basic' => 599,
+                'standard' => 1599,
+                'business' => 3599
             ];
             
             $discounts = [

@@ -352,10 +352,12 @@ Route::middleware([
         Route::post('/subscription/{id}/extend', [\App\Http\Controllers\SubscriptionRequestController::class, 'extend'])->name('subscription.extend');
     });
     
-    // Admin Subscription Routes
-    Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/subscription-requests', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'index'])->name('subscription-requests.index');
-        Route::get('/subscription-requests/{id}', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'show'])->name('subscription-requests.show');
+    // Admin subscription requests routes
+    Route::prefix('admin')->middleware(['auth', 'admin'])->group(function() {
+        Route::get('/subscription-requests', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'index'])->name('admin.subscription-requests.index');
+        Route::get('/subscription-requests/{id}', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'show'])->name('admin.subscription-requests.show');
+        Route::post('/subscription-requests/{id}/approve', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'approve'])->name('admin.subscription-requests.approve');
+        Route::post('/subscription-requests/{id}/reject', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'reject'])->name('admin.subscription-requests.reject');
     });
 
     // Update the clinic info route to use the ClinicProfileController instead of an inline route definition

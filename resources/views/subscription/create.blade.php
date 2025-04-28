@@ -30,6 +30,13 @@
                     New Subscription Request
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Please Note:</strong> All subscription requests require admin approval before they become active. 
+                        Once approved, you will gain access to all features included in your selected plan. 
+                        The approval process typically takes 1-2 business days.
+                    </div>
+                    
                     <form action="{{ route('subscription.store') }}" method="POST" id="subscriptionForm">
                         @csrf
                         
@@ -80,7 +87,30 @@
                                 <p class="text-muted">Choose the plan that best fits your clinic's needs</p>
                                 
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="card h-100 plan-card {{ request('plan') == 'free' ? 'border border-2 border-primary' : '' }}">
+                                            <div class="card-header bg-light">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="plan" 
+                                                        id="planFree" value="free" {{ request('plan') == 'free' ? 'checked' : '' }} 
+                                                        {{ old('plan') == 'free' ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-bold" for="planFree">
+                                                        Free Plan - ₱0/month
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <ul class="list-unstyled">
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 20 Appointments/month</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Basic Clinic Setup (Name)</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 1 admin account</li>
+                                                    <li class="mb-2"><i class="fas fa-times text-danger me-2"></i> No Premium Reports</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 mb-3">
                                         <div class="card h-100 plan-card {{ request('plan') == 'basic' ? 'border border-2 border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -88,23 +118,23 @@
                                                         id="planBasic" value="basic" {{ request('plan') == 'basic' ? 'checked' : '' }} 
                                                         {{ old('plan') == 'basic' ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-bold" for="planBasic">
-                                                        Basic Plan - ₱4,999/month
+                                                        Basic Plan - ₱599/month
                                                     </label>
                                                 </div>
                                             </div>
                                             <div class="card-body">
                                                 <ul class="list-unstyled">
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 100 patient records</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 2 staff accounts</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 1 veterinarian account</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Basic email support</li>
-                                                    <li class="mb-2"><i class="fas fa-times text-danger me-2"></i> No priority support</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 100 appointments/month</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Inventory for up to 200 products</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Basic Customization (Logo, 2 theme colors)</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 2 Admin/Staff Accounts</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Standard Reports (Appointment & Inventory Summary)</li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <div class="card h-100 plan-card {{ request('plan') == 'standard' || !request('plan') ? 'border border-2 border-primary' : '' }}">
                                             <div class="card-header bg-primary text-white">
                                                 <div class="form-check">
@@ -113,42 +143,43 @@
                                                         {{ (request('plan') == 'standard' || !request('plan')) && !old('plan') ? 'checked' : '' }}
                                                         {{ old('plan') == 'standard' ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-bold" for="planStandard">
-                                                        Standard Plan - ₱4,999/month
+                                                        Standard Plan - ₱1,599/month
                                                     </label>
                                                 </div>
                                                 <span class="badge bg-warning text-dark">Most Popular</span>
                                             </div>
                                             <div class="card-body">
                                                 <ul class="list-unstyled">
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 500 patient records</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 5 staff accounts</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 3 veterinarian accounts</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Priority email support</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Monthly usage reports</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 500 appointments/month</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Inventory for up to 500 products</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Full clinic customization (logo, banners, multiple theme colors)</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 5 staff accounts</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Full reports and basic analytics</li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-4 mb-3">
-                                        <div class="card h-100 plan-card {{ request('plan') == 'premium' ? 'border border-2 border-primary' : '' }}">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="card h-100 plan-card {{ request('plan') == 'business' ? 'border border-2 border-primary' : '' }}">
                                             <div class="card-header bg-dark text-white">
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="plan" 
-                                                        id="planPremium" value="premium" {{ request('plan') == 'premium' ? 'checked' : '' }}
-                                                        {{ old('plan') == 'premium' ? 'checked' : '' }}>
-                                                    <label class="form-check-label fw-bold" for="planPremium">
-                                                        Premium Plan - ₱4,999/month
+                                                        id="planBusiness" value="business" {{ request('plan') == 'business' ? 'checked' : '' }}
+                                                        {{ old('plan') == 'business' ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-bold" for="planBusiness">
+                                                        Business Plan - ₱3,599/month
                                                     </label>
                                                 </div>
                                             </div>
                                             <div class="card-body">
                                                 <ul class="list-unstyled">
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited patient records</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 10 staff accounts</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 5 veterinarian accounts</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 24/7 phone support</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Advanced analytics & reports</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited Appointments</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited inventory items</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Advanced customization</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited Staff Account</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Complete analytics and custom reporting</li>
+                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Patient Portal (Client can view their pet's info, appointment history)</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -298,9 +329,10 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Variables for plan prices
         const planPrices = {
-            'basic': 4999,
-            'standard': 4999,
-            'premium': 4999
+            'free': 0,
+            'basic': 599,
+            'standard': 1599,
+            'business': 3599
         };
         
         // Variables for duration discounts

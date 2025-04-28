@@ -558,6 +558,25 @@
                         </li>
                         <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
                             <div class="d-flex align-items-center">
+                                <div class="icon icon-shape icon-sm me-3 bg-gradient-info shadow text-center quick-action-icon">
+                                    <i class="fas fa-credit-card text-white opacity-10"></i>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <h6 class="mb-1 text-dark text-sm">Subscription Requests</h6>
+                                    <span class="text-xs">Manage clinic subscription plans and requests</span>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" style="width: 85%; background-image: var(--info-gradient)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex">
+                                <a href="{{ route('admin.subscription-requests.index') }}" class="btn btn-link btn-icon-only btn-rounded btn-sm text-dark icon-move-right my-auto">
+                                    <i class="fas fa-arrow-right text-sm"></i>
+                                </a>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                            <div class="d-flex align-items-center">
                                 <div class="icon icon-shape icon-sm me-3 bg-gradient-success shadow text-center quick-action-icon">
                                     <i class="fas fa-user-md text-white opacity-10"></i>
                                 </div>

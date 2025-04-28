@@ -353,6 +353,9 @@
             });
         </script>
         
+        <!-- Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        
         @stack('js')
     </body>
 </html>

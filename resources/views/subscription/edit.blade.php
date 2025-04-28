@@ -47,7 +47,29 @@
 
                             <div class="col-md-12 mb-3">
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="card h-100 {{ $subscription->plan == 'free' ? 'border-primary' : '' }}">
+                                            <div class="card-header bg-light">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="plan" id="freePlan" value="free" {{ $subscription->plan == 'free' ? 'checked' : '' }} required>
+                                                    <label class="form-check-label fw-bold" for="freePlan">
+                                                        Free Plan
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <h5 class="card-title text-primary">₱0/month</h5>
+                                                <ul class="list-unstyled">
+                                                    <li><i class="fas fa-check text-success me-2"></i> 20 Appointments/month</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Basic Clinic Setup (Name)</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> 1 admin account</li>
+                                                    <li><i class="fas fa-times text-danger me-2"></i> No Premium Reports</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 mb-3">
                                         <div class="card h-100 {{ $subscription->plan == 'basic' ? 'border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -58,18 +80,19 @@
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <h5 class="card-title text-primary">₱4,999/month</h5>
+                                                <h5 class="card-title text-primary">₱599/month</h5>
                                                 <ul class="list-unstyled">
-                                                    <li><i class="fas fa-check text-success me-2"></i> Up to 500 patient records</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 5 staff accounts</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 2 vet accounts</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Basic reporting</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Up to 100 appointments/month</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Inventory for up to 200 products</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Basic Customization (Logo, 2 theme colors)</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Up to 2 Admin/Staff Accounts</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Standard Reports</li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <div class="card h-100 {{ $subscription->plan == 'standard' ? 'border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -80,37 +103,37 @@
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <h5 class="card-title text-primary">₱4,999/month</h5>
+                                                <h5 class="card-title text-primary">₱1,599/month</h5>
                                                 <ul class="list-unstyled">
-                                                    <li><i class="fas fa-check text-success me-2"></i> Up to 2,000 patient records</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 10 staff accounts</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 5 vet accounts</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Advanced reporting</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Inventory management</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Up to 500 appointments/month</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Inventory for up to 500 products</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Full clinic customization (logo, banners, multiple theme colors)</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Up to 5 staff accounts</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Full reports and basic analytics</li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-4 mb-3">
-                                        <div class="card h-100 {{ $subscription->plan == 'premium' ? 'border-primary' : '' }}">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="card h-100 {{ $subscription->plan == 'business' ? 'border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="plan" id="premiumPlan" value="premium" {{ $subscription->plan == 'premium' ? 'checked' : '' }} required>
-                                                    <label class="form-check-label fw-bold" for="premiumPlan">
-                                                        Premium Plan
+                                                    <input class="form-check-input" type="radio" name="plan" id="businessPlan" value="business" {{ $subscription->plan == 'business' || $subscription->plan == 'premium' ? 'checked' : '' }} required>
+                                                    <label class="form-check-label fw-bold" for="businessPlan">
+                                                        Business Plan
                                                     </label>
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <h5 class="card-title text-primary">₱4,999/month</h5>
+                                                <h5 class="card-title text-primary">₱3,599/month</h5>
                                                 <ul class="list-unstyled">
-                                                    <li><i class="fas fa-check text-success me-2"></i> Unlimited patient records</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 20 staff accounts</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 10 vet accounts</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Premium reporting</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Full inventory management</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Priority support</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Unlimited Appointments</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Unlimited inventory items</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Advanced customization</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Unlimited Staff Account</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Complete analytics and custom reporting</li>
+                                                    <li><i class="fas fa-check text-success me-2"></i> Patient Portal</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -247,14 +270,17 @@
             
             let basePrice = 0;
             switch(selectedPlan) {
+                case 'free':
+                    basePrice = 0;
+                    break;
                 case 'basic':
-                    basePrice = 4999;
+                    basePrice = 599;
                     break;
                 case 'standard':
-                    basePrice = 4999;
+                    basePrice = 1599;
                     break;
-                case 'premium':
-                    basePrice = 4999;
+                case 'business':
+                    basePrice = 3599;
                     break;
             }
             

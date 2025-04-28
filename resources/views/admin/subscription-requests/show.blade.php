@@ -41,7 +41,7 @@
                         <i class="fas fa-info-circle me-1"></i>
                         Request Details
                     </div>
-                    <span class="badge bg-{{ $subscriptionRequest->status == 'pending' ? 'warning text-dark' : ($subscriptionRequest->status == 'approved' ? 'success' : 'danger') }}">
+                    <span class="badge bg-{{ $subscriptionRequest->status == 'pending' ? 'warning text-dark' : ($subscriptionRequest->status == 'approved' || $subscriptionRequest->status == 'active' ? 'success' : 'danger') }}">
                         {{ ucfirst($subscriptionRequest->status) }}
                     </span>
                 </div>
@@ -61,7 +61,7 @@
                         <div class="col-md-6 mb-3">
                             <h6 class="fw-bold text-muted">Plan Details</h6>
                             <p class="mb-0">
-                                <span class="badge bg-{{ $subscriptionRequest->plan == 'basic' ? 'secondary' : ($subscriptionRequest->plan == 'standard' ? 'info' : 'primary') }}">
+                                <span class="badge bg-{{ $subscriptionRequest->plan == 'free' ? 'secondary' : ($subscriptionRequest->plan == 'basic' ? 'info' : ($subscriptionRequest->plan == 'standard' ? 'primary' : 'dark')) }}">
                                     {{ ucfirst($subscriptionRequest->plan) }} Plan
                                 </span>
                                 for {{ $subscriptionRequest->duration }} month(s)
@@ -83,8 +83,9 @@
                         <div class="col-md-6 mb-3">
                             <h6 class="fw-bold text-muted">Request Dates</h6>
                             <p class="mb-0"><strong>Submitted:</strong> {{ $subscriptionRequest->created_at->format('M d, Y g:i A') }}</p>
-                            @if($subscriptionRequest->status == 'approved')
+                            @if($subscriptionRequest->status == 'approved' || $subscriptionRequest->status == 'active')
                             <p class="mb-0"><strong>Approved:</strong> {{ Carbon\Carbon::parse($subscriptionRequest->approved_at)->format('M d, Y g:i A') }}</p>
+                            <p class="mb-0"><strong>Expires:</strong> {{ Carbon\Carbon::parse($subscriptionRequest->expired_at)->format('M d, Y g:i A') }}</p>
                             @elseif($subscriptionRequest->status == 'rejected')
                             <p class="mb-0"><strong>Rejected:</strong> {{ Carbon\Carbon::parse($subscriptionRequest->rejected_at)->format('M d, Y g:i A') }}</p>
                             @endif
@@ -123,6 +124,60 @@
                         <div class="col-md-12">
                             <h6 class="fw-bold text-muted">Rejection Reason</h6>
                             <p class="mb-0">{{ $subscriptionRequest->rejection_reason }}</p>
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if($subscriptionRequest->status == 'pending')
+                    <hr>
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-check-circle me-1"></i> Approve Subscription
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ route('admin.subscription-requests.approve', $subscriptionRequest->id) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label for="expiration_date" class="form-label">Expiration Date <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="expiration_date" name="expiration_date" 
+                                                value="{{ Carbon\Carbon::now()->addMonths($subscriptionRequest->duration)->format('Y-m-d') }}" required>
+                                            <small class="text-muted">Default is {{ $subscriptionRequest->duration }} month(s) from today</small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="admin_notes" class="form-label">Admin Notes</label>
+                                            <textarea class="form-control" id="admin_notes" name="admin_notes" rows="3" placeholder="Optional notes about this approval"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="fas fa-check me-1"></i> Approve Request
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <i class="fas fa-times-circle me-1"></i> Reject Subscription
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ route('admin.subscription-requests.reject', $subscriptionRequest->id) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label for="rejection_reason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" placeholder="Provide reason for rejection" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="admin_notes_reject" class="form-label">Admin Notes</label>
+                                            <textarea class="form-control" id="admin_notes_reject" name="admin_notes" rows="3" placeholder="Optional internal notes"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger w-100">
+                                            <i class="fas fa-times me-1"></i> Reject Request
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     @endif
