@@ -96,13 +96,30 @@ class ClinicProfileController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'theme' => ['required', 'string', 'in:default,dark,forest,sunset,vintage,blossom,lagoon,amber'],
+            'theme' => ['required', 'string'],
         ]);
         
         if ($validator->fails()) {
             return back()
                 ->withErrors($validator)
                 ->withInput();
+        }
+        
+        // Enforce theme restrictions based on plan
+        $premiumThemes = ['forest','sunset','vintage','blossom','lagoon','amber'];
+        $selectedTheme = $request->theme;
+        $isStandard = $clinic->subscription_plan === 'standard' && $clinic->is_subscription_active;
+        if (in_array($selectedTheme, $premiumThemes) && !$isStandard) {
+            // Not allowed to select premium theme
+            return back()
+                ->withErrors(['theme' => 'You must be subscribed to the Standard plan to use this theme.'])
+                ->withInput(array_merge($request->all(), ['theme' => 'default']));
+        }
+        if (!in_array($selectedTheme, array_merge(['default','dark'], $premiumThemes))) {
+            // Invalid theme
+            return back()
+                ->withErrors(['theme' => 'Invalid theme selected.'])
+                ->withInput(array_merge($request->all(), ['theme' => 'default']));
         }
         
         // Update the clinic profile

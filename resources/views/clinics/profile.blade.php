@@ -124,6 +124,13 @@
                     </div>
                 </div>
                 @else
+                <!-- DEBUG: Show current clinic subscription info -->
+                <div class="alert alert-warning">
+                    <strong>Debug:</strong><br>
+                    Plan: {{ $clinic->subscription_plan }}<br>
+                    Active: {{ $clinic->is_subscription_active ? 'yes' : 'no' }}<br>
+                    Ends At: {{ $clinic->subscription_ends_at }}
+                </div>
                 <form action="{{ route('clinic.profile.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
@@ -248,6 +255,9 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Premium Themes - Only available with standard subscription -->
+                                                @if($clinic->subscription_plan === 'standard' && $clinic->is_subscription_active)
+                                                <!-- Forest Theme -->
                                                 <div class="col-md-6">
                                                     <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'forest' ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
@@ -266,6 +276,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Sunset Theme -->
                                                 <div class="col-md-6">
                                                     <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'sunset' ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
@@ -284,6 +295,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Vintage Theme -->
                                                 <div class="col-md-6">
                                                     <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'vintage' ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
@@ -291,7 +303,7 @@
                                                             <label class="form-check-label d-block" for="theme-vintage">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Vintage Theme</strong>
-                                                                    </div>
+                                                                </div>
                                                                 <div class="d-flex mb-3">
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #8b4513;"></span>
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
@@ -302,6 +314,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Blossom Theme -->
                                                 <div class="col-md-6">
                                                     <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'blossom' ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
@@ -320,6 +333,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Lagoon Theme -->
                                                 <div class="col-md-6">
                                                     <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'lagoon' ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
@@ -338,6 +352,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <!-- Amber Theme -->
                                                 <div class="col-md-6">
                                                     <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'amber' ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
@@ -356,6 +371,23 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @else
+                                                <!-- Premium Themes Locked Message -->
+                                                <div class="col-12">
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-lock me-2"></i>
+                                                        Upgrade to the Standard plan to unlock additional themes:
+                                                        <ul class="mb-0 mt-2">
+                                                            <li>Forest Theme</li>
+                                                            <li>Sunset Theme</li>
+                                                            <li>Vintage Theme</li>
+                                                            <li>Blossom Theme</li>
+                                                            <li>Lagoon Theme</li>
+                                                            <li>Amber Theme</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

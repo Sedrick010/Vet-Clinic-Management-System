@@ -144,27 +144,24 @@ class SubscriptionRequestController extends Controller
             if ($user && $user->clinic) {
                 $clinic = $user->clinic;
                 $clinic->is_subscription_active = true;
-                $clinic->subscription_expiry = $expirationDate;
+                $clinic->subscription_ends_at = $expirationDate;
                 $clinic->subscription_plan = $subscription->plan;
                 $clinic->save();
             }
         } else if (!empty($subscription->guest_clinic_name) && !empty($subscription->guest_email)) {
             // Handle guest subscription where no user_id exists
-            // You might want to log this or take additional actions
             \Illuminate\Support\Facades\Log::info('Guest subscription approved', [
                 'subscription_id' => $subscription->id,
                 'guest_clinic_name' => $subscription->guest_clinic_name,
                 'guest_email' => $subscription->guest_email
             ]);
-            
             // Optional: Check if there's a clinic with the same name or email
             $clinic = Clinic::where('name', $subscription->guest_clinic_name)
                            ->orWhere('email', $subscription->guest_email)
                            ->first();
-                           
             if ($clinic) {
                 $clinic->is_subscription_active = true;
-                $clinic->subscription_expiry = $expirationDate;
+                $clinic->subscription_ends_at = $expirationDate;
                 $clinic->subscription_plan = $subscription->plan;
                 $clinic->save();
             }
