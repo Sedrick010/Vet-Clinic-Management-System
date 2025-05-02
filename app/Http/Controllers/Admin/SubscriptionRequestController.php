@@ -156,12 +156,10 @@ class SubscriptionRequestController extends Controller
                 'guest_clinic_name' => $subscription->guest_clinic_name,
                 'guest_email' => $subscription->guest_email
             ]);
-            
             // Optional: Check if there's a clinic with the same name or email
             $clinic = Clinic::where('name', $subscription->guest_clinic_name)
                            ->orWhere('email', $subscription->guest_email)
                            ->first();
-                           
             if ($clinic) {
                 $clinic->is_subscription_active = true;
                 $clinic->subscription_ends_at = $expirationDate;

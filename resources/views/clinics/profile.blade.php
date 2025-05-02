@@ -124,6 +124,13 @@
                     </div>
                 </div>
                 @else
+                <!-- DEBUG: Show current clinic subscription info -->
+                <div class="alert alert-warning">
+                    <strong>Debug:</strong><br>
+                    Plan: {{ $clinic->subscription_plan }}<br>
+                    Active: {{ $clinic->is_subscription_active ? 'yes' : 'no' }}<br>
+                    Ends At: {{ $clinic->subscription_ends_at }}
+                </div>
                 <form action="{{ route('clinic.profile.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
@@ -328,6 +335,7 @@
                                                             <label class="form-check-label d-block" for="theme-vintage">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Vintage Theme</strong>
+                                                                </div>
                                                                 </div>
                                                                 <div class="d-flex mb-3">
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #a1887f;"></span>

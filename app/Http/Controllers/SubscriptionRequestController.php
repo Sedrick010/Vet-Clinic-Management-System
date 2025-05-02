@@ -407,11 +407,9 @@ class SubscriptionRequestController extends Controller
     /**
      * Cancel a pending subscription request.
      */
-    public function cancel($id)
+    public function cancel(Request $request, $id)
     {
         $user = Auth::user();
-        
-        // Check if the user exists
         if (!$user) {
             return redirect()->route('login');
         }
@@ -423,10 +421,14 @@ class SubscriptionRequestController extends Controller
         
         $subscription->status = 'cancelled';
         $subscription->cancelled_at = now();
+        if ($request->has('cancellation_reason')) {
+            $subscription->notes = ($subscription->notes ? $subscription->notes . "\n\n" : '') .
+                "Cancelled by " . ($user->hasRole('admin') ? 'admin' : 'user') . " on " . now()->format('Y-m-d') . ". Reason: " . $request->cancellation_reason;
+        }
         $subscription->save();
-        
+
         return redirect()->route('subscription.index')
-            ->with('success', 'Subscription request has been cancelled successfully.');
+            ->with('success', 'Subscription has been cancelled successfully.');
     }
     
     /**
@@ -495,6 +497,29 @@ class SubscriptionRequestController extends Controller
         $subscription->approved_at = now();
         $subscription->expired_at = $validated['expired_at'];
         $subscription->save();
+
+        // Robustly update the correct clinic
+        $clinic = null;
+        if ($subscription->user_id && $subscription->user && $subscription->user->clinic) {
+            $clinic = $subscription->user->clinic;
+        }
+        // Fallback: Try to find the clinic by guest_clinic_name or guest_email
+        if (!$clinic && !empty($subscription->guest_clinic_name) && !empty($subscription->guest_email)) {
+            $clinic = \App\Models\Clinic::where('name', $subscription->guest_clinic_name)
+                ->orWhere('email', $subscription->guest_email)
+                ->first();
+        }
+        // Fallback: Try to find the clinic by session (for tenant users)
+        if (!$clinic && session()->has('current_clinic_id')) {
+            $clinic = \App\Models\Clinic::find(session('current_clinic_id'));
+        }
+        // If we found a clinic, update it
+        if ($clinic) {
+            $clinic->is_subscription_active = true;
+            $clinic->subscription_ends_at = $subscription->expired_at;
+            $clinic->subscription_plan = $subscription->plan;
+            $clinic->save();
+        }
         
         // Notify the user about approval
         // Code for notification would go here...
