@@ -6,6 +6,7 @@ use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Services\TenantDatabaseService;
 use Illuminate\Support\Facades\Log;
+use App\Services\SubscriptionService;
 
 class PetController extends Controller
 {
@@ -43,22 +44,9 @@ class PetController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        // Check if deleted_at column exists
-        $hasDeletedAt = false;
-        try {
-            $hasDeletedAt = \Illuminate\Support\Facades\Schema::connection('tenant')->hasColumn('pets', 'deleted_at');
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error checking for deleted_at column: ' . $e->getMessage());
-        }
-
-        $query = Pet::with('owner');
-        
-        // Only apply the SoftDeletes condition if the column exists
-        if ($hasDeletedAt) {
-            $query->whereNull('deleted_at');
-        }
-        
-        $pets = $query->orderBy('name')->paginate(10);
+        $pets = Pet::with('owner')
+            ->orderBy('name')
+            ->paginate(10);
         
         // Get theme from clinic settings
         $theme = [];
@@ -227,6 +215,26 @@ class PetController extends Controller
                         'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
                     ];
                     break;
+            }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
             }
         }
         
@@ -428,6 +436,26 @@ class PetController extends Controller
                     ];
                     break;
             }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
+            }
         }
         
         // Get tenant user data for the sidebar (from session)
@@ -457,6 +485,22 @@ class PetController extends Controller
         }
 
         $this->tenantDatabaseService->switchToTenant($clinic);
+
+        // Check subscription pet limit
+        $petCount = Pet::count();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        
+        if ($subscriptionService->hasReachedLimit($clinic, 'pets_limit', $petCount)) {
+            Log::warning('Pet limit reached', [
+                'clinic_id' => $clinic->id,
+                'clinic_name' => $clinic->name,
+                'subscription_plan' => $clinic->subscription_plan,
+                'pet_count' => $petCount
+            ]);
+            
+            return redirect()->route('subscription.limit.reached', ['limitType' => 'pets'])
+                ->with('error', 'You have reached the maximum number of pets allowed in your current subscription plan.');
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -657,6 +701,26 @@ class PetController extends Controller
                         'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
                     ];
                     break;
+            }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
             }
         }
         
@@ -859,6 +923,26 @@ class PetController extends Controller
                     ];
                     break;
             }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
+            }
         }
         
         // Get tenant user data for the sidebar (from session)
@@ -931,5 +1015,29 @@ class PetController extends Controller
             Log::error('Failed to delete pet: ' . $e->getMessage());
             return back()->with('error', 'Failed to delete pet. Please try again.');
         }
+    }
+
+    /**
+     * Helper method to lighten a hex color
+     * 
+     * @param string $hex Hex color code
+     * @param int $percent Percentage to lighten (0-100)
+     * @return string Lightened hex color
+     */
+    private function lightenColor($hex, $percent) {
+        // Convert hex to rgb
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) == 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
+        $rgb = [];
+        for ($i = 0; $i < 3; $i++) {
+            $rgb[$i] = hexdec(substr($hex, $i * 2, 2));
+            $rgb[$i] = round($rgb[$i] + (255 - $rgb[$i]) * ($percent / 100));
+            $rgb[$i] = max(0, min(255, $rgb[$i]));
+        }
+        
+        return '#' . sprintf('%02x%02x%02x', $rgb[0], $rgb[1], $rgb[2]);
     }
 } 

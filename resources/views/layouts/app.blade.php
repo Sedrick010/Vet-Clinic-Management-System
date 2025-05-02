@@ -11,11 +11,11 @@
         <!-- Fonts and icons -->
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
         <!-- You may remove this if you don't use Fullcalendar -->
-        <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}?v={{ Session::get('css_version', time()) }}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         
         <!-- CSS Files -->
-        <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
+        <link id="pagestyle" href="{{ asset('assets/css/soft-ui-dashboard.css') }}?v={{ Session::get('css_version', time()) }}" rel="stylesheet" />
         
         <!-- Theme styles -->
         <style>
@@ -408,6 +408,168 @@
                 color: var(--danger-color) !important;
                 border-color: var(--danger-color) !important;
             }
+
+            /* Ensuring theme colors apply to all elements, including client and pet pages */
+            .avatar.bg-gradient-primary, 
+            .bg-gradient-primary,
+            .icon-shape,
+            .avatar.bg-primary,
+            .btn.btn-primary {
+                background-color: var(--primary-color) !important;
+                background-image: var(--primary-gradient) !important;
+                color: white !important;
+            }
+            
+            /* Target avatar elements in pets and clients pages */
+            .avatar {
+                background-color: var(--primary-color) !important;
+            }
+            
+            .avatar.avatar-sm {
+                color: white !important;
+            }
+            
+            /* Force styles on pets page avatar colors */
+            .avatar.avatar-sm.bg-primary {
+                background-color: var(--primary-color) !important;
+            }
+            
+            .avatar.avatar-sm.bg-warning {
+                background-color: var(--warning-color) !important;
+            }
+            
+            .avatar.avatar-sm.bg-success {
+                background-color: var(--success-color) !important;
+            }
+            
+            .avatar.avatar-sm.bg-info {
+                background-color: var(--info-color) !important;
+            }
+            
+            .avatar.avatar-sm.bg-secondary {
+                background-color: var(--secondary-color) !important;
+            }
+            
+            /* Force important on all bg classes */
+            [class*="bg-"] {
+                background-color: inherit;
+            }
+            
+            /* Directly target color classes */
+            [class*="bg-primary"], 
+            .bg-primary {
+                background-color: var(--primary-color) !important;
+            }
+            
+            [class*="bg-success"], 
+            .bg-success {
+                background-color: var(--success-color) !important;
+            }
+            
+            [class*="bg-info"], 
+            .bg-info {
+                background-color: var(--info-color) !important;
+            }
+            
+            [class*="bg-warning"], 
+            .bg-warning {
+                background-color: var(--warning-color) !important;
+            }
+            
+            [class*="bg-danger"], 
+            .bg-danger {
+                background-color: var(--danger-color) !important;
+            }
+            
+            /* Force important on all bg-gradient classes */
+            [class*="bg-gradient-"] {
+                background-image: none;
+            }
+            
+            .btn.btn-primary,
+            .btn-primary {
+                background-color: var(--primary-color) !important;
+                border-color: var(--primary-color) !important;
+                color: white !important;
+            }
+            
+            .btn.btn-success,
+            .btn-success {
+                background-color: var(--success-color) !important;
+                border-color: var(--success-color) !important;
+                color: white !important;
+            }
+            
+            .btn.btn-info,
+            .btn-info {
+                background-color: var(--info-color) !important;
+                border-color: var(--info-color) !important;
+                color: white !important;
+            }
+            
+            .btn.btn-warning,
+            .btn-warning {
+                background-color: var(--warning-color) !important;
+                border-color: var(--warning-color) !important;
+                color: white !important;
+            }
+            
+            .btn.btn-danger,
+            .btn-danger {
+                background-color: var(--danger-color) !important;
+                border-color: var(--danger-color) !important;
+                color: white !important;
+            }
+            
+            .bg-gradient-primary {
+                background-color: var(--primary-color) !important;
+                background-image: var(--primary-gradient) !important;
+            }
+            
+            .bg-gradient-success {
+                background-color: var(--success-color) !important;
+                background-image: var(--success-gradient) !important;
+            }
+            
+            .bg-gradient-info {
+                background-color: var(--info-color) !important;
+                background-image: var(--info-gradient) !important;
+            }
+            
+            .bg-gradient-warning {
+                background-color: var(--warning-color) !important;
+                background-image: var(--warning-gradient) !important;
+            }
+            
+            .bg-gradient-danger {
+                background-color: var(--danger-color) !important;
+                background-image: var(--danger-gradient) !important;
+            }
+
+            /* Special handling for pet species in pet list */
+            .avatar.avatar-sm.bg-primary,
+            .avatar.avatar-sm.bg-success,
+            .avatar.avatar-sm.bg-info,
+            .avatar.avatar-sm.bg-warning,
+            .avatar.avatar-sm.bg-secondary,
+            .avatar.avatar-sm.bg-danger {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            /* Fix icon colors in avatars */
+            .avatar i,
+            .avatar .fas,
+            .icon-shape i,
+            .icon-shape .fas {
+                color: #fff !important;
+            }
+            
+            /* Ensure text color in navbar matches */
+            .navbar-vertical .navbar-nav > .nav-item .nav-link.active {
+                color: #fff !important;
+            }
         </style>
         
         <!-- Custom CSS -->
@@ -491,6 +653,19 @@
         <script>
             // Check session validity regularly on authenticated pages
             document.addEventListener('DOMContentLoaded', function() {
+                // Force page refresh if theme was just changed
+                @if(session('_refresh'))
+                    // Clear any CSS caches
+                    for (var i = 0; i < document.styleSheets.length; i++) {
+                        try {
+                            document.styleSheets[i].disabled = true;
+                            document.styleSheets[i].disabled = false;
+                        } catch (e) {
+                            console.log('Failed to refresh stylesheet:', e);
+                        }
+                    }
+                @endif
+                
                 // Only on authenticated pages
                 @if(Auth::check() || session()->has('tenant_user'))
                     // Check session every 5 seconds

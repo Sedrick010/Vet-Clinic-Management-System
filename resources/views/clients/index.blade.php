@@ -1,14 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid clients-list">
     <div class="row">
         <div class="col-12 mb-3">
             <div class="card">
                 <div class="card-header pb-0">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Clients</h5>
-                        <a href="{{ route('clients.create') }}" class="btn btn-sm btn-primary">
+                        <div>
+                            <h5 class="mb-0">Clients</h5>
+                            <!-- Subscription Limit Indicator -->
+                            @if(isset($clientsLimit) && isset($clientsCount))
+                                <x-subscription-limit-indicator 
+                                    :count="$clientsCount" 
+                                    :limit="$clientsLimit" 
+                                    type="clients" 
+                                />
+                            @endif
+                        </div>
+                        <a href="{{ route('clients.create') }}" class="btn btn-sm bg-gradient-primary">
                             <i class="fas fa-plus"></i> Add Client
                         </a>
                     </div>
@@ -43,7 +53,7 @@
                                         <td>
                                             <div class="d-flex px-2 py-1">
                                                 <div>
-                                                    <div class="avatar avatar-sm me-3 bg-gradient-primary rounded-circle d-flex justify-content-center align-items-center">
+                                                    <div class="avatar avatar-sm me-3 bg-gradient-primary rounded-circle d-flex justify-content-center align-items-center" style="background-color: var(--primary-color) !important;">
                                                         <i class="text-white fas fa-user"></i>
                                                     </div>
                                                 </div>

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Subscription;
+use App\Models\SubscriptionRequest;
 use App\Models\Clinic;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -17,21 +17,21 @@ class SubscriptionRequestController extends Controller
      */
     public function index()
     {
-        $pendingRequests = Subscription::where('status', 'pending')
+        $pendingRequests = SubscriptionRequest::where('status', 'pending')
                                      ->latest()
                                      ->get();
         
-        $processedRequests = Subscription::whereIn('status', ['approved', 'rejected', 'active'])
+        $processedRequests = SubscriptionRequest::whereIn('status', ['approved', 'rejected'])
                                         ->latest()
                                         ->paginate(10);
         
         // Plan distribution data for chart
         $planDistribution = [
-            'free' => Subscription::where('plan', 'free')->where('status', 'active')->count(),
-            'basic' => Subscription::where('plan', 'basic')->where('status', 'active')->count(),
-            'standard' => Subscription::where('plan', 'standard')->where('status', 'active')->count(),
-            'premium' => Subscription::where('plan', 'premium')->where('status', 'active')->count() + 
-                         Subscription::where('plan', 'business')->where('status', 'active')->count()
+            'free' => SubscriptionRequest::where('plan', 'free')->where('status', 'approved')->count(),
+            'basic' => SubscriptionRequest::where('plan', 'basic')->where('status', 'approved')->count(),
+            'standard' => SubscriptionRequest::where('plan', 'standard')->where('status', 'approved')->count(),
+            'premium' => SubscriptionRequest::where('plan', 'premium')->where('status', 'approved')->count() + 
+                         SubscriptionRequest::where('plan', 'business')->where('status', 'approved')->count()
         ];
         
         // Monthly subscription requests data (last 6 months)
@@ -49,7 +49,7 @@ class SubscriptionRequestController extends Controller
             $months[] = $currentDate->format('M Y');
             
             // Count of new subscriptions for the month
-            $count = Subscription::whereBetween('created_at', [
+            $count = SubscriptionRequest::whereBetween('created_at', [
                 $currentDate->format('Y-m-d'),
                 $nextMonth->format('Y-m-d')
             ])->count();
@@ -57,10 +57,10 @@ class SubscriptionRequestController extends Controller
             $monthlyData[] = $count;
             
             // Revenue from approved subscriptions for the month
-            $revenue = Subscription::whereBetween('approved_at', [
+            $revenue = SubscriptionRequest::whereBetween('approved_at', [
                 $currentDate->format('Y-m-d'),
                 $nextMonth->format('Y-m-d')
-            ])->where('status', 'active')
+            ])->where('status', 'approved')
               ->sum('amount_paid');
             
             $revenueData[] = $revenue;
@@ -78,11 +78,11 @@ class SubscriptionRequestController extends Controller
         
         // Calculate total statistics
         $stats = [
-            'totalActive' => Subscription::where('status', 'active')->count(),
-            'totalPending' => Subscription::where('status', 'pending')->count(),
-            'totalRejected' => Subscription::where('status', 'rejected')->count(),
-            'totalRevenue' => Subscription::where('status', 'active')->sum('amount_paid'),
-            'averageRevenue' => Subscription::where('status', 'active')->avg('amount_paid') ?? 0
+            'totalActive' => SubscriptionRequest::where('status', 'approved')->count(),
+            'totalPending' => SubscriptionRequest::where('status', 'pending')->count(),
+            'totalRejected' => SubscriptionRequest::where('status', 'rejected')->count(),
+            'totalRevenue' => SubscriptionRequest::where('status', 'approved')->sum('amount_paid'),
+            'averageRevenue' => SubscriptionRequest::where('status', 'approved')->avg('amount_paid') ?? 0
         ];
         
         return view('admin.subscription-requests.index', [
@@ -101,7 +101,7 @@ class SubscriptionRequestController extends Controller
      */
     public function show($id)
     {
-        $subscriptionRequest = Subscription::findOrFail($id);
+        $subscriptionRequest = SubscriptionRequest::findOrFail($id);
         
         return view('admin.subscription-requests.show', [
             'subscriptionRequest' => $subscriptionRequest,
@@ -119,7 +119,7 @@ class SubscriptionRequestController extends Controller
             'expiration_date' => 'required|date|after:today',
         ]);
         
-        $subscription = Subscription::findOrFail($id);
+        $subscription = SubscriptionRequest::findOrFail($id);
         
         if ($subscription->status !== 'pending') {
             return redirect()->route('admin.subscription-requests.show', $id)
@@ -132,10 +132,11 @@ class SubscriptionRequestController extends Controller
             $expirationDate = Carbon::parse($validated['expiration_date']);
         }
         
-        $subscription->status = 'active';
+        $subscription->status = 'approved';
         $subscription->approved_at = Carbon::now();
         $subscription->admin_notes = $validated['admin_notes'] ?? null;
         $subscription->expired_at = $expirationDate;
+        $subscription->processed_by = Auth::id();
         $subscription->save();
         
         // Update the clinic's subscription status if applicable
@@ -144,13 +145,12 @@ class SubscriptionRequestController extends Controller
             if ($user && $user->clinic) {
                 $clinic = $user->clinic;
                 $clinic->is_subscription_active = true;
-                $clinic->subscription_expiry = $expirationDate;
+                $clinic->subscription_ends_at = $expirationDate;
                 $clinic->subscription_plan = $subscription->plan;
                 $clinic->save();
             }
         } else if (!empty($subscription->guest_clinic_name) && !empty($subscription->guest_email)) {
             // Handle guest subscription where no user_id exists
-            // You might want to log this or take additional actions
             \Illuminate\Support\Facades\Log::info('Guest subscription approved', [
                 'subscription_id' => $subscription->id,
                 'guest_clinic_name' => $subscription->guest_clinic_name,
@@ -164,7 +164,7 @@ class SubscriptionRequestController extends Controller
                            
             if ($clinic) {
                 $clinic->is_subscription_active = true;
-                $clinic->subscription_expiry = $expirationDate;
+                $clinic->subscription_ends_at = $expirationDate;
                 $clinic->subscription_plan = $subscription->plan;
                 $clinic->save();
             }
@@ -186,7 +186,7 @@ class SubscriptionRequestController extends Controller
             'admin_notes' => 'nullable|string|max:1000',
         ]);
         
-        $subscription = Subscription::findOrFail($id);
+        $subscription = SubscriptionRequest::findOrFail($id);
         
         if ($subscription->status !== 'pending') {
             return redirect()->route('admin.subscription-requests.show', $id)
@@ -197,6 +197,7 @@ class SubscriptionRequestController extends Controller
         $subscription->rejected_at = Carbon::now();
         $subscription->rejection_reason = $validated['rejection_reason'];
         $subscription->admin_notes = $validated['admin_notes'] ?? null;
+        $subscription->processed_by = Auth::id();
         $subscription->save();
         
         // Could add email notification here

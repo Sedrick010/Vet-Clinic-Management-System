@@ -6,6 +6,7 @@ use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Services\TenantDatabaseService;
 use Illuminate\Support\Facades\Log;
+use App\Services\SubscriptionService;
 
 class ClientController extends Controller
 {
@@ -44,6 +45,12 @@ class ClientController extends Controller
         $this->tenantDatabaseService->switchToTenant($clinic);
 
         $clients = Client::orderBy('name')->paginate(10);
+        
+        // Get clients count and subscription limit
+        $clientsCount = Client::count();
+        $subscriptionService = app(SubscriptionService::class);
+        $clientsLimit = $subscriptionService->getLimitForFeature($clinic, 'clients_limit');
+        $hasReachedLimit = $subscriptionService->hasReachedLimit($clinic, 'clients_limit', $clientsCount);
         
         // Get theme from clinic settings
         $theme = [];
@@ -213,6 +220,26 @@ class ClientController extends Controller
                     ];
                     break;
             }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
+            }
         }
         
         // Get tenant user data for the sidebar
@@ -229,7 +256,17 @@ class ClientController extends Controller
         // Set up admin menu if needed
         $adminMenu = [];
         
-        return view('clients.index', compact('clients', 'clinic', 'theme', 'userRole', 'userName', 'adminMenu'))
+        return view('clients.index', [
+            'clients' => $clients,
+            'clientsCount' => $clientsCount, 
+            'clientsLimit' => $clientsLimit,
+            'hasReachedLimit' => $hasReachedLimit,
+            'clinic' => $clinic,
+            'theme' => $theme,
+            'userRole' => $userRole,
+            'userName' => $userName,
+            'adminMenu' => $adminMenu
+        ])
             ->with('isSidebar', true);
     }
 
@@ -411,6 +448,26 @@ class ClientController extends Controller
                     ];
                     break;
             }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
+            }
         }
         
         // Get tenant user data for the sidebar
@@ -433,17 +490,6 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'notes' => 'nullable|string'
-        ]);
-
         $clinic = $this->getClinic($request);
         if (!$clinic) {
             return redirect()->route('login')
@@ -451,11 +497,31 @@ class ClientController extends Controller
         }
 
         $this->tenantDatabaseService->switchToTenant($clinic);
+        
+        // Check client subscription limit
+        $clientCount = Client::count();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        
+        if ($subscriptionService->hasReachedLimit($clinic, 'clients_limit', $clientCount)) {
+            return redirect()->route('subscription.limit.reached', ['limitType' => 'clients'])
+                ->with('error', 'You have reached the maximum number of clients allowed in your current subscription plan.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'zip' => 'nullable|string|max:20',
+            'notes' => 'nullable|string'
+        ]);
 
         try {
-            Client::create($validated);
+            $client = Client::create($validated);
             return redirect()->route('clients.index')
-                ->with('success', 'Client created successfully.');
+                ->with('success', 'Client created successfully');
         } catch (\Exception $e) {
             Log::error('Failed to create client: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Failed to create client. Please try again.');
@@ -641,6 +707,26 @@ class ClientController extends Controller
                         'danger' => 'linear-gradient(310deg, #f43f5e 0%, #be185d 100%)'
                     ];
                     break;
+            }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
             }
         }
         
@@ -842,6 +928,26 @@ class ClientController extends Controller
                     ];
                     break;
             }
+            
+            // Apply custom theme colors if available
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $theme['colors'] = array_merge($theme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors
+                $primary = $theme['colors']['primary'];
+                $success = $theme['colors']['success'];
+                $info = $theme['colors']['info'];
+                $warning = $theme['colors']['warning'];
+                $danger = $theme['colors']['danger'];
+                
+                // Create gradients for custom colors using a simple lightening approach
+                $theme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $theme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $theme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $theme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $theme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
+            }
         }
         
         // Get tenant user data for the sidebar
@@ -921,5 +1027,29 @@ class ClientController extends Controller
             Log::error('Failed to delete client: ' . $e->getMessage());
             return back()->with('error', 'Failed to delete client. Please try again.');
         }
+    }
+
+    /**
+     * Helper method to lighten a hex color
+     * 
+     * @param string $hex Hex color code
+     * @param int $percent Percentage to lighten (0-100)
+     * @return string Lightened hex color
+     */
+    private function lightenColor($hex, $percent) {
+        // Convert hex to rgb
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) == 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
+        $rgb = [];
+        for ($i = 0; $i < 3; $i++) {
+            $rgb[$i] = hexdec(substr($hex, $i * 2, 2));
+            $rgb[$i] = round($rgb[$i] + (255 - $rgb[$i]) * ($percent / 100));
+            $rgb[$i] = max(0, min(255, $rgb[$i]));
+        }
+        
+        return '#' . sprintf('%02x%02x%02x', $rgb[0], $rgb[1], $rgb[2]);
     }
 } 

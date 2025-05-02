@@ -6,6 +6,7 @@ use App\Models\Staff;
 use App\Models\Clinic;
 use App\Mail\StaffInvitation;
 use App\Services\TenantDatabaseService;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -19,10 +20,12 @@ use Illuminate\Support\Facades\Log;
 class StaffController extends Controller
 {
     protected $tenantDatabaseService;
+    protected $subscriptionService;
 
-    public function __construct(TenantDatabaseService $tenantDatabaseService)
+    public function __construct(TenantDatabaseService $tenantDatabaseService, SubscriptionService $subscriptionService)
     {
         $this->tenantDatabaseService = $tenantDatabaseService;
+        $this->subscriptionService = $subscriptionService;
     }
 
     /**
@@ -110,6 +113,12 @@ class StaffController extends Controller
             if ($staffTableExists) {
                 $staff = DB::connection('tenant')->table('staff')->get();
             }
+            
+            // Get staff count and subscription limit
+            $staffCount = $staff->count();
+            $staffLimit = $this->subscriptionService->getLimitForFeature($clinic, 'staff_limit');
+            $hasReachedLimit = $this->subscriptionService->hasReachedLimit($clinic, 'staff_limit', $staffCount);
+            
         } catch (\Exception $e) {
             Log::error('Error in staff index: ' . $e->getMessage(), [
                 'clinic_id' => $clinic->id,
@@ -127,7 +136,13 @@ class StaffController extends Controller
             ]);
         }
 
-        return view('staff.index', compact('staff', 'clinic'));
+        return view('staff.index', [
+            'staff' => $staff, 
+            'clinic' => $clinic,
+            'staffCount' => $staffCount,
+            'staffLimit' => $staffLimit,
+            'hasReachedLimit' => $hasReachedLimit
+        ]);
     }
 
     /**
@@ -149,7 +164,28 @@ class StaffController extends Controller
                 ->with('error', 'You do not have permission to add staff members.');
         }
 
-        return view('staff.create', compact('clinic'));
+        // Switch to tenant database to count staff
+        $this->tenantDatabaseService->switchToTenant($clinic);
+        
+        // Check staff limit
+        $staffCount = 0;
+        try {
+            if (Schema::connection('tenant')->hasTable('staff')) {
+                $staffCount = DB::connection('tenant')->table('staff')->count();
+            }
+        } catch (\Exception $e) {
+            Log::error('Error counting staff: ' . $e->getMessage());
+        }
+        
+        $staffLimit = $this->subscriptionService->getLimitForFeature($clinic, 'staff_limit');
+        $hasReachedLimit = $this->subscriptionService->hasReachedLimit($clinic, 'staff_limit', $staffCount);
+        
+        return view('staff.create', [
+            'clinic' => $clinic,
+            'staffCount' => $staffCount,
+            'staffLimit' => $staffLimit,
+            'hasReachedLimit' => $hasReachedLimit
+        ]);
     }
 
     /**
@@ -196,6 +232,13 @@ class StaffController extends Controller
                     return redirect()->route('staff.index')
                         ->with('error', 'Staff database table not found. Please contact support.');
                 }
+            }
+            
+            // Check staff limit before creating
+            $staffCount = DB::connection('tenant')->table('staff')->count();
+            
+            if ($this->subscriptionService->hasReachedLimit($clinic, 'staff_limit', $staffCount)) {
+                return redirect()->route('subscription.limit.reached', ['limitType' => 'staff']);
             }
 
             // Check if email already exists in tenant database

@@ -17,6 +17,14 @@
                         <div>
                             <h6 class="mb-0">Staff Members</h6>
                             <p class="text-sm mb-0">Manage your clinic staff accounts</p>
+                            <!-- Subscription Limit Indicator -->
+                            @if(isset($staffLimit) && isset($staffCount))
+                                <x-subscription-limit-indicator 
+                                    :count="$staffCount" 
+                                    :limit="$staffLimit" 
+                                    type="staff" 
+                                />
+                            @endif
                         </div>
                         @if(request()->attributes->get('can_manage_staff', false))
                         <a href="{{ route('staff.create') }}" class="btn bg-gradient-primary">

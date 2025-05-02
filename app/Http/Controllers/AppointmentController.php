@@ -50,25 +50,22 @@ class AppointmentController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
 
-        // Check if deleted_at column exists
-        $hasDeletedAt = false;
-        try {
-            $hasDeletedAt = Schema::connection('tenant')->hasColumn('appointments', 'deleted_at');
-        } catch (\Exception $e) {
-            \Log::error('Error checking for deleted_at column: ' . $e->getMessage());
-        }
-
-        $query = Appointment::with(['staff']);
-        
-        // Only apply the SoftDeletes condition if the column exists
-        if ($hasDeletedAt) {
-            $query->whereNull('deleted_at');
-        }
-        
-        $appointments = $query->orderBy('start_time', 'desc')
+        $appointments = Appointment::with(['staff'])
+            ->orderBy('start_time', 'desc')
             ->paginate(10);
+        
+        // Get appointments count and subscription limit
+        $appointmentsCount = Appointment::count();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        $appointmentsLimit = $subscriptionService->getLimitForFeature($clinic, 'appointments_limit');
+        $hasReachedLimit = $subscriptionService->hasReachedLimit($clinic, 'appointments_limit', $appointmentsCount);
             
-        return view('appointments.index', compact('appointments'));
+        return view('appointments.index', [
+            'appointments' => $appointments,
+            'appointmentsCount' => $appointmentsCount,
+            'appointmentsLimit' => $appointmentsLimit,
+            'hasReachedLimit' => $hasReachedLimit,
+        ]);
     }
 
     public function create(Request $request)
@@ -297,73 +294,66 @@ class AppointmentController extends Controller
         }
 
         $this->tenantDatabaseService->switchToTenant($clinic);
+        
+        // Check appointment subscription limit
+        $appointmentCount = Appointment::count();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        
+        if ($subscriptionService->hasReachedLimit($clinic, 'appointments_limit', $appointmentCount)) {
+            return redirect()->route('subscription.limit.reached', ['limitType' => 'appointments'])
+                ->with('error', 'You have reached the maximum number of appointments allowed in your current subscription plan.');
+        }
 
+        // Appointment type validation - ensure it's a valid value
+        $validAppointmentTypes = ['check-up', 'vaccination', 'surgery', 'consultation', 'emergency', 'follow-up', 'grooming', 'other'];
+        
+        $validated = $request->validate([
+            'pet_id' => 'required|exists:tenant.pets,id',
+            'staff_id' => 'required|exists:tenant.staff,id',
+            'start_date' => 'required|date',
+            'start_time' => 'required',
+            'duration' => 'required|integer|min:5',
+            'reason' => 'required|string|max:255',
+            'notes' => 'nullable|string',
+            'status' => 'required|in:scheduled,completed,cancelled,no-show',
+            'appointment_type' => 'required|in:' . implode(',', $validAppointmentTypes),
+            'client_id' => 'required|exists:tenant.clients,id',
+            'client_name' => 'required|string|max:255',
+        ]);
+        
         try {
-            DB::beginTransaction();
-
-            // Validate basic fields
-            $validated = $request->validate([
-                'client_id' => 'required|exists:tenant.clients,id',
-                'client_name' => 'nullable|string|max:255',
-                'pet_id' => 'required|exists:tenant.pets,id',
-                'staff_id' => 'required|exists:tenant.staff,id',
-                'start_time' => 'required|date',
-                'end_time' => 'required|date|after:start_time',
-                'reason' => 'required|string',
-                'notes' => 'nullable|string'
-            ]);
-
-            // Get client name if not provided
-            if (empty($validated['client_name']) && isset($validated['client_id'])) {
-                $client = Client::find($validated['client_id']);
-                if ($client) {
-                    $validated['client_name'] = $client->name;
-                }
-            }
-
-            // Set appointment status
-            $validated['status'] = 'scheduled';
-
+            // Combine date and time
+            $startDateTime = $validated['start_date'] . ' ' . $validated['start_time'];
+            $startTime = new \DateTime($startDateTime);
+            
+            // Calculate end time based on duration
+            $endTime = clone $startTime;
+            $endTime->add(new \DateInterval('PT' . $validated['duration'] . 'M'));
+            
             // Create the appointment
-            $appointment = Appointment::create($validated);
-
-            // Log successful appointment creation with pet information
-            $pet = Pet::find($request->pet_id);
-            \Log::info('Appointment created successfully', [
-                'appointment_id' => $appointment->id,
-                'client_id' => $validated['client_id'],
-                'client_name' => $validated['client_name'],
-                'pet_id' => $request->pet_id,
-                'pet_name' => $pet ? $pet->name : 'Unknown',
-                'start_time' => $validated['start_time']
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('appointments.index')
-                ->with('success', 'Appointment created successfully.');
-
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            \Log::error('Appointment validation failed', [
-                'errors' => $e->errors(),
-                'input' => $request->except(['_token'])
-            ]);
-            return back()
-                ->withErrors($e->errors())
-                ->withInput()
-                ->with('error', 'Please check the form for errors.');
+            $appointment = new Appointment();
+            $appointment->pet_id = $validated['pet_id'];
+            $appointment->staff_id = $validated['staff_id'];
+            $appointment->start_time = $startTime;
+            $appointment->end_time = $endTime;
+            $appointment->duration = $validated['duration'];
+            $appointment->reason = $validated['reason'];
+            $appointment->notes = $validated['notes'];
+            $appointment->status = $validated['status'];
+            $appointment->appointment_type = $validated['appointment_type'];
+            $appointment->client_id = $validated['client_id'];
+            $appointment->client_name = $validated['client_name'];
+            $appointment->save();
+            
+            return redirect()->route('appointments.index')
+                ->with('success', 'Appointment scheduled successfully.');
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Appointment creation failed: ' . $e->getMessage(), [
-                'exception' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+            \Log::error('Error creating appointment: ' . $e->getMessage(), [
+                'clinic_id' => $clinic->id,
+                'user_input' => $request->except(['_token'])
             ]);
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create appointment: ' . $e->getMessage());
+            
+            return back()->withInput()->with('error', 'Error creating appointment: ' . $e->getMessage());
         }
     }
 

@@ -3,9 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Clinic;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Models\Clinic;
+use App\Services\TenantDatabaseService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FixAppointmentsTable extends Command
@@ -15,14 +16,28 @@ class FixAppointmentsTable extends Command
      *
      * @var string
      */
-    protected $signature = 'tenant:fix-appointments {clinic_id? : Specific clinic ID to fix} {--all : Fix all clinics}';
+    protected $signature = 'fix:tables {clinic_id?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Add deleted_at column to appointments table for soft deletes';
+    protected $description = 'Adds the deleted_at column to tables that need soft deletes';
+
+    /**
+     * The tenant database service instance.
+     */
+    protected $tenantDatabaseService;
+
+    /**
+     * Create a new command instance.
+     */
+    public function __construct(TenantDatabaseService $tenantDatabaseService)
+    {
+        parent::__construct();
+        $this->tenantDatabaseService = $tenantDatabaseService;
+    }
 
     /**
      * Execute the console command.
@@ -30,113 +45,76 @@ class FixAppointmentsTable extends Command
     public function handle()
     {
         $clinicId = $this->argument('clinic_id');
-        $fixAll = $this->option('all');
-
-        if (!$clinicId && !$fixAll) {
-            $this->error('Please provide a clinic ID or use --all option');
-            return 1;
-        }
 
         if ($clinicId) {
             $clinic = Clinic::find($clinicId);
             if (!$clinic) {
-                $this->error("Clinic with ID {$clinicId} not found");
+                $this->error("Clinic with ID {$clinicId} not found.");
                 return 1;
             }
-            $this->fixAppointmentsTable($clinic);
+
+            $this->fixTables($clinic);
         } else {
-            $clinics = Clinic::where('approval_status', 'approved')->get();
-            $this->info("Fixing appointments table for {$clinics->count()} clinics...");
+            $clinics = Clinic::all();
+            $this->info("Adding deleted_at column to tables for all clinics...");
             
-            $this->withProgressBar($clinics, function ($clinic) {
-                $this->fixAppointmentsTable($clinic, false);
-            });
-            
-            $this->newLine(2);
-            $this->info("All clinics processed!");
+            foreach ($clinics as $clinic) {
+                $this->fixTables($clinic);
+            }
         }
 
+        $this->info("Command completed successfully!");
         return 0;
     }
 
     /**
-     * Fix the appointments table for a specific clinic
+     * Fix tables for a specific clinic.
      */
-    private function fixAppointmentsTable(Clinic $clinic, bool $verbose = true)
+    private function fixTables(Clinic $clinic)
     {
-        if ($verbose) {
-            $this->info("Processing clinic: {$clinic->name} (ID: {$clinic->id}, Database: {$clinic->database_name})");
-        }
-
         try {
-            // Check if database exists
-            $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$clinic->database_name]);
+            $this->info("Processing clinic: {$clinic->name} (ID: {$clinic->id})");
             
-            if (empty($dbExists)) {
-                if ($verbose) {
-                    $this->warn("Database {$clinic->database_name} does not exist. Skipping.");
-                }
-                return;
-            }
-
-            // Configure tenant database connection
-            config(['database.connections.tenant' => [
-                'driver' => 'mysql',
-                'host' => env('DB_HOST', 'localhost'),
-                'port' => env('DB_PORT', '3306'),
-                'database' => $clinic->database_name,
-                'username' => env('DB_USERNAME', 'root'),
-                'password' => env('DB_PASSWORD', ''),
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix' => '',
-                'strict' => true,
-                'engine' => null,
-            ]]);
-
-            // Clear any existing connections
-            DB::purge('tenant');
-            DB::reconnect('tenant');
-
-            // Check if appointments table exists
-            if (!Schema::connection('tenant')->hasTable('appointments')) {
-                if ($verbose) {
-                    $this->warn("Appointments table does not exist in {$clinic->database_name}. Skipping.");
-                }
-                return;
-            }
-
-            // Check if deleted_at column already exists
-            if (Schema::connection('tenant')->hasColumn('appointments', 'deleted_at')) {
-                if ($verbose) {
-                    $this->info("deleted_at column already exists in appointments table. Skipping.");
-                }
-                return;
-            }
-
-            // Add deleted_at column
-            DB::connection('tenant')->statement('ALTER TABLE appointments ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL');
-            DB::connection('tenant')->statement('ALTER TABLE appointments ADD INDEX appointments_deleted_at_index (deleted_at)');
-
-            if ($verbose) {
-                $this->info("Successfully added deleted_at column to appointments table!");
-            }
-
-            Log::info("Fixed appointments table for clinic", [
-                'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name,
-            ]);
-
+            // Switch to tenant connection
+            $this->tenantDatabaseService->switchToTenant($clinic);
+            
+            // Fix the appointments table
+            $this->fixTable($clinic, 'appointments');
+            
+            // Fix the pets table
+            $this->fixTable($clinic, 'pets');
+            
         } catch (\Exception $e) {
-            if ($verbose) {
-                $this->error("Error fixing appointments table: " . $e->getMessage());
+            $this->error("Error processing clinic {$clinic->name}: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Fix a specific table by adding the deleted_at column if it doesn't exist.
+     */
+    private function fixTable(Clinic $clinic, string $tableName)
+    {
+        try {
+            // Check if table exists
+            if (!Schema::connection('tenant')->hasTable($tableName)) {
+                $this->warn("{$tableName} table does not exist for clinic: {$clinic->name}");
+                return;
             }
             
-            Log::error("Error fixing appointments table", [
-                'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name,
-                'error' => $e->getMessage(),
-            ]);
+            // Check if deleted_at column already exists
+            if (Schema::connection('tenant')->hasColumn($tableName, 'deleted_at')) {
+                $this->info("deleted_at column already exists for {$tableName} table in clinic: {$clinic->name}");
+                return;
+            }
+            
+            // Add deleted_at column
+            Schema::connection('tenant')->table($tableName, function ($table) {
+                $table->softDeletes();
+            });
+            
+            $this->info("Successfully added deleted_at column to {$tableName} table for clinic: {$clinic->name}");
+        } catch (\Exception $e) {
+            $this->error("Error processing {$tableName} table for clinic {$clinic->name}: " . $e->getMessage());
         }
     }
 } 

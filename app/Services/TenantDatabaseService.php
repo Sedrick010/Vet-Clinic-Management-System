@@ -234,6 +234,18 @@ class TenantDatabaseService
                         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                     ');
                 }
+                
+                // Run the fix:tables command to ensure deleted_at columns exist for all required tables
+                Artisan::call('fix:tables', [
+                    'clinic_id' => $clinic->id,
+                ]);
+                
+                $fixTablesOutput = trim(Artisan::output());
+                
+                Log::info('Fixed tables with missing deleted_at columns', [
+                    'database' => $clinic->database_name,
+                    'fix_tables_output' => $fixTablesOutput
+                ]);
             } catch (\Exception $e) {
                 Log::error('Error running tenant migrations: ' . $e->getMessage(), [
                     'database' => $clinic->database_name,
@@ -249,14 +261,14 @@ class TenantDatabaseService
                 'clinic_id' => $clinic->id,
                 'database' => $clinic->database_name
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error setting up tenant database: ' . $e->getMessage(), [
-                'database' => $clinic->database_name,
                 'clinic_id' => $clinic->id,
+                'database_name' => $clinic->database_name ?? 'undefined',
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // Always throw the exception so the caller can handle it
             throw $e;
         }
     }

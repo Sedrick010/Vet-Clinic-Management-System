@@ -40,6 +40,8 @@ class Clinic extends Model
         'is_enabled',
         'disable_reason',
         'theme',
+        'custom_theme_colors',
+        'theme_customization_level',
     ];
 
     /**
@@ -52,6 +54,7 @@ class Clinic extends Model
         'is_subscription_active' => 'boolean',
         'subscription_ends_at' => 'datetime',
         'is_enabled' => 'boolean',
+        'custom_theme_colors' => 'json',
     ];
 
     /**
@@ -191,10 +194,133 @@ class Clinic extends Model
             ]
         ];
         
-        if ($this->theme === 'dark') {
-            return $darkTheme;
+        $forestTheme = [
+            'name' => 'forest',
+            'colors' => [
+                'primary' => '#2e7d32',
+                'secondary' => '#66bb6a',
+                'success' => '#43a047',
+                'info' => '#26a69a',
+                'warning' => '#ff9800',
+                'danger' => '#e53935',
+                'background' => '#f1f8e9',
+                'card' => '#ffffff',
+                'cardSecondary' => '#c8e6c9',
+                'cardAccent' => '#e8f5e9',
+                'text' => '#1b5e20',
+                'textSecondary' => '#33691e'
+            ]
+        ];
+        
+        // Check if this clinic has custom theme colors
+        if ($this->theme_customization_level === 'advanced' && $this->custom_theme_colors) {
+            $baseTheme = $this->theme === 'dark' ? $darkTheme : $defaultTheme;
+            
+            // Merge custom colors with the base theme
+            return [
+                'name' => 'custom',
+                'colors' => array_merge($baseTheme['colors'], $this->custom_theme_colors)
+            ];
         }
         
-        return $defaultTheme;
+        // Return standard theme based on selection
+        switch ($this->theme) {
+            case 'dark':
+                return $darkTheme;
+            case 'forest':
+                return $forestTheme;
+            case 'sunset':
+                return [
+                    'name' => 'sunset',
+                    'colors' => [
+                        'primary' => '#ff7043',
+                        'secondary' => '#ffab91',
+                        'success' => '#66bb6a',
+                        'info' => '#29b6f6',
+                        'warning' => '#ffa726',
+                        'danger' => '#f44336',
+                        'background' => '#fff3e0',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#ffe0b2',
+                        'cardAccent' => '#fff8e1',
+                        'text' => '#e64a19',
+                        'textSecondary' => '#bf360c'
+                    ]
+                ];
+            case 'vintage':
+                return [
+                    'name' => 'vintage',
+                    'colors' => [
+                        'primary' => '#a1887f',
+                        'secondary' => '#bcaaa4',
+                        'success' => '#558b2f',
+                        'info' => '#0277bd',
+                        'warning' => '#ef6c00',
+                        'danger' => '#c62828',
+                        'background' => '#efebe9',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#d7ccc8',
+                        'cardAccent' => '#f5f5f5',
+                        'text' => '#795548',
+                        'textSecondary' => '#5d4037'
+                    ]
+                ];
+            case 'blossom':
+                return [
+                    'name' => 'blossom',
+                    'colors' => [
+                        'primary' => '#ec407a',
+                        'secondary' => '#f48fb1',
+                        'success' => '#66bb6a',
+                        'info' => '#26c6da',
+                        'warning' => '#ffca28',
+                        'danger' => '#ef5350',
+                        'background' => '#fce4ec',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#f8bbd0',
+                        'cardAccent' => '#ffebee',
+                        'text' => '#d81b60',
+                        'textSecondary' => '#ad1457'
+                    ]
+                ];
+            case 'lagoon':
+                return [
+                    'name' => 'lagoon',
+                    'colors' => [
+                        'primary' => '#14b8a6',
+                        'secondary' => '#5eead4',
+                        'success' => '#10b981',
+                        'info' => '#0ea5e9',
+                        'warning' => '#f59e0b',
+                        'danger' => '#ef4444',
+                        'background' => '#ecfeff',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#cffafe',
+                        'cardAccent' => '#f0fdfa',
+                        'text' => '#0d9488',
+                        'textSecondary' => '#0f766e'
+                    ]
+                ];
+            case 'amber':
+                return [
+                    'name' => 'amber',
+                    'colors' => [
+                        'primary' => '#f59e0b',
+                        'secondary' => '#fcd34d',
+                        'success' => '#84cc16',
+                        'info' => '#06b6d4',
+                        'warning' => '#fb923c',
+                        'danger' => '#ef4444',
+                        'background' => '#fffbea',
+                        'card' => '#ffffff',
+                        'cardSecondary' => '#fef3c7',
+                        'cardAccent' => '#fefce8',
+                        'text' => '#d97706',
+                        'textSecondary' => '#b45309'
+                    ]
+                ];
+            default:
+                return $defaultTheme;
+        }
     }
 } 

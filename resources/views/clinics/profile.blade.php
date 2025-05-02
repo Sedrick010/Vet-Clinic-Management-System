@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', isset($readOnly) && $readOnly ? 'Clinic Information' : 'Clinic Profile Settings')
-@section('page_name', isset($readOnly) && $readOnly ? 'Clinic Information' : 'Clinic Profile Settings')
+@section('title', (isset($readOnly) && $readOnly) ? 'Clinic Information' : 'Clinic Profile Settings')
+@section('page_name', (isset($readOnly) && $readOnly) ? 'Clinic Information' : 'Clinic Profile Settings')
 
 @section('content')
 <style>
@@ -34,7 +34,7 @@
         <div class="col-12">
             <div class="card card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="mb-0">{{ isset($readOnly) && $readOnly ? 'Clinic Information' : 'Clinic Profile Settings' }}</h5>
+                    <h5 class="mb-0">{{ (isset($readOnly) && $readOnly) ? 'Clinic Information' : 'Clinic Profile Settings' }}</h5>
                     @if(isset($readOnly) && $readOnly)
                         <a href="{{ route('clinic.profile') }}" class="btn btn-sm btn-primary">
                             <i class="fas fa-edit me-1"></i> Edit Profile
@@ -143,7 +143,7 @@
                                         <i class="fas fa-upload me-1"></i> Change Logo
                                     </label>
                                 </div>
-                                <small class="form-text {{ $theme['name'] == 'dark' ? 'text-light opacity-75' : 'text-muted' }} d-block mt-2">
+                                <small class="form-text {{ ($theme['name'] == 'dark') ? 'text-light opacity-75' : 'text-muted' }} d-block mt-2">
                                     Click to upload a logo. Recommended size: 200x200px.
                                 </small>
                                 <div id="logo-upload-info" class="mt-2 small text-info d-none">
@@ -186,7 +186,7 @@
                                             <span class="input-group-text">https://</span>
                                             <input type="text" id="subdomain" class="form-control" value="{{ $clinic->subdomain }}.{{ parse_url(config('app.url'), PHP_URL_HOST) }}" readonly style="background-color: var(--card-secondary-color); color: var(--text-color);">
                                         </div>
-                                        <small class="form-text {{ $theme['name'] == 'dark' ? 'text-light opacity-75' : 'text-muted' }}">Your clinic's custom URL cannot be changed.</small>
+                                        <small class="form-text {{ ($theme['name'] == 'dark') ? 'text-light opacity-75' : 'text-muted' }}">Your clinic's custom URL cannot be changed.</small>
                                     </div>
                                 </div>
                                 
@@ -210,12 +210,40 @@
                                 <div class="col-md-12">
                                     <div class="form-group mb-4">
                                         <label class="form-control-label">Theme</label>
+                                        
+                                        <!-- Subscription Plan Theme Restrictions -->
+                                        @if(isset($themeCustomizationLevel))
+                                            @if($themeCustomizationLevel === 'none')
+                                                <div class="alert alert-warning mt-2">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                                    <strong>Free Plan Restriction:</strong> Theme customization is not available on the Free plan. 
+                                                    <a href="{{ route('subscription.index') }}" class="alert-link">Upgrade your plan</a> to access theme customization.
+                                                </div>
+                                                <input type="hidden" name="theme" value="default">
+                                            @elseif($themeCustomizationLevel === 'basic')
+                                                <div class="alert alert-info mt-2">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    <strong class="text-dark">Basic Plan:</strong> <span class="text-dark">You can choose between Light and Dark themes.</span> 
+                                                    <a href="{{ route('subscription.index') }}" class="alert-link text-primary">Upgrade to Standard plan</a> <span class="text-dark">to access all themes.</span>
+                                                </div>
+                                            @elseif($themeCustomizationLevel === 'advanced')
+                                                <div class="alert alert-success mt-2">
+                                                    <i class="fas fa-palette me-2"></i>
+                                                    <strong>Business Plan Feature:</strong> You have access to advanced color palette customization. 
+                                                    <a href="{{ route('themes.customize') }}" class="btn btn-sm btn-primary ms-2">
+                                                        <i class="fas fa-paint-brush me-1"></i> Customize Color Palette
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        @endif
+                                        
                                         <div class="mt-2">
                                             <div class="row">
+                                                <!-- Default Theme (always available) -->
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'default' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'default') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-default" value="default" {{ old('theme', $clinic->theme) == 'default' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-default" value="default" {{ (old('theme', $clinic->theme) == 'default') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-default">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Default Theme</strong>
@@ -230,10 +258,13 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
+                                                <!-- Dark Theme (available on Basic plan and above) -->
+                                                @if(isset($themeCustomizationLevel) && $themeCustomizationLevel !== 'none')
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'dark' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'dark') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-dark" value="dark" {{ old('theme', $clinic->theme) == 'dark' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-dark" value="dark" {{ (old('theme', $clinic->theme) == 'dark') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-dark">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Dark Theme</strong>
@@ -248,114 +279,124 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @endif
+                                                
+                                                <!-- Full Theme Customization (Premium/Standard/Business plans only) -->
+                                                @if(isset($themeCustomizationLevel) && ($themeCustomizationLevel === 'full' || $themeCustomizationLevel === 'advanced'))
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'forest' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'forest') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-forest" value="forest" {{ old('theme', $clinic->theme) == 'forest' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-forest" value="forest" {{ (old('theme', $clinic->theme) == 'forest') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-forest">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Forest Theme</strong>
                                                                 </div>
                                                                 <div class="d-flex mb-3">
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #2e7d32;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f1f8e9; border: 1px solid #dee2e6;"></span>
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #1b5e20;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f1f8e9;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #c8e6c9;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'sunset' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'sunset') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-sunset" value="sunset" {{ old('theme', $clinic->theme) == 'sunset' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-sunset" value="sunset" {{ (old('theme', $clinic->theme) == 'sunset') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-sunset">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Sunset Theme</strong>
                                                                 </div>
                                                                 <div class="d-flex mb-3">
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ff6b6b;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fff5f5; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #2b2d42;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ff7043;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #e64a19;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fff3e0;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffe0b2;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'vintage' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'vintage') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-vintage" value="vintage" {{ old('theme', $clinic->theme) == 'vintage' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-vintage" value="vintage" {{ (old('theme', $clinic->theme) == 'vintage') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-vintage">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Vintage Theme</strong>
-                                                                    </div>
+                                                                </div>
                                                                 <div class="d-flex mb-3">
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #8b4513;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fef3c7; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #422006;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #a1887f;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #795548;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #efebe9;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #d7ccc8;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'blossom' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'blossom') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-blossom" value="blossom" {{ old('theme', $clinic->theme) == 'blossom' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-blossom" value="blossom" {{ (old('theme', $clinic->theme) == 'blossom') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-blossom">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Blossom Theme</strong>
                                                                 </div>
                                                                 <div class="d-flex mb-3">
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #e75480;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ffffff; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fff0f6; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #b983ff;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ec407a;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #d81b60;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fce4ec;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f8bbd0;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'lagoon' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'lagoon') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-lagoon" value="lagoon" {{ old('theme', $clinic->theme) == 'lagoon' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-lagoon" value="lagoon" {{ (old('theme', $clinic->theme) == 'lagoon') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-lagoon">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Lagoon Theme</strong>
                                                                 </div>
                                                                 <div class="d-flex mb-3">
                                                                     <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #14b8a6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #cffafe; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ecfeff; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #134e4a;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #0d9488;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #ecfeff;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #cffafe;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
                                                 <div class="col-md-6">
-                                                    <div class="card p-3 mb-3 {{ old('theme', $clinic->theme) == 'amber' ? 'border border-primary' : 'border' }}">
+                                                    <div class="card p-3 mb-3 {{ (old('theme', $clinic->theme) == 'amber') ? 'border border-primary' : 'border' }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="radio" name="theme" id="theme-amber" value="amber" {{ old('theme', $clinic->theme) == 'amber' ? 'checked' : '' }}>
+                                                            <input class="form-check-input" type="radio" name="theme" id="theme-amber" value="amber" {{ (old('theme', $clinic->theme) == 'amber') ? 'checked' : '' }}>
                                                             <label class="form-check-label d-block" for="theme-amber">
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <strong>Amber Theme</strong>
                                                                 </div>
                                                                 <div class="d-flex mb-3">
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f59e42;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fffbea; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fef3c7; border: 1px solid #dee2e6;"></span>
-                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #78350f;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f59e0b;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #d97706;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fffbea;"></span>
+                                                                    <span class="d-block me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fef3c7;"></span>
                                                                 </div>
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

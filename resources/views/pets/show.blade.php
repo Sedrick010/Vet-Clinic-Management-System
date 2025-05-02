@@ -31,14 +31,13 @@
                             <div class="row border-bottom pb-4">
                                 <div class="col-md-12 mb-4">
                                     <div class="d-flex align-items-center">
-                                        <div class="icon icon-shape icon-lg text-center border-radius-md text-white me-3" style="background-color: 
-                                            @if($pet->species == 'Dog') #3498db
-                                            @elseif($pet->species == 'Cat') #f39c12
-                                            @elseif($pet->species == 'Bird') #2ecc71
-                                            @elseif($pet->species == 'Reptile') #27ae60
-                                            @else #95a5a6
-                                            @endif
-                                        ">
+                                        <div class="icon icon-shape icon-lg text-center border-radius-md text-white me-3
+                                            @if($pet->species == 'Dog') bg-gradient-primary
+                                            @elseif($pet->species == 'Cat') bg-gradient-warning
+                                            @elseif($pet->species == 'Bird') bg-gradient-success
+                                            @elseif($pet->species == 'Reptile') bg-gradient-info
+                                            @else bg-gradient-secondary
+                                            @endif">
                                             <i class="fas 
                                                 @if($pet->species == 'Dog') fa-dog
                                                 @elseif($pet->species == 'Cat') fa-cat

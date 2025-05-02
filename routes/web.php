@@ -15,6 +15,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ClinicProfileController;
 use App\Http\Controllers\TenantProfileController;
+use App\Http\Controllers\ThemeCustomizationController;
 
 // Protection against unregistered subdomains - apply at the top of the file
 Route::middleware([
@@ -278,6 +279,11 @@ Route::middleware([
         Route::get('/clinic/profile', [ClinicProfileController::class, 'edit'])->name('clinic.profile');
         Route::put('/clinic/profile', [ClinicProfileController::class, 'update'])->name('clinic.profile.update');
         
+        // Theme Customization routes - for Business Plan subscribers
+        Route::get('/themes/customize', [ThemeCustomizationController::class, 'edit'])->name('themes.customize');
+        Route::post('/themes/customize', [ThemeCustomizationController::class, 'update'])->name('themes.customize.update');
+        Route::get('/themes/customize/reset', [ThemeCustomizationController::class, 'reset'])->name('themes.customize.reset');
+        
         // Tenant Profile routes
         Route::get('/tenant/profile', [TenantProfileController::class, 'edit'])->name('tenant.profile.edit');
         Route::patch('/tenant/profile', [TenantProfileController::class, 'update'])->name('tenant.profile.update');
@@ -290,10 +296,14 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicActive::class,
         \App\Http\Middleware\CheckClinicEnabled::class,
         \App\Http\Middleware\RealTimeSubscriptionCheck::class,
-        \App\Http\Middleware\CheckSubscriptionAccess::class
     ])->prefix('premium')->name('premium.')->group(function() {
-        Route::get('/reports', [\App\Http\Controllers\PremiumReportsController::class, 'index'])->name('reports');
-        Route::get('/analytics', [\App\Http\Controllers\PremiumReportsController::class, 'analytics'])->name('analytics');
+        Route::get('/reports', [\App\Http\Controllers\PremiumReportsController::class, 'index'])
+            ->middleware(\App\Http\Middleware\CheckSubscriptionAccess::class.':reports')
+            ->name('reports');
+            
+        Route::get('/analytics', [\App\Http\Controllers\PremiumReportsController::class, 'analytics'])
+            ->middleware(\App\Http\Middleware\CheckSubscriptionAccess::class.':analytics')
+            ->name('analytics');
     });
 
     // Admin routes for managing clinics
@@ -309,6 +319,15 @@ Route::middleware([
         Route::put('/subscription', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'update'])->name('subscription.update');
         Route::put('/subscription/toggle-activation', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggleActivation'])->name('subscription.toggle-activation');
         Route::patch('/subscription/toggle', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'toggle'])->name('subscription.toggle');
+        
+        // New routes for changing subscription
+        Route::get('/subscription/change', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'showChangeForm'])->name('subscription.change.form');
+        Route::post('/subscription/change', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'changeSubscription'])->name('subscription.change');
+    });
+
+    // Admin routes for subscription management
+    Route::middleware(['auth', 'admin', 'web'])->prefix('admin/subscriptions')->name('admin.subscriptions.')->group(function () {
+        Route::post('/{id}/remove', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'removeSubscription'])->name('remove');
     });
 
     // Appointment routes
@@ -320,7 +339,7 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicActive::class,
         \App\Http\Middleware\CheckClinicEnabled::class,
         \App\Http\Middleware\RealTimeSubscriptionCheck::class,
-        \App\Http\Middleware\CheckSubscriptionAccess::class
+        \App\Http\Middleware\CheckSubscriptionAccess::class.':inventory_management'
     ])->prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/', [App\Http\Controllers\InventoryController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\InventoryController::class, 'create'])->name('create');
@@ -337,6 +356,11 @@ Route::middleware([
     Route::get('/subscription/create', [\App\Http\Controllers\SubscriptionRequestController::class, 'create'])->name('subscription.create');
     Route::post('/subscription', [\App\Http\Controllers\SubscriptionRequestController::class, 'store'])->name('subscription.store');
     Route::get('/subscription/thank-you', [\App\Http\Controllers\SubscriptionRequestController::class, 'thankYou'])->name('subscription.thankyou');
+    
+    // Subscription limit reached page
+    Route::get('/subscription/limit/{limitType}', [\App\Http\Controllers\SubscriptionLimitController::class, 'show'])
+        ->name('subscription.limit.reached')
+        ->middleware([\App\Http\Middleware\AuthTenantStaff::class]);
 
     // Authenticated Subscription Routes (protected by middleware)
     Route::middleware([\App\Http\Middleware\AuthTenantStaff::class])->group(function () {
@@ -345,6 +369,7 @@ Route::middleware([
         Route::put('/subscription/{id}', [\App\Http\Controllers\SubscriptionRequestController::class, 'update'])->name('subscription.update');
         Route::post('/subscription/{id}/cancel', [\App\Http\Controllers\SubscriptionRequestController::class, 'cancel'])->name('subscription.cancel');
         Route::post('/subscription/{id}/cancel-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'cancelRequest'])->name('subscription.cancel-request');
+        Route::get('/subscription/{id}/cancel-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'cancelRequest'])->name('subscription.cancelRequest');
         
         // Admin actions (protected by admin role check in the controller)
         Route::post('/subscription/{id}/approve', [\App\Http\Controllers\SubscriptionRequestController::class, 'approve'])->name('subscription.approve');
@@ -371,4 +396,27 @@ Route::middleware([
     if (app()->environment('local')) {
         Route::get('/debug/pets-check', [AppointmentController::class, 'debugPetsCheck'])->name('debug.pets-check');
     }
+
+    // Debug route for subscription requests
+    Route::get('/debug/subscription-requests', function() {
+        $requests = App\Models\SubscriptionRequest::with(['clinic', 'user'])->get();
+        
+        return response()->json([
+            'count' => $requests->count(),
+            'pending_count' => $requests->where('status', 'pending')->count(),
+            'approved_count' => $requests->where('status', 'approved')->count(),
+            'requests' => $requests->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'clinic_id' => $request->clinic_id,
+                    'clinic_name' => $request->clinic ? $request->clinic->name : ($request->guest_clinic_name ?? 'N/A'),
+                    'user_id' => $request->user_id,
+                    'user_name' => $request->user ? $request->user->name : 'N/A',
+                    'plan' => $request->plan,
+                    'status' => $request->status,
+                    'created_at' => $request->created_at
+                ];
+            })
+        ]);
+    });
 });

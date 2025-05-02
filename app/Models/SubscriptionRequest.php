@@ -17,16 +17,27 @@ class SubscriptionRequest extends Model
      */
     protected $fillable = [
         'clinic_id',
-        'payment_reference',
+        'user_id',
+        'plan',
+        'duration',
         'payment_method',
+        'payment_reference',
+        'payment_details',
         'amount_paid',
         'notes',
         'admin_notes',
         'payment_date',
         'receipt_image_path',
         'status',
+        'auto_renew',
+        'guest_clinic_name',
+        'guest_email',
+        'guest_phone',
         'approved_at',
         'rejected_at',
+        'cancelled_at',
+        'expired_at',
+        'rejection_reason',
         'processed_by',
     ];
 
@@ -40,6 +51,9 @@ class SubscriptionRequest extends Model
         'payment_date' => 'date',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'expired_at' => 'datetime',
+        'auto_renew' => 'boolean',
     ];
 
     /**
@@ -48,6 +62,14 @@ class SubscriptionRequest extends Model
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    /**
+     * Get the user that owns the subscription request.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -80,5 +102,53 @@ class SubscriptionRequest extends Model
     public function scopeRejected($query)
     {
         return $query->where('status', 'rejected');
+    }
+
+    /**
+     * Check if the subscription is active.
+     *
+     * @return bool
+     */
+    public function isActive()
+    {
+        return $this->status === 'approved' && 
+               $this->expired_at !== null && 
+               now()->lt($this->expired_at);
+    }
+
+    /**
+     * Check if the subscription is expired.
+     *
+     * @return bool
+     */
+    public function isExpired()
+    {
+        return $this->status === 'approved' && 
+               $this->expired_at !== null && 
+               now()->gte($this->expired_at);
+    }
+
+    /**
+     * Check if the subscription is cancelled.
+     *
+     * @return bool
+     */
+    public function isCancelled()
+    {
+        return $this->status === 'cancelled';
+    }
+
+    /**
+     * Get the time remaining for the subscription.
+     *
+     * @return string
+     */
+    public function getTimeRemaining()
+    {
+        if (!$this->isActive() || !$this->expired_at) {
+            return 'N/A';
+        }
+        
+        return now()->diffForHumans($this->expired_at, true) . ' remaining';
     }
 }

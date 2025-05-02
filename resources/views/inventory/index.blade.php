@@ -8,7 +8,17 @@
     <div class="col-12">
         <div class="card mb-4">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                <h6>Inventory Management</h6>
+                <div>
+                    <h6>Inventory Management</h6>
+                    <!-- Subscription Limit Indicator -->
+                    @if(isset($inventoryLimit) && isset($inventoryCount))
+                        <x-subscription-limit-indicator 
+                            :count="$inventoryCount" 
+                            :limit="$inventoryLimit" 
+                            type="inventory" 
+                        />
+                    @endif
+                </div>
                 <a href="{{ route('inventory.create') }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-plus me-2"></i>Add New Item
                 </a>

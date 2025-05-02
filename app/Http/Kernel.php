@@ -45,6 +45,7 @@ class Kernel extends HttpKernel
             // Combined cache prevention and session validation
             \App\Http\Middleware\CheckSessionValid::class,
             \App\Http\Middleware\RealTimeSubscriptionCheck::class, // Check subscription status in real-time
+            \App\Http\Middleware\NoCacheMiddleware::class, // Prevent caching of assets
         ],
 
         'api' => [
@@ -85,5 +86,6 @@ class Kernel extends HttpKernel
         'clinic.enabled' => \App\Http\Middleware\CheckClinicEnabled::class, // Check if clinic is enabled
         'domain.auth' => \App\Http\Middleware\RedirectIfAuthenticatedForWrongDomain::class, // Enforce domain-specific authentication
         'real.time.subscription' => \App\Http\Middleware\RealTimeSubscriptionCheck::class, // Real-time subscription status checker
+        'no.cache' => \App\Http\Middleware\NoCacheMiddleware::class, // Prevent caching of assets
     ];
 } 

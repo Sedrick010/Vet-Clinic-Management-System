@@ -16,16 +16,5 @@ class DatabaseSeeder extends Seeder
         // Create system admin
         $this->call(AdminUserSeeder::class);
 
-        // Create test user if in local environment and not exists
-        if (app()->environment('local') && !User::where('email', 'test@example.com')->exists()) {
-            User::factory()->create([
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-            ]);
-        }
-
-        $this->call([
-            TemporaryPetAndVetSeeder::class,
-        ]);
     }
 }

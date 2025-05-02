@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('postal_code')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Pets - After clients are created
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->enum('gender', ['male', 'female', 'unknown']);
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Appointments
@@ -50,6 +52,7 @@ return new class extends Migration
             $table->text('reason');
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Medical Records
@@ -63,6 +66,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->date('record_date');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Inventory Items
@@ -77,6 +81,7 @@ return new class extends Migration
             $table->integer('stock_quantity');
             $table->integer('reorder_level');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Invoices

@@ -66,10 +66,15 @@
                                 <li>Free plan: Limited features and up to 100 patient records</li>
                                 <li>Basic plan: More features and up to 500 patient records</li>
                                 <li>Premium plan: Full feature access and unlimited records</li>
+                                <li><strong>Update Subscription:</strong> Change plan or end date without creating a new subscription record</li>
+                                <li><strong>Change & Extend:</strong> Change plan and add more time to the subscription, creating a new subscription record</li>
                             </ul>
                         </div>
                         
-                        <div class="d-flex justify-content-end">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('admin.clinics.subscription.change.form', $clinic) }}" class="btn btn-info">
+                                <i class="fas fa-exchange-alt me-1"></i> Change & Extend Subscription
+                            </a>
                             <button type="submit" class="btn bg-gradient-primary">
                                 <i class="fas fa-save me-1"></i> Update Subscription
                             </button>

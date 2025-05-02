@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Services\TenantDatabaseService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use App\Services\SubscriptionService;
 
 class InventoryController extends Controller
 {
@@ -80,11 +81,24 @@ class InventoryController extends Controller
         // Get unique categories for filter dropdown
         $categories = Inventory::distinct()->pluck('category')->filter()->sort()->values();
         
+        // Get clinic information
+        $clinicId = session('current_clinic_id');
+        $clinic = \App\Models\Clinic::find($clinicId);
+        
+        // Get inventory count and subscription limit
+        $inventoryCount = Inventory::count();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        $inventoryLimit = $subscriptionService->getLimitForFeature($clinic, 'inventory_limit');
+        $hasReachedLimit = $subscriptionService->hasReachedLimit($clinic, 'inventory_limit', $inventoryCount);
+        
         return view('inventory.index', [
             'items' => $items,
             'categories' => $categories,
             'filters' => $request->only(['search', 'category']),
             'isSidebar' => true,
+            'inventoryCount' => $inventoryCount,
+            'inventoryLimit' => $inventoryLimit,
+            'hasReachedLimit' => $hasReachedLimit,
         ]);
     }
 
@@ -110,6 +124,17 @@ class InventoryController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $this->switchToTenantDb();
+        
+        // Check inventory limit
+        $inventoryCount = Inventory::count();
+        $clinicId = session('current_clinic_id');
+        $clinic = \App\Models\Clinic::find($clinicId);
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        
+        if ($subscriptionService->hasReachedLimit($clinic, 'inventory_limit', $inventoryCount)) {
+            return redirect()->route('subscription.limit.reached', ['limitType' => 'inventory'])
+                ->with('error', 'You have reached the maximum number of inventory items allowed in your current subscription plan.');
+        }
         
         // Make sure we're using the tenant connection for validation
         $validator = Validator::make($request->all(), [

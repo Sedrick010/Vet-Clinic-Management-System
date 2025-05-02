@@ -47,29 +47,7 @@
 
                             <div class="col-md-12 mb-3">
                                 <div class="row">
-                                    <div class="col-md-3 mb-3">
-                                        <div class="card h-100 {{ $subscription->plan == 'free' ? 'border-primary' : '' }}">
-                                            <div class="card-header bg-light">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="plan" id="freePlan" value="free" {{ $subscription->plan == 'free' ? 'checked' : '' }} required>
-                                                    <label class="form-check-label fw-bold" for="freePlan">
-                                                        Free Plan
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="card-body">
-                                                <h5 class="card-title text-primary">₱0/month</h5>
-                                                <ul class="list-unstyled">
-                                                    <li><i class="fas fa-check text-success me-2"></i> 20 Appointments/month</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> Basic Clinic Setup (Name)</li>
-                                                    <li><i class="fas fa-check text-success me-2"></i> 1 admin account</li>
-                                                    <li><i class="fas fa-times text-danger me-2"></i> No Premium Reports</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <div class="card h-100 {{ $subscription->plan == 'basic' ? 'border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -92,7 +70,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <div class="card h-100 {{ $subscription->plan == 'standard' ? 'border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -115,7 +93,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <div class="card h-100 {{ $subscription->plan == 'business' ? 'border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -270,9 +248,6 @@
             
             let basePrice = 0;
             switch(selectedPlan) {
-                case 'free':
-                    basePrice = 0;
-                    break;
                 case 'basic':
                     basePrice = 599;
                     break;

@@ -289,35 +289,60 @@ class ThemeServiceProvider extends ServiceProvider
         // Determine which theme to use
         $themeConfig = $defaultTheme;
         if ($clinic) {
+            // First get the base theme
+            $baseTheme = $defaultTheme;
             switch ($clinic->theme) {
                 case 'dark':
-                    $themeConfig = $darkTheme;
+                    $baseTheme = $darkTheme;
                     break;
                 case 'ocean':
-                    $themeConfig = $oceanTheme;
+                    $baseTheme = $oceanTheme;
                     break;
                 case 'forest':
-                    $themeConfig = $forestTheme;
+                    $baseTheme = $forestTheme;
                     break;
                 case 'sunset':
-                    $themeConfig = $sunsetTheme;
+                    $baseTheme = $sunsetTheme;
                     break;
                 case 'modern':
-                    $themeConfig = $modernTheme;
+                    $baseTheme = $modernTheme;
                     break;
                 case 'vintage':
-                    $themeConfig = $vintageTheme;
+                    $baseTheme = $vintageTheme;
                     break;
                 case 'blossom':
-                    $themeConfig = $blossomTheme;
+                    $baseTheme = $blossomTheme;
                     break;
                 case 'lagoon':
-                    $themeConfig = $lagoonTheme;
+                    $baseTheme = $lagoonTheme;
                     break;
                 case 'amber':
-                    $themeConfig = $amberTheme;
+                    $baseTheme = $amberTheme;
                     break;
             }
+            
+            // Check if this clinic has custom theme colors
+            if ($clinic->theme_customization_level === 'advanced' && $clinic->custom_theme_colors) {
+                // Merge custom colors with the base theme
+                $baseTheme['colors'] = array_merge($baseTheme['colors'], $clinic->custom_theme_colors);
+                
+                // Also update gradients to match custom colors - always use the lightenColor function
+                // to ensure proper gradient generation
+                $primary = $baseTheme['colors']['primary'];
+                $success = $baseTheme['colors']['success'];
+                $info = $baseTheme['colors']['info'];
+                $warning = $baseTheme['colors']['warning'];
+                $danger = $baseTheme['colors']['danger'];
+                
+                // Always create gradients for custom colors
+                $baseTheme['gradients']['primary'] = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $this->lightenColor($primary, 15) . ' 100%)';
+                $baseTheme['gradients']['success'] = 'linear-gradient(310deg, ' . $success . ' 0%, ' . $this->lightenColor($success, 15) . ' 100%)';
+                $baseTheme['gradients']['info'] = 'linear-gradient(310deg, ' . $info . ' 0%, ' . $this->lightenColor($info, 15) . ' 100%)';
+                $baseTheme['gradients']['warning'] = 'linear-gradient(310deg, ' . $warning . ' 0%, ' . $this->lightenColor($warning, 15) . ' 100%)';
+                $baseTheme['gradients']['danger'] = 'linear-gradient(310deg, ' . $danger . ' 0%, ' . $this->lightenColor($danger, 15) . ' 100%)';
+            }
+            
+            $themeConfig = $baseTheme;
         }
 
         // Share theme configurations with all views
@@ -347,5 +372,29 @@ class ThemeServiceProvider extends ServiceProvider
                 'matches' => ['admin/database-check']
             ]
         ]);
+    }
+
+    /**
+     * Helper method to lighten a hex color
+     * 
+     * @param string $hex Hex color code
+     * @param int $percent Percentage to lighten (0-100)
+     * @return string Lightened hex color
+     */
+    private function lightenColor($hex, $percent) {
+        // Convert hex to rgb
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) == 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
+        $rgb = [];
+        for ($i = 0; $i < 3; $i++) {
+            $rgb[$i] = hexdec(substr($hex, $i * 2, 2));
+            $rgb[$i] = round($rgb[$i] + (255 - $rgb[$i]) * ($percent / 100));
+            $rgb[$i] = max(0, min(255, $rgb[$i]));
+        }
+        
+        return '#' . sprintf('%02x%02x%02x', $rgb[0], $rgb[1], $rgb[2]);
     }
 }

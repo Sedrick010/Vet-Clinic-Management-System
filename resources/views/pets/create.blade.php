@@ -1,6 +1,11 @@
 @extends('layouts.app')
 
+@section('title', 'Add New Pet')
 @section('page_name', 'Add New Pet')
+
+@php
+    $isSidebar = true;
+@endphp
 
 @section('content')
 <div class="container-fluid py-4">
@@ -9,7 +14,7 @@
             <div class="card">
                 <div class="card-header pb-0 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Add New Pet</h6>
-                    <a href="{{ route('pets.index') }}" class="btn btn-sm bg-gradient-secondary">
+                    <a href="{{ route('pets.index') }}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left me-1"></i> Back to Pets
                     </a>
                 </div>
@@ -122,7 +127,7 @@
                         
                         <div class="d-flex justify-content-end mt-4">
                             <a href="{{ route('pets.index') }}" class="btn btn-light me-2">Cancel</a>
-                            <button type="submit" class="btn bg-gradient-primary">Save Pet</button>
+                            <button type="submit" class="btn btn-primary">Save Pet</button>
                         </div>
                     </form>
                 </div>

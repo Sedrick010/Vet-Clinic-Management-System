@@ -13,7 +13,17 @@
         <div class="col-12">
             <div class="card mb-4">
                 <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6>Appointments</h6>
+                    <div>
+                        <h6>Appointments</h6>
+                        <!-- Subscription Limit Indicator -->
+                        @if(isset($appointmentsLimit) && isset($appointmentsCount))
+                            <x-subscription-limit-indicator 
+                                :count="$appointmentsCount" 
+                                :limit="$appointmentsLimit" 
+                                type="appointments" 
+                            />
+                        @endif
+                    </div>
                     <a href="{{ route('appointments.create') }}" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus"></i> New Appointment
                     </a>

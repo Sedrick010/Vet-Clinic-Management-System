@@ -10,9 +10,17 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Services\SubscriptionService;
 
 class ClinicProfileController extends Controller
 {
+    protected $subscriptionService;
+
+    public function __construct(SubscriptionService $subscriptionService)
+    {
+        $this->subscriptionService = $subscriptionService;
+    }
+
     /**
      * Show the clinic profile settings form.
      */
@@ -44,11 +52,15 @@ class ClinicProfileController extends Controller
                 'clinic_id' => $clinicId
             ]);
         }
+
+        // Get the theme customization level based on subscription
+        $themeCustomizationLevel = $this->subscriptionService->getThemeCustomizationLevel($clinic);
         
         return view('clinics.profile', [
             'clinic' => $clinic,
             'isSidebar' => true,
-            'readOnly' => !$canEdit
+            'readOnly' => !$canEdit,
+            'themeCustomizationLevel' => $themeCustomizationLevel
         ]);
     }
     
@@ -82,8 +94,20 @@ class ClinicProfileController extends Controller
                 ->with('error', 'You do not have permission to edit clinic settings.');
         }
         
-        // Validate the request
-        $validator = Validator::make($request->all(), [
+        // Get the theme customization level based on subscription
+        $themeCustomizationLevel = $this->subscriptionService->getThemeCustomizationLevel($clinic);
+        
+        // Define allowed themes based on subscription
+        $allowedThemes = ['default'];
+        
+        if ($themeCustomizationLevel === 'basic') {
+            $allowedThemes = ['default', 'dark'];
+        } elseif ($themeCustomizationLevel === 'full' || $themeCustomizationLevel === 'advanced') {
+            $allowedThemes = ['default', 'dark', 'forest', 'sunset', 'vintage', 'blossom', 'lagoon', 'amber'];
+        }
+        
+        // Define validation rules
+        $validationRules = [
             'name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
@@ -96,8 +120,19 @@ class ClinicProfileController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'theme' => ['required', 'string', 'in:default,dark,forest,sunset,vintage,blossom,lagoon,amber'],
-        ]);
+        ];
+        
+        // Only validate theme if customization is allowed
+        if ($themeCustomizationLevel !== 'none') {
+            $validationRules['theme'] = [
+                'required', 
+                'string', 
+                Rule::in($allowedThemes)
+            ];
+        }
+        
+        // Validate the request
+        $validator = Validator::make($request->all(), $validationRules);
         
         if ($validator->fails()) {
             return back()
@@ -105,15 +140,26 @@ class ClinicProfileController extends Controller
                 ->withInput();
         }
         
-        // Update the clinic profile
-        $clinic->update([
+        // Prepare data for update
+        $updateData = [
             'name' => $request->name,
             'address' => $request->address,
             'phone' => $request->phone,
             'email' => $request->email,
             'description' => $request->description,
-            'theme' => $request->theme,
-        ]);
+        ];
+        
+        // Only update theme if customization is allowed
+        if ($themeCustomizationLevel !== 'none' && in_array($request->theme, $allowedThemes)) {
+            $updateData['theme'] = $request->theme;
+            
+            // Reset custom colors when selecting a predefined theme
+            // This ensures only one theme system (either custom or predefined) is active at any time
+            $updateData['custom_theme_colors'] = null;
+        }
+        
+        // Update the clinic profile
+        $clinic->update($updateData);
         
         // Handle logo upload
         if ($request->hasFile('logo') && $request->file('logo')->isValid()) {

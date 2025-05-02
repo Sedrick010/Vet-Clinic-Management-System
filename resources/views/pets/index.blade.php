@@ -1,6 +1,11 @@
 @extends('layouts.app')
 
+@section('title', 'Pets')
 @section('page_name', 'Pets')
+
+@php
+    $isSidebar = true;
+@endphp
 
 @section('content')
 <div class="container-fluid py-4">
@@ -8,20 +13,30 @@
         <div class="col-12">
             <div class="card mb-4">
                 <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">All Pets</h6>
-                    <a href="{{ route('pets.create') }}" class="btn btn-sm bg-gradient-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Add New Pet
+                    <div>
+                        <h6>All Pets</h6>
+                        <!-- Subscription Limit Indicator -->
+                        @if(isset($petsLimit) && isset($petsCount))
+                            <x-subscription-limit-indicator 
+                                :count="$petsCount" 
+                                :limit="$petsLimit" 
+                                type="pets" 
+                            />
+                        @endif
+                    </div>
+                    <a href="{{ route('pets.create') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> New Pet
                     </a>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if(session('success'))
-                        <div class="alert alert-success mx-4 mt-3 text-white">
+                        <div class="alert alert-success mx-4 mt-3">
                             {{ session('success') }}
                         </div>
                     @endif
                     
                     @if(session('error'))
-                        <div class="alert alert-danger mx-4 mt-3 text-white">
+                        <div class="alert alert-danger mx-4 mt-3">
                             {{ session('error') }}
                         </div>
                     @endif
@@ -45,22 +60,14 @@
                                             <td>
                                                 <div class="d-flex px-2 py-1">
                                                     <div>
-                                                        <div class="icon icon-shape icon-sm text-center border-radius-md text-white" style="background-color: 
-                                                            @if($pet->species == 'Dog') #3498db
-                                                            @elseif($pet->species == 'Cat') #f39c12
-                                                            @elseif($pet->species == 'Bird') #2ecc71
-                                                            @elseif($pet->species == 'Reptile') #27ae60
-                                                            @else #95a5a6
-                                                            @endif
-                                                        ">
-                                                            <i class="fas 
+                                                        <div class="avatar avatar-sm me-3 bg-{{ $pet->species == 'Dog' ? 'primary' : ($pet->species == 'Cat' ? 'warning' : ($pet->species == 'Bird' ? 'success' : ($pet->species == 'Reptile' ? 'info' : 'secondary'))) }} rounded-circle d-flex justify-content-center align-items-center" style="background-color: var(--{{ $pet->species == 'Dog' ? 'primary' : ($pet->species == 'Cat' ? 'warning' : ($pet->species == 'Bird' ? 'success' : ($pet->species == 'Reptile' ? 'info' : 'secondary'))) }}-color) !important;">
+                                                            <i class="text-white fas 
                                                                 @if($pet->species == 'Dog') fa-dog
                                                                 @elseif($pet->species == 'Cat') fa-cat
                                                                 @elseif($pet->species == 'Bird') fa-dove
                                                                 @elseif($pet->species == 'Reptile') fa-dragon
                                                                 @else fa-paw
-                                                                @endif
-                                                                opacity-10">
+                                                                @endif">
                                                             </i>
                                                         </div>
                                                     </div>
@@ -90,19 +97,18 @@
                                             </td>
                                             <td class="align-middle">
                                                 <div class="d-flex align-items-center">
-                                                    <a href="{{ route('pets.show', $pet->id) }}" class="icon-link me-2" data-bs-toggle="tooltip" data-bs-title="View details">
-                                                        <i class="fas fa-eye"></i>
+                                                    <a href="{{ route('pets.show', $pet->id) }}" class="btn btn-link text-secondary mb-0 me-2">
+                                                        <i class="fas fa-eye text-xs"></i>
                                                     </a>
-                                                    <a href="{{ route('pets.edit', $pet->id) }}" class="icon-link me-2" data-bs-toggle="tooltip" data-bs-title="Edit">
-                                                        <i class="fas fa-edit"></i>
+                                                    <a href="{{ route('pets.edit', $pet->id) }}" class="btn btn-link text-secondary mb-0 me-2">
+                                                        <i class="fas fa-edit text-xs"></i>
                                                     </a>
                                                     <form action="{{ route('pets.destroy', $pet->id) }}" method="POST" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-link icon-link p-0 m-0" 
-                                                            onclick="return confirm('Are you sure you want to delete this pet?')"
-                                                            data-bs-toggle="tooltip" data-bs-title="Delete">
-                                                            <i class="fas fa-trash text-danger"></i>
+                                                        <button type="submit" class="btn btn-link text-secondary mb-0" 
+                                                            onclick="return confirm('Are you sure you want to delete this pet?')">
+                                                            <i class="fas fa-trash text-danger text-xs"></i>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -117,11 +123,11 @@
                         @else
                             <div class="text-center py-4">
                                 <div class="icon mb-2">
-                                    <i class="fas fa-paw fa-3x" style="color: var(--bs-gray-400);"></i>
+                                    <i class="fas fa-paw fa-3x text-secondary"></i>
                                 </div>
                                 <h6 class="text-secondary">No pets found</h6>
-                                <a href="{{ route('pets.create') }}" class="btn btn-sm btn-primary mt-3">
-                                    <i class="fas fa-plus-circle me-1"></i> Add First Pet
+                                <a href="{{ route('pets.create') }}" class="btn btn-primary btn-sm mt-3">
+                                    <i class="fas fa-plus me-1"></i> Add First Pet
                                 </a>
                             </div>
                         @endif

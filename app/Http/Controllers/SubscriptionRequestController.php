@@ -3,230 +3,154 @@
 namespace App\Http\Controllers;
 
 use App\Models\Clinic;
+use App\Models\Subscription;
 use App\Models\SubscriptionRequest;
+use App\Services\SubdomainService;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class SubscriptionRequestController extends Controller
 {
+    protected $subdomainService;
+    protected $subscriptionService;
+
+    public function __construct(SubdomainService $subdomainService, SubscriptionService $subscriptionService)
+    {
+        $this->subdomainService = $subdomainService;
+        $this->subscriptionService = $subscriptionService;
+    }
+
     /**
      * Display the subscription request form or current status.
      */
     public function index()
     {
-        // For tenant users
-        if (session()->has('tenant_user') && session()->has('current_clinic_id')) {
-            $tenantUser = (object)session('tenant_user');
-            $clinicId = session('current_clinic_id');
-            
-            // Get the clinic
-            $clinic = \App\Models\Clinic::find($clinicId);
-            if (!$clinic) {
-                \Illuminate\Support\Facades\Log::error('Tenant subscription index: Clinic not found', [
-                    'tenant_user' => $tenantUser,
-                    'clinic_id' => $clinicId
-                ]);
-                
-                return view('subscription.index', [
-                    'subscriptions' => [],
-                    'activeSubscription' => null,
-                    'pendingSubscription' => null,
-                    'isSidebar' => true,
-                    'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
-                    'monthlyRequests' => ['labels' => [], 'data' => []],
-                    'monthlyRevenue' => ['labels' => [], 'data' => []],
-                    'stats' => [
-                        'totalActive' => 0,
-                        'totalPending' => 0,
-                        'totalRejected' => 0,
-                        'totalRevenue' => 0,
-                        'averageRevenue' => 0
-                    ]
-                ]);
-            }
-            
-            // Explicitly query subscriptions using the clinic's user_id
-            $ownerId = $clinic->user_id;
-            
-            \Illuminate\Support\Facades\Log::info('Tenant subscription index: Querying subscriptions', [
-                'tenant_user' => $tenantUser,
-                'clinic_id' => $clinicId,
-                'owner_id' => $ownerId
-            ]);
-            
-            // Direct query to the subscriptions table
-            $subscriptions = \App\Models\Subscription::where(function($query) use ($ownerId, $clinic) {
-                $query->where('user_id', $ownerId)
-                      ->orWhere('guest_clinic_name', $clinic->name);
-            })->latest()->get();
-            
-            $activeSubscription = $subscriptions->where('status', 'active')->first();
-            $pendingSubscription = $subscriptions->where('status', 'pending')->first();
-            
-            \Illuminate\Support\Facades\Log::info('Tenant subscription results', [
-                'subscription_count' => $subscriptions->count(),
-                'has_active' => !is_null($activeSubscription),
-                'has_pending' => !is_null($pendingSubscription)
-            ]);
-            
-            return view('subscription.index', [
-                'subscriptions' => $subscriptions,
-                'activeSubscription' => $activeSubscription,
-                'pendingSubscription' => $pendingSubscription,
-                'isSidebar' => true,
-                'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
-                'monthlyRequests' => ['labels' => [], 'data' => []],
-                'monthlyRevenue' => ['labels' => [], 'data' => []],
-                'stats' => [
-                    'totalActive' => 0,
-                    'totalPending' => 0,
-                    'totalRejected' => 0,
-                    'totalRevenue' => 0,
-                    'averageRevenue' => 0
-                ]
-            ]);
-        }
-        
-        // Handle case when user is not logged in and not a tenant
-        if (!auth()->check()) {
-            return view('subscription.index', [
-                'subscriptions' => [],
-                'activeSubscription' => null,
-                'pendingSubscription' => null,
-                'isSidebar' => true,
-                'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
-                'monthlyRequests' => ['labels' => [], 'data' => []],
-                'monthlyRevenue' => ['labels' => [], 'data' => []],
-                'stats' => [
-                    'totalActive' => 0,
-                    'totalPending' => 0,
-                    'totalRejected' => 0,
-                    'totalRevenue' => 0,
-                    'averageRevenue' => 0
-                ]
-            ]);
-        }
-        
-        // For regular users (not tenants)
-        $user = Auth::user();
-        
-        // Check if the user has an associated clinic
-        if (!$user->clinic && !$user->hasRole('admin')) {
-            // For users without a clinic association
-            return view('subscription.index', [
-                'subscriptions' => [],
-                'activeSubscription' => null,
-                'pendingSubscription' => null,
-                'isSidebar' => true,
-                'planDistribution' => ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0],
-                'monthlyRequests' => ['labels' => [], 'data' => []],
-                'monthlyRevenue' => ['labels' => [], 'data' => []],
-                'stats' => [
-                    'totalActive' => 0,
-                    'totalPending' => 0,
-                    'totalRejected' => 0,
-                    'totalRevenue' => 0,
-                    'averageRevenue' => 0
-                ]
-            ]);
-        }
-        
-        $clinic = $user->clinic;
-        
-        // Get subscription data for admin or regular user
-        $subscriptions = $user->hasRole('admin') 
-            ? \App\Models\Subscription::with('user')->latest()->get()
-            : \App\Models\Subscription::where('user_id', $user->id)->latest()->get();
-        
-        // Find active and pending subscriptions
-        $activeSubscription = $subscriptions->where('status', 'active')->first();
-        $pendingSubscription = $subscriptions->where('status', 'pending')->first();
-        
-        // For admin users, prepare stats data
-        $planDistribution = ['free' => 0, 'basic' => 0, 'standard' => 0, 'business' => 0, 'premium' => 0];
-        $monthlyRequests = ['labels' => [], 'data' => []];
-        $monthlyRevenue = ['labels' => [], 'data' => []];
+        // Get statistics for admin view
         $stats = [
-            'totalActive' => 0,
-            'totalPending' => 0,
-            'totalRejected' => 0,
-            'totalRevenue' => 0,
-            'averageRevenue' => 0
+            'totalActive' => SubscriptionRequest::where('status', 'approved')->count(),
+            'totalPending' => SubscriptionRequest::where('status', 'pending')->count(),
+            'totalRevenue' => SubscriptionRequest::where('status', 'approved')->sum('amount_paid'),
+            'averageRevenue' => SubscriptionRequest::where('status', 'approved')->avg('amount_paid') ?? 0,
         ];
         
-        if ($user->hasRole('admin')) {
-            // Get plan distribution
-            foreach ($subscriptions->where('status', 'active') as $subscription) {
-                if (isset($planDistribution[$subscription->plan])) {
-                    $planDistribution[$subscription->plan]++;
-                }
-            }
+        // Get plan distribution data for the chart
+        $planDistribution = [
+            'free' => Clinic::where('subscription_plan', 'free')->where('is_subscription_active', true)->count(),
+            'basic' => Clinic::where('subscription_plan', 'basic')->where('is_subscription_active', true)->count(),
+            'standard' => Clinic::where('subscription_plan', 'standard')->where('is_subscription_active', true)->count(),
+            'premium' => Clinic::where('subscription_plan', 'premium')->where('is_subscription_active', true)->count(),
+        ];
+        
+        // Add monthly requests data for the chart (last 6 months)
+        $monthlyRequests = [
+            'labels' => [],
+            'data' => []
+        ];
+
+        // Get monthly revenue data for the chart (also referenced in the view)
+        $monthlyRevenue = [
+            'labels' => [],
+            'data' => []
+        ];
+
+        // Generate data for the last 6 months
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $monthName = $date->format('M Y');
             
-            // Get monthly subscription requests (last 6 months)
-            $labels = [];
-            $requestData = [];
-            $revenueData = [];
-            $startDate = \Carbon\Carbon::now()->subMonths(5)->startOfMonth();
+            // Add to labels array
+            $monthlyRequests['labels'][] = $monthName;
+            $monthlyRevenue['labels'][] = $monthName;
             
-            for ($i = 0; $i < 6; $i++) {
-                $currentDate = clone $startDate;
-                $currentDate->addMonths($i);
-                $nextMonth = clone $currentDate;
-                $nextMonth->addMonth();
-                
-                $labels[] = $currentDate->format('M Y');
-                
-                // Count of new subscriptions for the month
-                $count = \App\Models\Subscription::whereBetween('created_at', [
-                    $currentDate->format('Y-m-d'),
-                    $nextMonth->format('Y-m-d')
-                ])->count();
-                
-                $requestData[] = $count;
-                
-                // Revenue from approved subscriptions for the month
-                $revenue = \App\Models\Subscription::whereBetween('approved_at', [
-                    $currentDate->format('Y-m-d'),
-                    $nextMonth->format('Y-m-d')
-                ])->where('status', 'active')
-                  ->sum('amount_paid');
-                
-                $revenueData[] = $revenue;
-            }
+            // Count requests for this month
+            $requestCount = SubscriptionRequest::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+            $monthlyRequests['data'][] = $requestCount;
             
-            $monthlyRequests = [
-                'labels' => $labels,
-                'data' => $requestData
-            ];
-            
-            $monthlyRevenue = [
-                'labels' => $labels,
-                'data' => $revenueData
-            ];
-            
-            // Calculate total statistics
-            $stats = [
-                'totalActive' => \App\Models\Subscription::where('status', 'active')->count(),
-                'totalPending' => \App\Models\Subscription::where('status', 'pending')->count(),
-                'totalRejected' => \App\Models\Subscription::where('status', 'rejected')->count(),
-                'totalRevenue' => \App\Models\Subscription::where('status', 'active')->sum('amount_paid'),
-                'averageRevenue' => \App\Models\Subscription::where('status', 'active')->avg('amount_paid') ?? 0
-            ];
+            // Sum revenue for this month
+            $revenue = SubscriptionRequest::where('status', 'approved')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->sum('amount_paid');
+            $monthlyRevenue['data'][] = $revenue;
         }
         
-        return view('subscription.index', [
-            'subscriptions' => $subscriptions,
-            'activeSubscription' => $activeSubscription,
-            'pendingSubscription' => $pendingSubscription,
-            'isSidebar' => true,
-            'planDistribution' => $planDistribution,
-            'monthlyRequests' => $monthlyRequests,
-            'monthlyRevenue' => $monthlyRevenue,
-            'stats' => $stats
-        ]);
+        // Get clinic and subscription info
+        $clinic = null;
+        $activeSubscription = null;
+        $pendingSubscription = null;
+        
+        // Check if user is logged in
+        if (Auth::check()) {
+            // Admin should see all subscriptions
+            if (Auth::user()->role === 'admin') {
+                // Get all subscription requests for admin display
+                $allRequests = SubscriptionRequest::with(['clinic', 'user'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                // Log the count of requests for debugging
+                Log::info('Admin subscription dashboard', [
+                    'total_requests' => $allRequests->count(),
+                    'pending_requests' => $allRequests->where('status', 'pending')->count(),
+                    'approved_requests' => $allRequests->where('status', 'approved')->count(),
+                    'cancelled_requests' => $allRequests->where('status', 'cancelled')->count(),
+                    'has_clinic_relation' => $allRequests->filter(function($request) {
+                        return $request->clinic_id && $request->clinic;
+                    })->count()
+                ]);
+                
+                return view('subscription.index', compact(
+                    'stats', 
+                    'planDistribution', 
+                    'monthlyRequests', 
+                    'monthlyRevenue', 
+                    'allRequests'
+                ));
+            }
+            
+            // Regular user - get their clinic
+            $user = Auth::user();
+            if ($user->clinic_id) {
+                $clinic = Clinic::find($user->clinic_id);
+            }
+        } else {
+            // Try to get clinic from tenant session
+            if (session()->has('tenant_user') && session()->has('current_clinic_id')) {
+                $clinic = Clinic::find(session('current_clinic_id'));
+            }
+        }
+        
+        // If we have a clinic, get subscription details
+        if ($clinic) {
+            // Get pending subscription request if any
+            $pendingSubscription = SubscriptionRequest::where('clinic_id', $clinic->id)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+                
+            // Get active subscription request
+            $activeSubscription = SubscriptionRequest::where('clinic_id', $clinic->id)
+                ->where('status', 'approved')
+                ->where('expired_at', '>', now())
+                ->latest()
+                ->first();
+        }
+        
+        // Get subscription plan features
+        $planFeatures = [
+            'free' => $this->subscriptionService->getPlanDescription('free'),
+            'basic' => $this->subscriptionService->getPlanDescription('basic'),
+            'premium' => $this->subscriptionService->getPlanDescription('premium'),
+        ];
+        
+        return view('subscription.index', compact('stats', 'planDistribution', 'clinic', 'activeSubscription', 'pendingSubscription', 'planFeatures', 'monthlyRequests', 'monthlyRevenue'));
     }
     
     /**
@@ -249,7 +173,7 @@ class SubscriptionRequestController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plan' => 'required|string|in:free,basic,standard,business',
+            'plan' => 'required|string|in:basic,standard,business',
             'duration' => 'required|integer|min:1|max:12',
             'payment_method' => 'required|string|in:bank_transfer,gcash,credit_card',
             'payment_reference' => 'nullable|string|max:255',
@@ -283,10 +207,15 @@ class SubscriptionRequestController extends Controller
             
             // Determine the user_id based on who is making the request
             $userId = null;
+            $clinicId = null;
             
             // For authenticated users
             if (auth()->check()) {
                 $userId = auth()->id();
+                // If the user has a clinic_id, use it
+                if (auth()->user()->clinic_id) {
+                    $clinicId = auth()->user()->clinic_id;
+                }
             } 
             // For tenant users, use the clinic owner's ID
             elseif (session()->has('tenant_user') && session()->has('current_clinic_id')) {
@@ -303,9 +232,21 @@ class SubscriptionRequestController extends Controller
                 }
             }
             
+            // Log the subscription request data for debugging
+            Log::info('Creating subscription request', [
+                'user_id' => $userId,
+                'clinic_id' => $clinicId,
+                'plan' => $validated['plan'],
+                'amount' => $amount,
+                'is_authenticated' => auth()->check(),
+                'has_tenant_session' => session()->has('tenant_user'),
+                'current_clinic_id_in_session' => session('current_clinic_id')
+            ]);
+            
             // Create the subscription without requiring a user_id
-            $subscription = new \App\Models\Subscription([
+            $subscription = new SubscriptionRequest([
                 'user_id' => $userId, // Will be null for guests, set for authenticated or tenant users
+                'clinic_id' => $clinicId, // Use the determined clinic_id instead of directly from session
                 'plan' => $validated['plan'],
                 'duration' => $validated['duration'],
                 'payment_method' => $validated['payment_method'],
@@ -320,7 +261,23 @@ class SubscriptionRequestController extends Controller
                 'guest_phone' => $validated['contact_phone'],
             ]);
             
+            // Ensure clinic_id is set before saving
+            if (empty($subscription->clinic_id) && session()->has('current_clinic_id')) {
+                $subscription->clinic_id = session('current_clinic_id');
+                Log::info('Setting clinic_id from session', [
+                    'clinic_id' => $subscription->clinic_id
+                ]);
+            }
+            
             $subscription->save();
+            
+            // Log the saved subscription for verification
+            Log::info('Subscription request saved', [
+                'subscription_id' => $subscription->id,
+                'clinic_id' => $subscription->clinic_id,
+                'user_id' => $subscription->user_id,
+                'status' => $subscription->status
+            ]);
             
             // Notify all admin users about the new subscription request
             $adminUsers = \App\Models\User::where('role', 'admin')->get();
@@ -387,7 +344,7 @@ class SubscriptionRequestController extends Controller
             }
             
             // Get subscription directly by ID
-            $subscription = \App\Models\Subscription::find($id);
+            $subscription = SubscriptionRequest::find($id);
             
             if (!$subscription) {
                 \Illuminate\Support\Facades\Log::error('Tenant subscription show: Subscription not found', [
@@ -460,7 +417,7 @@ class SubscriptionRequestController extends Controller
         }
         
         // Get the subscription and ensure it belongs to the user
-        $subscription = \App\Models\Subscription::where('user_id', $user->id)
+        $subscription = SubscriptionRequest::where('user_id', $user->id)
             ->where('status', 'pending')
             ->findOrFail($id);
         
@@ -477,7 +434,38 @@ class SubscriptionRequestController extends Controller
      */
     public function cancelRequest($id)
     {
-        return $this->cancel($id);
+        $user = Auth::user();
+        
+        // Check if the user exists or if there's a clinic session
+        if (!$user && !session()->has('tenant_user')) {
+            return redirect()->route('login');
+        }
+        
+        // Get the subscription request
+        $subscriptionRequest = SubscriptionRequest::findOrFail($id);
+        
+        // Check if the user has permission to cancel this request
+        $clinicId = session('current_clinic_id');
+        if (!$user && $clinicId != $subscriptionRequest->clinic_id) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        if ($user && !$user->hasRole('admin') && $subscriptionRequest->user_id != $user->id) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        // Only pending subscriptions can be cancelled
+        if ($subscriptionRequest->status !== 'pending') {
+            return redirect()->route('subscription.show', $id)
+                ->with('error', 'Only pending subscription requests can be cancelled.');
+        }
+        
+        $subscriptionRequest->status = 'cancelled';
+        $subscriptionRequest->cancelled_at = now();
+        $subscriptionRequest->save();
+        
+        return redirect()->route('subscription.index')
+            ->with('success', 'Subscription request has been cancelled successfully.');
     }
     
     /**
@@ -651,7 +639,7 @@ class SubscriptionRequestController extends Controller
         
         // Validate the request data
         $validated = $request->validate([
-            'plan' => 'required|string|in:free,basic,standard,business',
+            'plan' => 'required|string|in:basic,standard,business',
             'duration' => 'required|integer|min:1|max:12',
             'payment_method' => 'required|string|in:bank_transfer,gcash,credit_card,maya',
             'payment_reference' => 'nullable|string|max:255',

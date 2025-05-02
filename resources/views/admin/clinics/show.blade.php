@@ -185,7 +185,10 @@
                     <i class="fas fa-arrow-left me-1"></i> Back to Clinics
                 </a>
                 <div>
-                    <a href="{{ route('admin.clinics.subscription.edit', $clinic) }}" class="btn btn-primary">
+                    <a href="{{ route('admin.clinics.subscription.change.form', $clinic) }}" class="btn btn-info">
+                        <i class="fas fa-exchange-alt me-1"></i> Change Subscription
+                    </a>
+                    <a href="{{ route('admin.clinics.subscription.edit', $clinic) }}" class="btn btn-primary ms-2">
                         <i class="fas fa-cog me-1"></i> Manage Subscription
                     </a>
                     <form action="{{ route('admin.clinics.destroy', $clinic->id) }}" method="POST" class="d-inline ms-2" onsubmit="return confirm('Are you sure you want to delete this clinic? This will permanently remove all their data and cannot be undone.');">

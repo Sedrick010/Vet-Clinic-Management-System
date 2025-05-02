@@ -87,30 +87,9 @@
                                 <p class="text-muted">Choose the plan that best fits your clinic's needs</p>
                                 
                                 <div class="row">
-                                    <div class="col-md-3 mb-3">
-                                        <div class="card h-100 plan-card {{ request('plan') == 'free' ? 'border border-2 border-primary' : '' }}">
-                                            <div class="card-header bg-light">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="plan" 
-                                                        id="planFree" value="free" {{ request('plan') == 'free' ? 'checked' : '' }} 
-                                                        {{ old('plan') == 'free' ? 'checked' : '' }}>
-                                                    <label class="form-check-label fw-bold" for="planFree">
-                                                        Free Plan - ₱0/month
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="card-body">
-                                                <ul class="list-unstyled">
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 20 Appointments/month</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Basic Clinic Setup (Name)</li>
-                                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 1 admin account</li>
-                                                    <li class="mb-2"><i class="fas fa-times text-danger me-2"></i> No Premium Reports</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <!-- Free plan removed - automatically assigned on registration -->
                                     
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <div class="card h-100 plan-card {{ request('plan') == 'basic' ? 'border border-2 border-primary' : '' }}">
                                             <div class="card-header bg-light">
                                                 <div class="form-check">
@@ -134,13 +113,13 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <div class="card h-100 plan-card {{ request('plan') == 'standard' || !request('plan') ? 'border border-2 border-primary' : '' }}">
                                             <div class="card-header bg-primary text-white">
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="plan" 
                                                         id="planStandard" value="standard" 
-                                                        {{ (request('plan') == 'standard' || !request('plan')) && !old('plan') ? 'checked' : '' }}
+                                                        {{ (request('plan') == 'standard' || !request('plan') || old('plan') == '') && old('plan') != 'basic' && old('plan') != 'business' ? 'checked' : '' }}
                                                         {{ old('plan') == 'standard' ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-bold" for="planStandard">
                                                         Standard Plan - ₱1,599/month
@@ -160,7 +139,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <div class="card h-100 plan-card {{ request('plan') == 'business' ? 'border border-2 border-primary' : '' }}">
                                             <div class="card-header bg-dark text-white">
                                                 <div class="form-check">
