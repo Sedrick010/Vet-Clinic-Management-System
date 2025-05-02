@@ -124,13 +124,6 @@
                     </div>
                 </div>
                 @else
-                <!-- DEBUG: Show current clinic subscription info -->
-                <div class="alert alert-warning">
-                    <strong>Debug:</strong><br>
-                    Plan: {{ $clinic->subscription_plan }}<br>
-                    Active: {{ $clinic->is_subscription_active ? 'yes' : 'no' }}<br>
-                    Ends At: {{ $clinic->subscription_ends_at }}
-                </div>
                 <form action="{{ route('clinic.profile.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')

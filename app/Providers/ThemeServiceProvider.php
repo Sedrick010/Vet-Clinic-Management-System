@@ -358,18 +358,11 @@ class ThemeServiceProvider extends ServiceProvider
                 'matches' => ['admin/dashboard']
             ],
             [
-                'name' => 'Clinic Approvals',
+                'name' => 'Tenant Management',
                 'route' => 'admin.clinics.index',
                 'icon' => 'fas fa-clinic-medical',
                 'color' => 'success',
                 'matches' => ['admin/clinics']
-            ],
-            [
-                'name' => 'Database Check',
-                'route' => 'admin.database.check',
-                'icon' => 'fas fa-database',
-                'color' => 'info',
-                'matches' => ['admin/database-check']
             ]
         ]);
     }
