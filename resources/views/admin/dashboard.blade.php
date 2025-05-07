@@ -223,13 +223,30 @@
         background-image: linear-gradient(to right, #5e72e4, #825ee4, #2dce89, #fbb140, #f5365c);
     }
     
+    /* New fixed height styling for stat cards */
     .stat-card {
         border-radius: 18px;
         overflow: hidden;
+        height: 160px;  /* Fixed height for all stat cards */
+        display: flex;
+        flex-direction: column;
     }
+    
+    .stat-card .card-body {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
     .stat-card .numbers {
         padding-top: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
     }
+    
     .stat-card .icon-shape {
         position: relative;
     }
@@ -375,7 +392,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card primary-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Total Clinics</p>
@@ -400,7 +417,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card warning-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Pending Approvals</p>
@@ -431,7 +448,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card success-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Approved Clinics</p>
@@ -457,7 +474,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card danger-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Rejected Clinics</p>
@@ -489,7 +506,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card info-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Total Tickets</p>
@@ -514,7 +531,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card primary-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Open Tickets</p>
@@ -545,7 +562,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card warning-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">In Progress</p>
@@ -570,7 +587,7 @@
         <div class="col-xl-3 col-sm-6">
             <div class="card stat-card danger-card">
                 <div class="card-body p-3">
-                    <div class="row">
+                    <div class="row h-100">
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-capitalize">Critical Tickets</p>

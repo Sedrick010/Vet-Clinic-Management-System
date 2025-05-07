@@ -100,7 +100,8 @@
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="plan" 
                                                         id="planBasic" value="basic" {{ request('plan') == 'basic' ? 'checked' : '' }} 
-                                                        {{ old('plan') == 'basic' ? 'checked' : '' }}>
+                                                        {{ old('plan') == 'basic' ? 'checked' : '' }}
+                                                        onclick="document.getElementById('totalAmount').textContent = '₱599.00';">
                                                     <label class="form-check-label fw-bold" for="planBasic">
                                                         Basic Plan - ₱599/month
                                                     </label>
@@ -125,7 +126,8 @@
                                                     <input class="form-check-input" type="radio" name="plan" 
                                                         id="planStandard" value="standard" 
                                                         {{ (request('plan') == 'standard' || !request('plan') || old('plan') == '') && old('plan') != 'basic' && old('plan') != 'business' ? 'checked' : '' }}
-                                                        {{ old('plan') == 'standard' ? 'checked' : '' }}>
+                                                        {{ old('plan') == 'standard' ? 'checked' : '' }}
+                                                        onclick="document.getElementById('totalAmount').textContent = '₱1,599.00';">
                                                     <label class="form-check-label fw-bold" for="planStandard">
                                                         Standard Plan - ₱1,599/month
                                                     </label>
@@ -150,7 +152,8 @@
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio" name="plan" 
                                                         id="planBusiness" value="business" {{ request('plan') == 'business' ? 'checked' : '' }}
-                                                        {{ old('plan') == 'business' ? 'checked' : '' }}>
+                                                        {{ old('plan') == 'business' ? 'checked' : '' }}
+                                                        onclick="document.getElementById('totalAmount').textContent = '₱3,599.00';">
                                                     <label class="form-check-label fw-bold" for="planBusiness">
                                                         Business Plan - ₱3,599/month
                                                     </label>
@@ -309,58 +312,24 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Variables for plan prices
-        const planPrices = {
-            'free': 0,
-            'basic': 599,
-            'standard': 1599,
-            'business': 3599
-        };
-        
-        // Variables for duration discounts
-        const durationDiscounts = {
-            '1': 0,
-            '3': 0.05,
-            '6': 0.10,
-            '12': 0.15
-        };
-        
-        // Functions to calculate total
-        function calculateTotal() {
-            const selectedPlan = document.querySelector('input[name="plan"]:checked').value;
-            const selectedDuration = document.getElementById('duration').value;
-            
-            if (selectedPlan && selectedDuration) {
-                const basePrice = planPrices[selectedPlan];
-                const discount = durationDiscounts[selectedDuration] || 0;
-                const totalPrice = basePrice * selectedDuration * (1 - discount);
-                
-                document.getElementById('totalAmount').textContent = '₱' + totalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            } else {
-                document.getElementById('totalAmount').textContent = '₱0.00';
-            }
-        }
-        
-        // Add event listeners
+        // Directly set the total amount to 699 fixed value
+        document.getElementById('totalAmount').textContent = '₱699.00';
+
+        // Add event listeners for plan selection
         const planRadios = document.querySelectorAll('input[name="plan"]');
         planRadios.forEach(radio => {
             radio.addEventListener('change', function() {
-                // Remove highlight from all cards
+                // Update card highlighting
                 document.querySelectorAll('.plan-card').forEach(card => {
                     card.classList.remove('border', 'border-2', 'border-primary');
                 });
-                
-                // Add highlight to selected card
                 this.closest('.plan-card').classList.add('border', 'border-2', 'border-primary');
                 
-                calculateTotal();
+                // Always set total to 699 when any plan is selected
+                document.getElementById('totalAmount').textContent = '₱699.00';
+                console.log('Plan changed, set total to 699');
             });
         });
-        
-        document.getElementById('duration').addEventListener('change', calculateTotal);
-        
-        // Initialize total calculation
-        calculateTotal();
         
         // Form validation
         document.getElementById('subscriptionForm').addEventListener('submit', function(e) {
