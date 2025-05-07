@@ -30,11 +30,16 @@
                     New Subscription Request
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Please Note:</strong> All subscription requests require admin approval before they become active. 
-                        Once approved, you will gain access to all features included in your selected plan. 
-                        The approval process typically takes 1-2 business days.
+                    <div class="alert bg-gradient-primary border-0 text-white fade show" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-white mb-1"><strong>Please Note:</strong></h6>
+                                <p class="mb-0">All subscription requests require admin approval before they become active. Once approved, you will gain access to all features included in your selected plan. The approval process typically takes 1-2 business days.</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <form action="{{ route('subscription.store') }}" method="POST" id="subscriptionForm">
@@ -255,21 +260,19 @@
                         
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="alert alert-info">
-                                    <div class="d-flex">
+                                <div class="alert bg-gradient-primary border-0 text-white fade show" role="alert">
+                                    <div class="d-flex align-items-start">
                                         <div class="me-3">
-                                            <i class="fas fa-info-circle fa-2x"></i>
+                                            <i class="fas fa-credit-card fa-2x"></i>
                                         </div>
                                         <div>
-                                            <h5 class="alert-heading">Payment Instructions</h5>
-                                            <p class="mb-0">
-                                                Please complete your payment before submitting this form. Your subscription will be reviewed and activated once the payment has been verified.
-                                                <br>For bank transfers, please use the following account details:
-                                            </p>
-                                            <ul class="mb-0 mt-2">
-                                                <li>Bank: Sample Bank of the Philippines</li>
-                                                <li>Account Name: VetClinic System Inc.</li>
-                                                <li>Account Number: 1234-5678-9012-3456</li>
+                                            <h6 class="text-white mb-2"><strong>Payment Instructions</strong></h6>
+                                            <p class="mb-3">Please complete your payment before submitting this form. Your subscription will be reviewed and activated once the payment has been verified.</p>
+                                            <p class="mb-2">For bank transfers, please use the following account details:</p>
+                                            <ul class="list-unstyled mb-0 ps-0">
+                                                <li class="mb-2"><i class="fas fa-university me-2"></i> Bank: Sample Bank of the Philippines</li>
+                                                <li class="mb-2"><i class="fas fa-user me-2"></i> Account Name: VetClinic System Inc.</li>
+                                                <li><i class="fas fa-hashtag me-2"></i> Account Number: 1234-5678-9012-3456</li>
                                             </ul>
                                         </div>
                                     </div>

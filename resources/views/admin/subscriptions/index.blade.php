@@ -207,20 +207,20 @@
                                         <div class="px-3 py-1">
                                             <div class="btn-group">
                                                 <a href="{{ route('admin.clinics.subscription.edit', $clinic->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit Subscription">
-                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-edit" style="font-size: 0.9rem;"></i>
                                                 </a>
                                                 <a href="{{ route('admin.clinics.subscription.change.form', $clinic->id) }}" class="btn btn-sm btn-info ms-1" data-bs-toggle="tooltip" title="Change & Extend">
-                                                    <i class="fas fa-exchange-alt"></i>
+                                                    <i class="fas fa-exchange-alt" style="font-size: 0.9rem;"></i>
                                                 </a>
                                                 <form action="{{ route('admin.clinics.subscription.toggle', $clinic->id) }}" method="POST" style="display:inline-block">
                                                     @csrf
                                                     @method('PATCH')
                                                     <button type="submit" class="btn btn-sm {{ $clinic->is_subscription_active ? 'btn-danger' : 'btn-success' }} ms-1" data-bs-toggle="tooltip" title="{{ $clinic->is_subscription_active ? 'Deactivate' : 'Activate' }}">
-                                                        <i class="fas {{ $clinic->is_subscription_active ? 'fa-ban' : 'fa-check-circle' }}"></i>
+                                                        <i class="fas {{ $clinic->is_subscription_active ? 'fa-ban' : 'fa-check-circle' }}" style="font-size: 0.9rem;"></i>
                                                     </button>
                                                 </form>
                                                 <a href="{{ route('admin.clinics.show', $clinic->id) }}" class="btn btn-sm btn-secondary ms-1" data-bs-toggle="tooltip" title="View Clinic">
-                                                    <i class="fas fa-hospital"></i>
+                                                    <i class="fas fa-hospital" style="font-size: 0.9rem;"></i>
                                                 </a>
                                             </div>
                                         </div>
