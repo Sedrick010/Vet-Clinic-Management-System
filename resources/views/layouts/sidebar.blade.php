@@ -21,6 +21,11 @@
         transition: all 0.3s ease;
         margin: 0.2rem 1rem;
         color: var(--text-color);
+        position: relative;
+        overflow: hidden;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
     }
     
     .sidenav .nav-link:hover {
@@ -28,17 +33,24 @@
     }
     
     .sidenav .nav-link.active {
-        background-color: {{ $theme['colors']['primary'] ?? '#5e72e4' }};
-        background-image: linear-gradient(310deg, {{ $theme['colors']['primary'] ?? '#5e72e4' }} 0%, {{ $theme['colors']['secondary'] ?? '#825ee4' }} 100%);
-        box-shadow: 0 5px 15px {{ $theme['name'] == 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(94, 114, 228, 0.3)' }};
+        background-image: linear-gradient(310deg, {{ $theme['colors']['info'] ?? '#1171ef' }} 0%, {{ $theme['colors']['primary'] ?? '#5e72e4' }} 100%);
+        color: #fff;
+        box-shadow: 0 3px 8px {{ $theme['name'] == 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(17, 113, 239, 0.3)' }};
+        border: 0;
     }
     
     .sidenav .nav-link.active .icon-shape {
-        background-color: #fff;
+        background-color: transparent !important;
+        box-shadow: none;
+        width: 35px !important;
+        height: 35px !important;
+        border-radius: 50% !important;
     }
     
     .sidenav .nav-link.active .icon-shape i {
-        color: {{ $theme['colors']['primary'] ?? '#5e72e4' }} !important;
+        color: #ffffff !important;
+        opacity: 1;
+        font-size: 1.2rem !important;
     }
     
     .sidenav .nav-link.active .nav-link-text {
@@ -48,28 +60,49 @@
     }
     
     .icon-shape {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.5rem;
-        background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#fff' }};
+        width: 35px !important;
+        height: 35px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+        background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#fff' }};
         transition: all 0.3s ease;
-        box-shadow: {{ $theme['name'] == 'dark' ? '0 2px 5px rgba(0, 0, 0, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)' }};
+        margin-right: 1rem !important;
     }
     
     .sidenav .nav-link:not(.active) .icon-shape i {
         color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'inherit' }} !important;
+        font-size: 1.2rem !important;
     }
     
     /* Custom colors for icons */
     .text-primary, .text-info, .text-success, .text-warning, .text-danger, .text-dark, .text-purple {
         color: {{ $theme['name'] == 'dark' ? '#ffffff' : 'inherit' }} !important;
+        opacity: {{ $theme['name'] == 'dark' ? '0.95' : '0.8' }};
     }
     
-    .text-purple {
-        color: {{ $theme['name'] == 'dark' ? '#a78bfa' : '#8b5cf6' }} !important;
+    .nav-link-text {
+        font-size: 1rem !important;
+        font-weight: 500;
+    }
+    
+    /* Section headers in sidebar */
+    .nav-item h6.text-uppercase {
+        margin-left: 1rem;
+        font-size: 0.75rem !important;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#8898aa' }};
+        font-weight: 700;
+        letter-spacing: 0.03em;
+    }
+    
+    /* Badge styling */
+    .nav-link .badge {
+        margin-left: auto;
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
     }
     
     /* Admin dashboard icon */
@@ -93,16 +126,6 @@
         background: white;
         color: #2dce89 !important;
     }
-    
-    .nav-item h6.text-uppercase {
-        margin-left: 1rem;
-        font-size: 0.65rem;
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-        color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#8898aa' }};
-        font-weight: 700;
-        letter-spacing: 0.03em;
-    }
     </style>
     
     <div class="collapse navbar-collapse w-auto max-height-vh-100 h-100" id="sidenav-collapse-main">
@@ -112,7 +135,7 @@
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-tachometer-alt text-primary"></i>
+                        <i class="fas fa-tachometer-alt text-info"></i>
                     </div>
                     <span class="nav-link-text ms-1">Dashboard</span>
                 </a>

@@ -31,9 +31,16 @@
                 </div>
                 @endif
                 
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Business Plan Feature:</strong> Customize your clinic's theme colors. Changes will be applied across your entire clinic interface.
+                <div class="alert bg-gradient-info text-white border-0">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-crown fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-white mb-1"><strong>Business Plan Feature</strong></h6>
+                            <p class="mb-0">Customize your clinic's theme colors. Changes will be applied across your entire clinic interface.</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <form action="{{ route('themes.customize.update') }}" method="POST">

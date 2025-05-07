@@ -227,12 +227,21 @@
                                                     <a href="{{ route('subscription.index') }}" class="alert-link">Upgrade to Standard plan</a> to access all themes.
                                                 </div>
                                             @elseif($themeCustomizationLevel === 'advanced')
-                                                <div class="alert alert-success mt-2">
-                                                    <i class="fas fa-palette me-2"></i>
-                                                    <strong>Business Plan Feature:</strong> You have access to advanced color palette customization. 
-                                                    <a href="{{ route('themes.customize') }}" class="btn btn-sm btn-primary ms-2">
-                                                        <i class="fas fa-paint-brush me-1"></i> Customize Color Palette
-                                                    </a>
+                                                <div class="alert alert-primary mt-2 bg-gradient-primary text-white border-0">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3">
+                                                            <i class="fas fa-palette fa-2x"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="text-white mb-1"><strong>Business Plan Feature</strong></h6>
+                                                            <p class="mb-0">You have access to advanced color palette customization.</p>
+                                                        </div>
+                                                        <div class="ms-auto">
+                                                            <a href="{{ route('themes.customize') }}" class="btn btn-sm btn-light">
+                                                                <i class="fas fa-paint-brush me-1"></i> Customize Color Palette
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             @endif
                                         @endif
