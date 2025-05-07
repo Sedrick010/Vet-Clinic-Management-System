@@ -15,42 +15,66 @@
     $criticalUpdates = $pendingUpdates->where('is_critical', true);
     $mandatoryUpdates = $pendingUpdates->where('is_mandatory', true);
     
-    // Get current system version
-    $currentVersion = config('self-update.version_installed');
+    // Get current system version for this clinic
+    $currentVersion = isset($updateCheck['current_version']) ? $updateCheck['current_version'] : config('self-update.version_installed');
+    
+    // For testing purposes - simulate different versions in local environment
+    if(app()->environment('local') && request()->has('test_version')) {
+        $currentVersion = request()->get('test_version');
+    }
 @endphp
 
 @section('content')
 <div class="container-fluid py-4">
-    <!-- System Version Information Card -->
+    @php
+        // We already have update information from above, no need to call again
+    @endphp
+
+    @if(app()->environment('local'))
+    <!-- Version Testing Panel (Only visible in development) -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="card bg-gradient-dark">
                 <div class="card-body p-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h5 class="mb-1">System Version</h5>
-                            <p class="mb-0 text-sm">Manage and apply system updates</p>
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-shape icon-sm bg-white text-dark shadow rounded-circle me-3">
+                            <i class="fas fa-code"></i>
                         </div>
-                        <div class="col-md-4 text-md-end">
-                            <div class="d-flex flex-column">
-                                <span class="text-xs text-uppercase font-weight-bolder opacity-6">Current Version:</span>
-                                <h5 class="mb-0 d-flex align-items-center justify-content-md-end">
-                                    <span class="badge bg-gradient-success me-1">{{ $currentVersion ?? 'Unknown' }}</span>
-                                    @if($hasUpdates)
-                                    <span class="badge bg-gradient-info text-xs ms-2">
-                                        <i class="fas fa-arrow-up me-1"></i> {{ $pendingUpdates->first()->version ?? 'New version' }} available
-                                    </span>
-                                    @endif
-                                </h5>
-                            </div>
+                        <div>
+                            <h6 class="text-white mb-0">Development Testing Panel</h6>
+                            <p class="text-sm text-white opacity-8 mb-2">Current simulated version: v{{ $currentVersion }}</p>
                         </div>
-                        <div class="col-md-2 text-md-end mt-3 mt-md-0">
-                            <a href="{{ route('system.updates.index') }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-sync-alt me-1"></i> Check for Updates
-                            </a>
+                        <div class="ms-auto">
+                            <a href="{{ route('dashboard') }}?test_version=1.0.6" class="btn btn-sm btn-outline-light me-2">Simulate v1.0.6</a>
+                            <a href="{{ route('dashboard') }}?test_version=1.0.7" class="btn btn-sm btn-outline-light">Simulate v1.0.7</a>
+                            <a href="{{ route('dashboard') }}" class="btn btn-sm btn-light ms-2">Reset</a>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- System Version Information Card -->
+    <div class="row mb-4">
+        <div class="col-lg-12 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row">
+                        <div class="col-lg-6 col-7">
+                            <h6>System Version</h6>
+                            <p class="text-sm mb-0">
+                                <i class="fa fa-check text-success" aria-hidden="true"></i>
+                                <span class="font-weight-bold ms-1">Current Version: v{{ $currentVersion }}</span>
+                            </p>
+                        </div>
+                        <div class="col-lg-6 col-5 my-auto text-end">
+                            <a href="{{ route('updates.index') }}" class="btn btn-sm btn-dark">Manage Updates</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2"></div>
             </div>
         </div>
     </div>
@@ -73,11 +97,29 @@
                             </p>
                         </div>
                         <div class="d-flex">
-                            <a href="{{ route('system.updates.update') }}" class="btn btn-sm btn-light me-2" 
-                                onclick="return confirm('Are you sure you want to update the system?');">
-                                <i class="fas fa-download me-1"></i> Apply Now
-                            </a>
-                            <a href="{{ route('system.updates.index') }}" class="btn btn-sm btn-outline-light me-2">
+                            @php
+                                $update = $pendingUpdates->first();
+                            @endphp
+                            
+                            <form action="{{ route('updates.apply', $update->id) }}" method="POST" class="d-inline me-2">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-light" 
+                                    onclick="return confirm('Are you sure you want to apply this update?');">
+                                    <i class="fas fa-download me-1"></i> Apply Now
+                                </button>
+                            </form>
+                            
+                            @if(!$update->is_mandatory)
+                                <form action="{{ route('updates.dismiss', $update->id) }}" method="POST" class="d-inline me-2">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-light" 
+                                        onclick="return confirm('Are you sure you want to dismiss this update?');">
+                                        <i class="fas fa-times me-1"></i> Dismiss
+                                    </button>
+                                </form>
+                            @endif
+                            
+                            <a href="{{ route('updates.index') }}" class="btn btn-sm btn-outline-light me-2">
                                 <i class="fas fa-info-circle me-1"></i> Details
                             </a>
                             <button type="button" class="btn-close text-white" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -155,60 +197,92 @@
         </div>
     </div>
 
-<style>
-    /* Icon styling for Quick Actions and Statistics */
-    .icon-shape {
-        width: 48px !important;
-        height: 48px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        border-radius: 50% !important;
-        margin-bottom: 1rem !important;
-        position: relative !important;
-    }
-    
-    .icon-shape i {
-        font-size: 1.25rem !important;
-        line-height: 0 !important;
-        position: relative !important;
-        top: 0 !important;
-        transform: translateY(0) !important;
-    }
-    
-    /* Quick Actions specific styling */
-    .card-body .icon-shape.icon-md {
-        width: 48px !important;
-        height: 48px !important;
-        margin: 0 auto 1rem auto !important;
-    }
-    
-    /* Statistics card icons */
-    .numbers + .col-4 .icon-shape {
-        width: 48px !important;
-        height: 48px !important;
-        margin: 0 !important;
-    }
-    
-    .numbers + .col-4 .icon-shape i {
-        font-size: 1.25rem !important;
-    }
-    
-    /* Remove opacity from icons */
-    .opacity-10 {
-        opacity: 1 !important;
-    }
-    
-    /* Fix vertical alignment for all icons */
-    .icon-shape i.fas,
-    .icon-shape i.far,
-    .icon-shape i.fab {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        height: 100% !important;
-    }
-</style>
+    <!-- Daily Quote Card - Only visible in v1.0.7 or higher -->
+    @php
+        $cleanCurrentVersion = ltrim($currentVersion, 'v');
+        $showNewFeature = version_compare($cleanCurrentVersion, '1.0.7', '>=');
+    @endphp
+
+    @if($showNewFeature)
+    <div class="row mb-4" id="new-v107-feature">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>Daily Inspiration</h6>
+                    <span class="badge bg-gradient-success">New in v1.0.7</span>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-shape icon-md shadow rounded-circle bg-gradient-warning me-3">
+                            <i class="fas fa-quote-left text-white opacity-10"></i>
+                        </div>
+                        <div>
+                            <blockquote class="blockquote mb-0">
+                                <p class="text-sm">"If you don't take risks, you can't create a future!"</p>
+                                <footer class="blockquote-footer mt-1">Monkey D. Luffy, <cite title="Source">Future King of the Pirates</cite></footer>
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <style>
+        /* Icon styling for Quick Actions and Statistics */
+        .icon-shape {
+            width: 48px !important;
+            height: 48px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50% !important;
+            margin-bottom: 1rem !important;
+            position: relative !important;
+        }
+        
+        .icon-shape i {
+            font-size: 1.25rem !important;
+            line-height: 0 !important;
+            position: relative !important;
+            top: 0 !important;
+            transform: translateY(0) !important;
+        }
+        
+        /* Quick Actions specific styling */
+        .card-body .icon-shape.icon-md {
+            width: 48px !important;
+            height: 48px !important;
+            margin: 0 auto 1rem auto !important;
+        }
+        
+        /* Statistics card icons */
+        .numbers + .col-4 .icon-shape {
+            width: 48px !important;
+            height: 48px !important;
+            margin: 0 !important;
+        }
+        
+        .numbers + .col-4 .icon-shape i {
+            font-size: 1.25rem !important;
+        }
+        
+        /* Remove opacity from icons */
+        .opacity-10 {
+            opacity: 1 !important;
+        }
+        
+        /* Fix vertical alignment for all icons */
+        .icon-shape i.fas,
+        .icon-shape i.far,
+        .icon-shape i.fab {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 100% !important;
+        }
+    </style>
 
     <!-- Quick Actions -->
     <div class="row mb-4">
@@ -532,5 +606,33 @@
 <script>
     // Any dashboard-specific JavaScript can go here
     console.log('Dashboard loaded');
+    
+    // Add auto-updating functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check for updates when the page loads
+        checkForUpdates();
+        
+        // Set interval to check for updates every 5 minutes (300000ms)
+        // You can adjust this interval as needed
+        setInterval(checkForUpdates, 300000);
+        
+        // Function to check for updates
+        function checkForUpdates() {
+            fetch('{{ route("updates.refresh") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.hasUpdates !== false) {
+                        // If there's an update, refresh the page to show the notification
+                        // or you could update a specific element to show the update notification
+                        if (document.querySelector('.update-notification') === null) {
+                            window.location.reload();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking for updates:', error);
+                });
+        }
+    });
 </script>
 @endpush

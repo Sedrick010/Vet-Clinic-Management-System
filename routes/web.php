@@ -430,18 +430,13 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicEnabled::class
     ]);
 
-    // System Updates routes
-    Route::middleware([
-        \App\Http\Middleware\AuthTenantStaff::class,
-        \App\Http\Middleware\CheckClinicActive::class,
-        \App\Http\Middleware\CheckClinicEnabled::class
-    ])->prefix('system')->name('system.')->group(function () {
-        Route::get('/updates', [\App\Http\Controllers\SystemUpdateController::class, 'index'])->name('updates.index');
-        Route::get('/updates/check', [\App\Http\Controllers\SystemUpdateController::class, 'checkForUpdates'])->name('updates.check');
-        Route::get('/updates/update', [App\Http\Controllers\SystemUpdateController::class, 'update'])->name('updates.update');
-        Route::post('/updates/{id}/apply', [\App\Http\Controllers\SystemUpdateController::class, 'apply'])->name('updates.apply');
-        Route::post('/updates/{id}/dismiss', [\App\Http\Controllers\SystemUpdateController::class, 'dismiss'])->name('updates.dismiss');
-    });
+    // System updates
+    Route::get('/system-updates', [\App\Http\Controllers\SystemUpdateController::class, 'index'])->name('updates.index');
+    Route::get('/system-updates/check', [\App\Http\Controllers\SystemUpdateController::class, 'checkForUpdates'])->name('updates.check');
+    Route::get('/system-updates/update', [\App\Http\Controllers\SystemUpdateController::class, 'update'])->name('updates.update');
+    Route::get('/system-updates/refresh', [\App\Http\Controllers\SystemUpdateController::class, 'refresh'])->name('updates.refresh');
+    Route::post('/system-updates/{id}/apply', [\App\Http\Controllers\SystemUpdateController::class, 'apply'])->name('updates.apply');
+    Route::post('/system-updates/{id}/dismiss', [\App\Http\Controllers\SystemUpdateController::class, 'dismiss'])->name('updates.dismiss');
 
     // Debug routes - only available in local environment
     if (app()->environment('local')) {

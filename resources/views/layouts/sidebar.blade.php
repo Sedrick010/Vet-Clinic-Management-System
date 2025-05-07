@@ -1,4 +1,21 @@
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3" id="sidenav-main" style="background-color: var(--card-color); box-shadow: {{ $theme['name'] == 'dark' ? '0 20px 27px 0 rgba(0,0,0,0.3)' : '0 20px 27px 0 rgba(0,0,0,0.05)' }};">
+    @php
+        // Initialize update-related variables
+        $pendingUpdates = collect();
+        $pendingUpdateCount = 0;
+        $hasUpdates = false;
+        
+        if(isset($clinic)) {
+            $systemUpdateService = app(\App\Services\SystemUpdateService::class);
+            $updateCheck = $systemUpdateService->checkForUpdates($clinic);
+            $hasUpdates = isset($updateCheck['success']) && $updateCheck['success'] && $updateCheck['has_updates'];
+            $pendingUpdates = $hasUpdates ? $updateCheck['updates'] : collect();
+            $pendingUpdateCount = $pendingUpdates->count();
+            $clinicId = $clinic->id;
+            $clinicCurrentVersion = $updateCheck['current_version'] ?? config('self-update.version_installed');
+        }
+    @endphp
+    
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand m-0" href="{{ route('dashboard') }}">
@@ -284,83 +301,49 @@
             
             <!-- System Updates -->
             <li class="nav-item">
-                <a class="nav-link {{ Request::is('system/updates*') ? 'active' : '' }}" href="{{ route('system.updates.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-sync-alt text-success"></i>
+                <a class="nav-link {{ Request::is('system-updates*') ? 'active' : '' }}" href="{{ route('updates.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-sync text-dark"></i>
                     </div>
                     <span class="nav-link-text ms-1">System Updates</span>
-                    @php
-                        // Check for updates using the custom updater service
-                        $hasUpdates = false;
-                        $latestVersion = null;
-                        $pendingUpdatesCount = 0;
-                        $pendingCriticalUpdates = 0;
-                        $pendingSecurityUpdates = 0;
-                        $currentVersion = config('self-update.version_installed');
-                        
-                        try {
-                            $customUpdater = app(\App\Services\CustomUpdaterService::class);
-                            $hasUpdates = $customUpdater->isNewVersionAvailable();
-                            $latestVersion = $customUpdater->getLatestVersion();
-                            
-                            // Get clinic ID
-                            $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
-                            
-                            // Also check if there are any pending updates in the database
-                            if ($clinicId) {
-                                $pendingUpdates = \App\Models\SystemUpdate::whereHas('clinicUpdates', function($query) use ($clinicId) {
-                                    $query->where('clinic_id', $clinicId)
-                                          ->where('is_applied', false)
-                                          ->where('is_dismissed', false);
-                                })->get();
-                                
-                                $pendingUpdatesCount = $pendingUpdates->count();
-                                $pendingCriticalUpdates = $pendingUpdates->where('is_critical', true)->count();
-                                $pendingSecurityUpdates = $pendingUpdates->where('is_security', true)->count();
-                                
-                                if ($pendingUpdatesCount > 0) {
-                                    $hasUpdates = true;
-                                }
-                            }
-                        } catch (\Exception $e) {
-                            // Silently fail in sidebar
-                        }
-                    @endphp
-                    
-                    <span class="badge bg-gradient-success text-white ms-auto text-xxs">{{ $currentVersion ?? 'v?.?.?' }}</span>
-                    
-                    @if($hasUpdates)
-                        <span class="badge bg-gradient-danger text-white ms-1 pulse-animation">
-                            {{ $pendingUpdatesCount > 0 ? $pendingUpdatesCount : 'New' }}
-                        </span>
+                    @if(isset($pendingUpdateCount) && $pendingUpdateCount > 0)
+                    <span class="badge badge-sm bg-gradient-warning ms-auto">{{ $pendingUpdateCount }}</span>
                     @endif
                 </a>
-                
-                @if($pendingUpdatesCount > 0)
-                <div class="ms-4 mt-1 mb-2 updates-sidebar-details">
-                    <div class="update-sidebar-list">
-                        @if($pendingCriticalUpdates > 0)
-                        <a href="{{ route('system.updates.index', ['filter' => 'critical']) }}" class="update-sidebar-item">
-                            <i class="fas fa-exclamation-triangle text-danger me-1"></i>
-                            <span class="small">{{ $pendingCriticalUpdates }} critical update{{ $pendingCriticalUpdates > 1 ? 's' : '' }}</span>
-                        </a>
-                        @endif
-                        
-                        @if($pendingSecurityUpdates > 0)
-                        <a href="{{ route('system.updates.index', ['filter' => 'security']) }}" class="update-sidebar-item">
-                            <i class="fas fa-shield-alt text-warning me-1"></i>
-                            <span class="small">{{ $pendingSecurityUpdates }} security update{{ $pendingSecurityUpdates > 1 ? 's' : '' }}</span>
-                        </a>
-                        @endif
-                        
-                        <a href="{{ route('system.updates.index') }}" class="update-sidebar-item d-flex justify-content-between">
-                            <span class="small"><i class="fas fa-arrow-right text-info me-1"></i> View all updates</span>
-                            <span class="badge bg-primary">{{ $pendingUpdatesCount }}</span>
-                        </a>
-                    </div>
-                </div>
-                @endif
             </li>
+            
+            @if(isset($pendingUpdates) && $pendingUpdates->count() > 0)
+            <div class="update-list">
+                <div class="update-list-header">
+                    <span>Available Updates</span>
+                </div>
+                <div class="update-list-body">
+                    @foreach($pendingUpdates->sortByDesc('is_critical') as $update)
+                        @if($update->is_critical)
+                            <a href="{{ route('updates.index', ['filter' => 'critical']) }}" class="update-sidebar-item">
+                                <span>{{ $update->version }}</span>
+                                <span class="badge bg-gradient-danger">Critical</span>
+                            </a>
+                        @elseif($update->is_security)
+                            <a href="{{ route('updates.index', ['filter' => 'security']) }}" class="update-sidebar-item">
+                                <span>{{ $update->version }}</span>
+                                <span class="badge bg-gradient-warning">Security</span>
+                            </a>
+                        @else
+                            <a href="{{ route('updates.index') }}" class="update-sidebar-item d-flex justify-content-between">
+                                <span>{{ $update->version }}</span>
+                                <span class="badge bg-gradient-info">Update</span>
+                            </a>
+                        @endif
+                    @endforeach
+                </div>
+                <div class="update-list-footer">
+                    <a href="{{ route('updates.index') }}" class="btn btn-sm btn-dark w-100">
+                        View All Updates
+                    </a>
+                </div>
+            </div>
+            @endif
             @endif
             
             <!-- Support Tickets - For tenants and regular users -->
@@ -458,31 +441,23 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the updates sidebar - collapsed by default on mobile
-        if (window.innerWidth < 992) {
-            const updateDetails = document.querySelector('.updates-sidebar-details');
-            if (updateDetails) {
-                updateDetails.style.display = 'none';
-                
-                // Add click handler on the parent menu item
-                const updateLink = document.querySelector('.nav-link[href="{{ route("system.updates.index") }}"]');
-                if (updateLink) {
-                    updateLink.addEventListener('click', function(e) {
-                        // Only toggle on mobile devices
-                        if (window.innerWidth < 992) {
-                            e.preventDefault();
-                            if (updateDetails.style.display === 'none') {
-                                updateDetails.style.display = 'block';
-                            } else {
-                                updateDetails.style.display = 'none';
-                                // Allow navigation after second click
-                                setTimeout(() => {
-                                    window.location.href = "{{ route('system.updates.index') }}";
-                                }, 100);
-                            }
+        // System updates notifications
+        const updateLink = document.querySelector('.nav-link[href="{{ route("updates.index") }}"]');
+        
+        if (updateLink) {
+            // Check for updates periodically (every 30 minutes)
+            function checkForUpdates() {
+                fetch('{{ route("updates.refresh") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.hasUpdates) {
+                            // Reload the page to show the update notification
+                            window.location.href = "{{ route('updates.index') }}";
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error checking for updates:', error);
                     });
-                }
             }
         }
     });

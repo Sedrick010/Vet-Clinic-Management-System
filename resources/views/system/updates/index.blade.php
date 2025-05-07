@@ -118,7 +118,7 @@
                                                     </span>
                                                 </td>
                                                 <td class="align-middle">
-                                                    <a href="{{ route('system.updates.show', $update->id) }}" class="btn btn-link text-secondary mb-0">
+                                                    <a href="{{ route('updates.index') }}" class="btn btn-link text-secondary mb-0">
                                                         <i class="fa fa-eye text-xs"></i> View
                                                     </a>
                                                 </td>
@@ -169,12 +169,43 @@
                 this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Checking...';
                 this.disabled = true;
                 
-                fetch('{{ route("system.updates.check") }}')
+                // Use the refresh endpoint for real-time GitHub checks
+                fetch('{{ route("updates.refresh") }}')
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Reload the page to show updated results
-                            window.location.reload();
+                            if (data.message === 'No new updates available') {
+                                // Show a temporary success message
+                                const alertContainer = document.createElement('div');
+                                alertContainer.className = 'alert alert-success alert-dismissible fade show';
+                                alertContainer.innerHTML = `
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0">Your system is up to date! No new updates available.</p>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                `;
+                                
+                                // Insert the alert before the updates container
+                                const updatesContainer = document.getElementById('updates-container');
+                                updatesContainer.parentNode.insertBefore(alertContainer, updatesContainer);
+                                
+                                // Reset button
+                                this.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Check for Updates';
+                                this.disabled = false;
+                                
+                                // Auto-dismiss after 5 seconds
+                                setTimeout(() => {
+                                    alertContainer.remove();
+                                }, 5000);
+                            } else {
+                                // Update found, reload the page
+                                window.location.reload();
+                            }
                         } else {
                             alert('Error checking for updates: ' + data.message);
                             this.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Check for Updates';

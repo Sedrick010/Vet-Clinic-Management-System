@@ -123,20 +123,35 @@ class SystemUpdateController extends Controller
             $latestVersion = $latestVersionDetails['version'] ?? null;
             
             if ($latestVersion) {
+                // Get clinic ID from auth user or session
+                $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
+                
+                if (!$clinicId) {
+                    return redirect()->back()->with('error', 'No clinic ID found');
+                }
+                
                 // Update status in database
                 if ($update = SystemUpdate::where('version', $latestVersion)->first()) {
-                    // Get clinic ID from auth user or session
-                    $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
-                    
-                    if ($clinicId) {
-                        if ($clinicUpdate = ClinicUpdate::where('system_update_id', $update->id)
-                                                       ->where('clinic_id', $clinicId)
-                                                       ->first()) {
-                            $clinicUpdate->is_applied = true;
-                            $clinicUpdate->applied_at = Carbon::now();
-                            $clinicUpdate->save();
-                        }
+                    if ($clinicUpdate = ClinicUpdate::where('system_update_id', $update->id)
+                                                   ->where('clinic_id', $clinicId)
+                                                   ->first()) {
+                        $clinicUpdate->is_applied = true;
+                        $clinicUpdate->applied_at = Carbon::now();
+                        $clinicUpdate->save();
                     }
+                }
+                
+                // Update the version in the .env file
+                $this->updateInstalledVersion($latestVersion, $clinicId);
+                
+                // Mark version as current in the SystemVersion table
+                if ($versionRecord = SystemVersion::where('version', $latestVersion)->first()) {
+                    // Set all versions to non-current
+                    SystemVersion::where('is_current', true)->update(['is_current' => false]);
+                    
+                    // Set the new version as current
+                    $versionRecord->is_current = true;
+                    $versionRecord->save();
                 }
                 
                 return redirect()->back()->with('success', "System has been updated to version {$latestVersion} successfully!");
@@ -146,6 +161,283 @@ class SystemUpdateController extends Controller
         } catch (\Exception $e) {
             Log::error('Update failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Update failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Force refresh of update checks
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh()
+    {
+        try {
+            // Force a fresh check for updates from GitHub
+            $hasUpdates = $this->customUpdater->forceRefreshUpdateCheck();
+            
+            if ($hasUpdates) {
+                $latestVersionDetails = $this->customUpdater->getLatestVersionDetails();
+                $version = $latestVersionDetails['version'] ?? null;
+                
+                if ($version && !SystemUpdate::where('version', $version)->exists()) {
+                    // Create the version record
+                    $versionRecord = SystemVersion::create([
+                        'version' => $version,
+                        'name' => $latestVersionDetails['name'] ?? "Version {$version}",
+                        'description' => $latestVersionDetails['description'] ?? "Update to version {$version}",
+                        'is_current' => false,
+                        'released_at' => isset($latestVersionDetails['published_at']) 
+                            ? new Carbon($latestVersionDetails['published_at']) 
+                            : Carbon::now(),
+                    ]);
+                    
+                    // Create system update record
+                    $systemUpdate = SystemUpdate::create([
+                        'version' => $version,
+                        'name' => $latestVersionDetails['name'] ?? "Version {$version} Update",
+                        'description' => $latestVersionDetails['description'] ?? "Automatic update from GitHub release",
+                        'changes' => $latestVersionDetails['description'] ?? "Update to version {$version}",
+                        'features' => is_array($latestVersionDetails['features'] ?? null) 
+                            ? implode("\n", $latestVersionDetails['features']) 
+                            : "New features in version {$version}",
+                        'bug_fixes' => is_array($latestVersionDetails['bug_fixes'] ?? null) 
+                            ? implode("\n", $latestVersionDetails['bug_fixes']) 
+                            : "Bug fixes in version {$version}",
+                        'is_critical' => $latestVersionDetails['is_critical'] ?? false,
+                        'is_security' => $latestVersionDetails['is_security'] ?? false,
+                        'is_mandatory' => $latestVersionDetails['is_mandatory'] ?? false,
+                        'available_from' => Carbon::now(),
+                    ]);
+                    
+                    // Create clinic update records for all clinics and notify them
+                    $clinics = \App\Models\Clinic::all();
+                    foreach ($clinics as $clinic) {
+                        // Create clinic update record
+                        ClinicUpdate::create([
+                            'clinic_id' => $clinic->id,
+                            'system_update_id' => $systemUpdate->id,
+                            'is_applied' => false,
+                            'is_dismissed' => false
+                        ]);
+                        
+                        // Notify clinic staff about the update
+                        try {
+                            // Find clinic admin/owner to notify
+                            $clinicAdmin = $clinic->users()->where('role', 'admin')->first();
+                            if ($clinicAdmin) {
+                                $clinicAdmin->notify(new \App\Notifications\SystemUpdateAvailable($systemUpdate));
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Failed to send update notification to clinic: ' . $clinic->id, [
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => "New update {$version} is available and clinics have been notified!",
+                        'updateInfo' => [
+                            'version' => $version,
+                            'description' => $latestVersionDetails['description'] ?? null,
+                            'published_at' => $latestVersionDetails['published_at'] ?? null,
+                            'is_critical' => $latestVersionDetails['is_critical'] ?? false,
+                        ]
+                    ]);
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Update is already in the system',
+                    'updateInfo' => [
+                        'version' => $version
+                    ]
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'No new updates available',
+                'hasUpdates' => false
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error checking for updates: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking for updates: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Update the installed version in the .env file and for the specific clinic
+     *
+     * @param string $newVersion
+     * @param int|null $clinicId
+     * @return bool
+     */
+    private function updateInstalledVersion(string $newVersion, int $clinicId = null): bool
+    {
+        try {
+            // Clean the version number (remove 'v' prefix if present)
+            $newVersion = ltrim($newVersion, 'v');
+            
+            // Get current clinic ID if not provided
+            if ($clinicId === null) {
+                $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
+            }
+            
+            if ($clinicId) {
+                // Update the clinic-specific version in a database setting
+                try {
+                    $clinic = \App\Models\Clinic::findOrFail($clinicId);
+                    
+                    // Store the clinic's current version in clinic settings
+                    $settingKey = 'installed_version';
+                    $clinic->settings()->updateOrCreate(
+                        ['key' => $settingKey],
+                        ['value' => $newVersion]
+                    );
+                    
+                    Log::info('Updated clinic-specific version', [
+                        'clinic_id' => $clinicId,
+                        'version' => $newVersion
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to update clinic-specific version: ' . $e->getMessage(), [
+                        'clinic_id' => $clinicId,
+                        'version' => $newVersion
+                    ]);
+                }
+            }
+            
+            // Only update the central .env file if we have a valid clinic ID
+            // This prevents non-authenticated users from changing the version
+            if ($clinicId) {
+                // Path to .env file
+                $envFile = base_path('.env');
+                
+                if (file_exists($envFile)) {
+                    // Read the .env file
+                    $envContents = file_get_contents($envFile);
+                    
+                    // Replace the version in the .env file
+                    $updatedContents = preg_replace(
+                        '/SELF_UPDATER_VERSION_INSTALLED=([^\n]+)/',
+                        'SELF_UPDATER_VERSION_INSTALLED=' . $newVersion,
+                        $envContents
+                    );
+                    
+                    // Write the updated contents back to the .env file
+                    file_put_contents($envFile, $updatedContents);
+                    
+                    // Clear config cache to ensure the new value is loaded
+                    \Artisan::call('config:clear');
+                    
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Failed to update installed version: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Apply a specific update for the current clinic
+     * 
+     * @param int $id The system update ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function apply($id)
+    {
+        try {
+            $update = SystemUpdate::findOrFail($id);
+            $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
+            
+            if (!$clinicId) {
+                return redirect()->back()->with('error', 'No clinic ID found');
+            }
+            
+            // Update the clinic-specific status
+            ClinicUpdate::updateOrCreate(
+                [
+                    'clinic_id' => $clinicId,
+                    'system_update_id' => $update->id
+                ],
+                [
+                    'is_applied' => true,
+                    'is_dismissed' => false,
+                    'applied_at' => Carbon::now(),
+                    'notes' => 'Applied manually by user'
+                ]
+            );
+            
+            // Only update system version if this is the latest version
+            $latestVersion = $this->customUpdater->getLatestVersion();
+            if ($update->version === $latestVersion) {
+                // Update the version in the .env file for this tenant only
+                $this->updateInstalledVersion($update->version, $clinicId);
+                
+                // Mark version as current in the SystemVersion table
+                if ($versionRecord = SystemVersion::where('version', $update->version)->first()) {
+                    // Set all versions to non-current
+                    SystemVersion::where('is_current', true)->update(['is_current' => false]);
+                    
+                    // Set the new version as current
+                    $versionRecord->is_current = true;
+                    $versionRecord->save();
+                }
+            }
+            
+            return redirect()->back()->with('success', "Update {$update->version} has been successfully applied!");
+        } catch (\Exception $e) {
+            Log::error('Error applying update: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error applying update: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Dismiss an update for the current clinic
+     * 
+     * @param int $id The system update ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function dismiss($id)
+    {
+        try {
+            $update = SystemUpdate::findOrFail($id);
+            $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
+            
+            if (!$clinicId) {
+                return redirect()->back()->with('error', 'No clinic ID found');
+            }
+            
+            // Don't allow dismissing mandatory updates
+            if ($update->is_mandatory) {
+                return redirect()->back()->with('error', 'This update is mandatory and cannot be dismissed.');
+            }
+            
+            // Update the clinic-specific status
+            ClinicUpdate::updateOrCreate(
+                [
+                    'clinic_id' => $clinicId,
+                    'system_update_id' => $update->id
+                ],
+                [
+                    'is_dismissed' => true,
+                    'dismissed_at' => Carbon::now(),
+                    'notes' => 'Dismissed manually by user'
+                ]
+            );
+            
+            return redirect()->back()->with('info', "Update {$update->version} has been dismissed.");
+        } catch (\Exception $e) {
+            Log::error('Error dismissing update: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error dismissing update: ' . $e->getMessage());
         }
     }
 } 

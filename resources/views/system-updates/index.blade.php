@@ -9,10 +9,10 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-0">System Updates</h5>
-                            <p class="text-sm mb-0">Manage and apply system updates</p>
+                            <p class="text-sm mb-0">View and manage system updates for your clinic</p>
                         </div>
                         <div>
-                            <a href="{{ route('system.updates.check') }}" class="btn btn-sm btn-primary">
+                            <a href="{{ route('updates.refresh') }}" class="btn btn-sm btn-primary" id="check-updates-btn">
                                 <i class="fas fa-sync-alt me-1"></i> Check for Updates
                             </a>
                         </div>
@@ -37,20 +37,18 @@
                         </div>
                     @endif
                     
-                    @if($hasNewUpdate)
-                        <div class="alert alert-warning mx-4 mt-3" role="alert">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    New update available: <strong>{{ $latestVersion }}</strong>
+                    <div id="update-notifications">
+                        @if($hasNewUpdate)
+                            <div class="alert alert-warning mx-4 mt-3" role="alert">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        New update available: <strong>{{ $latestVersion }}</strong>
+                                    </div>
                                 </div>
-                                <a href="{{ route('system.updates.update') }}" class="btn btn-sm btn-warning" 
-                                    onclick="return confirm('Are you sure you want to update the system?');">
-                                    Apply Update
-                                </a>
                             </div>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                     
                     <div class="table-responsive p-0">
                         <table class="table align-items-center mb-0">
@@ -61,7 +59,7 @@
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Type</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
-                                    <th class="text-secondary opacity-7"></th>
+                                    <th class="text-secondary opacity-7">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -122,9 +120,31 @@
                                             @endif
                                         </td>
                                         <td class="align-middle">
-                                            <button type="button" class="btn btn-link text-secondary mb-0" data-bs-toggle="modal" data-bs-target="#updateModal{{ $update->id }}">
-                                                <i class="fas fa-eye text-xs"></i>
-                                            </button>
+                                            <div class="d-flex">
+                                                <button type="button" class="btn btn-link text-secondary mb-0 me-2" data-bs-toggle="modal" data-bs-target="#updateModal{{ $update->id }}">
+                                                    <i class="fas fa-eye text-xs"></i>
+                                                </button>
+                                                
+                                                @if($status != 'applied')
+                                                    <form action="{{ route('updates.apply', $update->id) }}" method="POST" class="d-inline me-2">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-link text-success mb-0" 
+                                                            onclick="return confirm('Are you sure you want to apply this update?');">
+                                                            <i class="fas fa-check text-xs"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                                
+                                                @if($status == 'pending' && !$update->is_mandatory)
+                                                    <form action="{{ route('updates.dismiss', $update->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-link text-danger mb-0" 
+                                                            onclick="return confirm('Are you sure you want to dismiss this update?');">
+                                                            <i class="fas fa-times text-xs"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     
@@ -211,10 +231,23 @@
                                                     @endphp
                                                     
                                                     @if($status != 'applied')
-                                                        <a href="{{ route('system.updates.update') }}" class="btn btn-primary" 
-                                                            onclick="return confirm('Are you sure you want to apply this update?');">
-                                                            Apply Update
-                                                        </a>
+                                                        <form action="{{ route('updates.apply', $update->id) }}" method="POST" class="d-inline me-2">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-primary" 
+                                                                onclick="return confirm('Are you sure you want to apply this update?');">
+                                                                Apply Update
+                                                            </button>
+                                                        </form>
+                                                        
+                                                        @if(!$update->is_mandatory)
+                                                            <form action="{{ route('updates.dismiss', $update->id) }}" method="POST" class="d-inline me-2">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-outline-secondary" 
+                                                                    onclick="return confirm('Are you sure you want to dismiss this update?');">
+                                                                    Dismiss Update
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                     @endif
                                                     
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -238,4 +271,73 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkUpdatesBtn = document.getElementById('check-updates-btn');
+        
+        checkUpdatesBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            checkUpdatesBtn.disabled = true;
+            checkUpdatesBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Checking...';
+            
+            // Make AJAX request to check for updates
+            fetch('{{ route('updates.refresh') }}')
+                .then(response => response.json())
+                .then(data => {
+                    // Reset button state
+                    checkUpdatesBtn.disabled = false;
+                    checkUpdatesBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Check for Updates';
+                    
+                    if (data.success) {
+                        // Show success notification
+                        const notification = document.createElement('div');
+                        notification.className = 'alert alert-success mx-4 mt-3';
+                        notification.role = 'alert';
+                        notification.innerHTML = data.message;
+                        
+                        const notificationsContainer = document.getElementById('update-notifications');
+                        notificationsContainer.innerHTML = '';
+                        notificationsContainer.appendChild(notification);
+                        
+                        // Reload page after a short delay to show updates
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        // Show error notification
+                        const notification = document.createElement('div');
+                        notification.className = 'alert alert-danger mx-4 mt-3';
+                        notification.role = 'alert';
+                        notification.innerHTML = data.message;
+                        
+                        const notificationsContainer = document.getElementById('update-notifications');
+                        notificationsContainer.innerHTML = '';
+                        notificationsContainer.appendChild(notification);
+                    }
+                })
+                .catch(error => {
+                    // Reset button state
+                    checkUpdatesBtn.disabled = false;
+                    checkUpdatesBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Check for Updates';
+                    
+                    // Show error notification
+                    const notification = document.createElement('div');
+                    notification.className = 'alert alert-danger mx-4 mt-3';
+                    notification.role = 'alert';
+                    notification.innerHTML = 'An error occurred while checking for updates.';
+                    
+                    const notificationsContainer = document.getElementById('update-notifications');
+                    notificationsContainer.innerHTML = '';
+                    notificationsContainer.appendChild(notification);
+                    
+                    console.error('Error checking for updates:', error);
+                });
+        });
+    });
+</script>
+@endpush
 @endsection 

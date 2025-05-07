@@ -13,7 +13,7 @@
                         <h5 class="mb-0">Update Details</h5>
                         <p class="text-sm mb-0">Version {{ $update->version }} - {{ $update->name }}</p>
                     </div>
-                    <a href="{{ route('system.updates.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <a href="{{ route('updates.index') }}" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Back to Updates
                     </a>
                 </div>
@@ -154,7 +154,7 @@
                                     
                                     @if((!$clinicUpdate || (!$clinicUpdate->is_applied && !$clinicUpdate->is_dismissed)))
                                         <div class="mt-4">
-                                            <form id="apply-form" action="{{ route('system.updates.apply', $update->id) }}" method="POST" style="display: inline-block">
+                                            <form id="apply-form" action="{{ route('updates.apply', $update->id) }}" method="POST" style="display: inline-block">
                                                 @csrf
                                                 <button type="submit" class="btn btn-primary" id="apply-btn">
                                                     <i class="fas fa-download me-1"></i> Apply Update
@@ -162,7 +162,7 @@
                                             </form>
                                             
                                             @if(!$update->is_mandatory)
-                                                <form id="dismiss-form" action="{{ route('system.updates.dismiss', $update->id) }}" method="POST" style="display: inline-block">
+                                                <form id="dismiss-form" action="{{ route('updates.dismiss', $update->id) }}" method="POST" style="display: inline-block">
                                                     @csrf
                                                     <button type="submit" class="btn btn-outline-secondary ms-2" id="dismiss-btn">
                                                         <i class="fas fa-times me-1"></i> Dismiss
@@ -172,7 +172,7 @@
                                         </div>
                                     @elseif($clinicUpdate && $clinicUpdate->is_dismissed && !$update->is_mandatory)
                                         <div class="mt-4">
-                                            <form id="apply-form" action="{{ route('system.updates.apply', $update->id) }}" method="POST">
+                                            <form id="apply-form" action="{{ route('updates.apply', $update->id) }}" method="POST">
                                                 @csrf
                                                 <button type="submit" class="btn btn-primary" id="apply-btn">
                                                     <i class="fas fa-download me-1"></i> Apply Update

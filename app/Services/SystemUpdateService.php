@@ -23,7 +23,7 @@ class SystemUpdateService
     {
         try {
             // Get current system version
-            $currentVersion = SystemVersion::getCurrentVersion();
+            $currentVersion = $this->getClinicVersion($clinic);
             
             if (!$currentVersion) {
                 Log::error('No current system version found');
@@ -40,7 +40,7 @@ class SystemUpdateService
                 return [
                     'success' => true,
                     'has_updates' => false,
-                    'current_version' => $currentVersion->version,
+                    'current_version' => $currentVersion,
                     'updates' => []
                 ];
             }
@@ -52,7 +52,13 @@ class SystemUpdateService
                 ->keyBy('system_update_id');
             
             // Filter updates that haven't been applied or dismissed
-            $pendingUpdates = $availableUpdates->filter(function($update) use ($clinicUpdates) {
+            $pendingUpdates = $availableUpdates->filter(function($update) use ($clinicUpdates, $currentVersion) {
+                // Skip updates that are older than or equal to the current version
+                $updateVersion = ltrim($update->version, 'v');
+                if (version_compare($updateVersion, $currentVersion, '<=')) {
+                    return false;
+                }
+                
                 // Skip if already applied
                 if (isset($clinicUpdates[$update->id]) && $clinicUpdates[$update->id]->is_applied) {
                     return false;
@@ -86,8 +92,9 @@ class SystemUpdateService
             return [
                 'success' => true,
                 'has_updates' => $pendingUpdates->isNotEmpty(),
-                'current_version' => $currentVersion->version,
-                'updates' => $pendingUpdates->values()
+                'current_version' => $currentVersion,
+                'updates' => $pendingUpdates->values(),
+                'clinic_id' => $clinic->id
             ];
             
         } catch (Exception $e) {
@@ -102,6 +109,30 @@ class SystemUpdateService
                 'message' => 'An error occurred while checking for updates: ' . $e->getMessage()
             ];
         }
+    }
+    
+    /**
+     * Get the current version for a specific clinic
+     *
+     * @param Clinic $clinic
+     * @return string
+     */
+    public function getClinicVersion(Clinic $clinic): string
+    {
+        // Try to get clinic-specific version first
+        $clinicSetting = $clinic->settings()->where('key', 'installed_version')->first();
+        if ($clinicSetting && !empty($clinicSetting->value)) {
+            return $clinicSetting->value;
+        }
+        
+        // Fall back to system version if no clinic-specific version exists
+        $systemVersion = SystemVersion::getCurrentVersion();
+        if ($systemVersion) {
+            return ltrim($systemVersion->version, 'v');
+        }
+        
+        // Last resort: get from config
+        return ltrim(config('self-update.version_installed'), 'v');
     }
     
     /**
@@ -226,6 +257,86 @@ class SystemUpdateService
             return [
                 'success' => false,
                 'message' => 'An error occurred while dismissing the update: ' . $e->getMessage()
+            ];
+        }
+    }
+    
+    /**
+     * Get all pending updates for a clinic
+     *
+     * @param Clinic $clinic
+     * @return array
+     */
+    public function getPendingUpdates(Clinic $clinic)
+    {
+        try {
+            // Get current system version
+            $currentVersion = SystemVersion::getCurrentVersion();
+            
+            if (!$currentVersion) {
+                return [
+                    'success' => false,
+                    'message' => 'No current system version found'
+                ];
+            }
+            
+            // Get all available updates
+            $availableUpdates = SystemUpdate::getAvailableUpdates();
+            
+            if ($availableUpdates->isEmpty()) {
+                return [
+                    'success' => true,
+                    'has_updates' => false,
+                    'current_version' => $currentVersion->version,
+                    'updates' => []
+                ];
+            }
+            
+            // Check which updates have already been applied or dismissed
+            $clinicUpdates = ClinicUpdate::where('clinic_id', $clinic->id)
+                ->whereIn('system_update_id', $availableUpdates->pluck('id'))
+                ->get()
+                ->keyBy('system_update_id');
+            
+            // Filter updates that haven't been applied or dismissed
+            $pendingUpdates = $availableUpdates->filter(function($update) use ($clinicUpdates) {
+                // Skip if already applied
+                if (isset($clinicUpdates[$update->id]) && $clinicUpdates[$update->id]->is_applied) {
+                    return false;
+                }
+                
+                // Include if it's mandatory, even if dismissed
+                if ($update->is_mandatory) {
+                    return true;
+                }
+                
+                // Skip if dismissed
+                if (isset($clinicUpdates[$update->id]) && $clinicUpdates[$update->id]->is_dismissed) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Sort updates by version (newest first)
+            $pendingUpdates = $pendingUpdates->sortByDesc('version');
+            
+            return [
+                'success' => true,
+                'has_updates' => $pendingUpdates->isNotEmpty(),
+                'current_version' => $currentVersion->version,
+                'updates' => $pendingUpdates->values()
+            ];
+            
+        } catch (Exception $e) {
+            Log::error('Error getting pending updates: ' . $e->getMessage(), [
+                'clinic_id' => $clinic->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'An error occurred while retrieving pending updates: ' . $e->getMessage()
             ];
         }
     }

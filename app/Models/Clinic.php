@@ -323,4 +323,12 @@ class Clinic extends Model
                 return $defaultTheme;
         }
     }
+
+    /**
+     * Get the settings for this clinic
+     */
+    public function settings()
+    {
+        return $this->hasMany(ClinicSetting::class);
+    }
 } 
