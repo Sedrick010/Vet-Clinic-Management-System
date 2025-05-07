@@ -6,7 +6,7 @@
                 <img src="{{ $clinic->getLogoUrl() }}" class="navbar-brand-img h-100" alt="{{ $clinic->name }} logo" style="max-height: 40px; object-fit: contain;">
                 <span class="ms-1 font-weight-bold" style="color: var(--text-color);">{{ $clinic->name }}</span>
             @else
-                <img src="{{ asset('favicon.ico') }}" class="navbar-brand-img h-100" alt="main_logo">
+                <img src="{{ asset('images/logos/default-clinic-logo.png') }}" class="navbar-brand-img h-100" alt="Vet Clinic Logo" style="max-height: 40px; object-fit: contain;">
                 <span class="ms-1 font-weight-bold" style="color: var(--text-color);">Vet Clinic System</span>
             @endif
         </a>
