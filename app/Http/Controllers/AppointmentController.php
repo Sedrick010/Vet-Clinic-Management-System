@@ -469,6 +469,15 @@ class AppointmentController extends Controller
                 // For backward compatibility
                 $validated['staff_id'] = $request->veterinarian_id;
             }
+            
+            // Calculate duration in minutes between start_time and end_time
+            $startTime = new \DateTime($validated['start_time']);
+            $endTime = new \DateTime($validated['end_time']);
+            $interval = $startTime->diff($endTime);
+            $durationMinutes = ($interval->days * 24 * 60) + ($interval->h * 60) + $interval->i;
+            
+            // Add duration to validated data
+            $validated['duration'] = $durationMinutes;
 
             $appointment->update($validated);
             
@@ -480,7 +489,8 @@ class AppointmentController extends Controller
                 'client_name' => $validated['client_name'],
                 'pet_id' => $request->pet_id,
                 'pet_name' => $pet ? $pet->name : 'Unknown',
-                'start_time' => $validated['start_time']
+                'start_time' => $validated['start_time'],
+                'duration' => $durationMinutes
             ]);
 
             DB::commit();

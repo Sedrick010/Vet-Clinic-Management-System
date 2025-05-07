@@ -45,10 +45,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->constrained();
             $table->foreignId('client_id')->constrained('clients');
+            $table->string('client_name')->nullable()->comment('Name of the client for caching purposes');
             $table->foreignId('staff_id')->nullable()->constrained('staff');
             $table->dateTime('start_time');
             $table->dateTime('end_time');
+            $table->integer('duration')->nullable()->comment('Duration in minutes');
             $table->string('status'); // scheduled, confirmed, completed, cancelled, no-show
+            $table->string('appointment_type')->nullable()->comment('Type of appointment (check-up, vaccination, etc.)');
             $table->text('reason');
             $table->text('notes')->nullable();
             $table->timestamps();

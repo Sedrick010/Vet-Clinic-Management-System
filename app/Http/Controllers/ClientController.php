@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\TenantDatabaseService;
 use Illuminate\Support\Facades\Log;
 use App\Services\SubscriptionService;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends Controller
 {
@@ -46,8 +47,19 @@ class ClientController extends Controller
 
         $clients = Client::orderBy('name')->paginate(10);
         
-        // Get clients count and subscription limit
-        $clientsCount = Client::count();
+        // Get clients count and subscription limit - ensure we're using tenant connection
+        DB::connection('tenant')->statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+        $clientsCount = DB::connection('tenant')->table('clients')->count();
+        
+        // Log client count for debugging
+        Log::info('Client count check', [
+            'clinic_id' => $clinic->id,
+            'clinic_name' => $clinic->name,
+            'client_count' => $clientsCount,
+            'database' => DB::connection()->getDatabaseName(),
+            'tenant_db' => DB::connection('tenant')->getDatabaseName()
+        ]);
+        
         $subscriptionService = app(SubscriptionService::class);
         $clientsLimit = $subscriptionService->getLimitForFeature($clinic, 'clients_limit');
         $hasReachedLimit = $subscriptionService->hasReachedLimit($clinic, 'clients_limit', $clientsCount);
@@ -498,8 +510,18 @@ class ClientController extends Controller
 
         $this->tenantDatabaseService->switchToTenant($clinic);
         
-        // Check client subscription limit
-        $clientCount = Client::count();
+        // Check client subscription limit - use direct DB connection
+        $clientCount = DB::connection('tenant')->table('clients')->count();
+        
+        // Log client count for debugging
+        Log::info('Client count check before create', [
+            'clinic_id' => $clinic->id,
+            'clinic_name' => $clinic->name,
+            'client_count' => $clientCount,
+            'database' => DB::connection()->getDatabaseName(),
+            'tenant_db' => DB::connection('tenant')->getDatabaseName()
+        ]);
+        
         $subscriptionService = app(\App\Services\SubscriptionService::class);
         
         if ($subscriptionService->hasReachedLimit($clinic, 'clients_limit', $clientCount)) {
