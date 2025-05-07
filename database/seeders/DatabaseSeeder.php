@@ -18,5 +18,10 @@ class DatabaseSeeder extends Seeder
         
         // Seed support tickets for testing
         $this->call(SupportTicketSeeder::class);
+
+        // Run the system updates seeder
+        $this->call([
+            SystemUpdatesSeeder::class,
+        ]);
     }
 }

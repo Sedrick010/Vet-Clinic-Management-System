@@ -99,6 +99,9 @@
                             <p class="text-sm mb-0">Manage subscription plans for all clinics</p>
                         </div>
                         <div>
+                            <a href="{{ route('admin.subscription-requests.index') }}" class="btn btn-sm btn-info me-2">
+                                <i class="fas fa-credit-card me-1"></i> Subscription Requests
+                            </a>
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-filter me-1"></i> Filter
                             </button>
