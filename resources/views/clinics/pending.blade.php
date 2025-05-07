@@ -49,14 +49,6 @@
         </div>
         @endif
 
-        @php
-            $status = Session::get('pending_clinic_status', 'pending');
-            $clinicName = Session::get('pending_clinic_name', 'Your clinic');
-            $ownerName = Session::get('pending_clinic_owner');
-            $contactEmail = Session::get('pending_clinic_email');
-            $subdomain = Session::get('pending_clinic_subdomain');
-        @endphp
-
         @if($status === 'approved')
             <!-- Approved Status -->
             <h2 class="text-center text-2xl font-bold text-green-600 mb-5">Registration Approved!</h2>
@@ -134,7 +126,7 @@
         @elseif($status === 'rejected')
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <p class="text-gray-700 font-semibold mb-2">Reason for rejection:</p>
-                <p class="text-gray-600">{{ Session::get('pending_clinic_reason', 'Your clinic registration did not meet our requirements.') }}</p>
+                <p class="text-gray-600">{{ $rejectionReason ?? 'Your clinic registration did not meet our requirements.' }}</p>
             </div>
             
             <p class="text-gray-600 mb-6 text-center">
@@ -236,4 +228,24 @@
         }
     });
     </script>
+
+    @push('js')
+    <script>
+        const clinicId = "{{ session('pending_clinic_id') }}";
+        function checkClinicStatus() {
+            fetch(`/clinic-status/${clinicId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'approved') {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    // Optionally handle error
+                    // console.error('Error checking clinic status:', error);
+                });
+        }
+        setInterval(checkClinicStatus, 5000); // Check every 5 seconds
+    </script>
+    @endpush
 </x-guest-layout> 
