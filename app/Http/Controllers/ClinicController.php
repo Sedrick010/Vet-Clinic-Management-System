@@ -217,7 +217,17 @@ class ClinicController extends Controller
      */
     public function pending(): View
     {
-        return view('clinics.pending');
+        $clinicId = session('pending_clinic_id');
+        $clinic = \App\Models\Clinic::find($clinicId);
+
+        $status = $clinic ? $clinic->approval_status : session('pending_clinic_status', 'pending');
+        $clinicName = $clinic ? $clinic->name : session('pending_clinic_name', 'Your clinic');
+        $ownerName = $clinic ? $clinic->owner_name : session('pending_clinic_owner');
+        $contactEmail = $clinic ? $clinic->owner_email : session('pending_clinic_email');
+        $subdomain = $clinic ? $clinic->subdomain : session('pending_clinic_subdomain');
+        $rejectionReason = $clinic ? $clinic->rejection_reason : session('pending_clinic_reason');
+
+        return view('clinics.pending', compact('status', 'clinicName', 'ownerName', 'contactEmail', 'subdomain', 'rejectionReason'));
     }
 
     /**

@@ -217,9 +217,9 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-2">
-                                                        <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST">
+                                                        <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST" class="approve-form" data-clinic-id="{{ $clinic->id }}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-action btn-success">
+                                                            <button type="button" class="btn btn-action btn-success" onclick="confirmApprove({{ $clinic->id }}, '{{ $clinic->name }}')">
                                                                 <i class="fas fa-check me-1"></i> Approve
                                                             </button>
                                                         </form>
@@ -394,9 +394,9 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-2">
-                                                        <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST">
+                                                        <form action="{{ route('admin.clinics.approve', $clinic->id) }}" method="POST" class="approve-form" data-clinic-id="{{ $clinic->id }}">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-action btn-success">
+                                                            <button type="button" class="btn btn-action btn-success" onclick="confirmApprove({{ $clinic->id }}, '{{ $clinic->name }}')">
                                                                 <i class="fas fa-check me-1"></i> Approve
                                                             </button>
                                                         </form>
@@ -513,6 +513,31 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
+
+    function confirmApprove(clinicId, clinicName) {
+        if (typeof Swal === 'undefined') {
+            console.error('SweetAlert2 is not loaded');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Approve Clinic Registration?',
+            text: `Are you sure you want to approve the registration for ${clinicName}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#2dce89',
+            cancelButtonColor: '#f5365c',
+            confirmButtonText: 'Yes, approve it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.querySelector(`form.approve-form[data-clinic-id="${clinicId}"]`);
+                if (form) {
+                    form.submit();
+                }
+            }
+        });
+    }
 
     function openRejectModal(clinicId) {
         document.getElementById('rejectForm').action = `/admin/clinics/${clinicId}/reject`;
