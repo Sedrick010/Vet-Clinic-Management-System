@@ -126,6 +126,54 @@
         background: white;
         color: #2dce89 !important;
     }
+    
+    /* Update notification badge pulse animation */
+    .pulse-animation {
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+    
+    /* Updates sidebar list styling */
+    .updates-sidebar-details {
+        background-color: {{ $theme['name'] == 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(242, 242, 242, 0.7)' }};
+        border-radius: 0.5rem;
+        padding: 8px;
+        margin-right: 1rem;
+        border-left: 3px solid {{ $theme['colors']['primary'] ?? '#5e72e4' }};
+    }
+    
+    .update-sidebar-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .update-sidebar-item {
+        font-size: 0.85rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: var(--text-color);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+    }
+    
+    .update-sidebar-item:hover {
+        background-color: {{ $theme['name'] == 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(94, 114, 228, 0.1)' }};
+        color: {{ $theme['colors']['primary'] ?? '#5e72e4' }};
+    }
     </style>
     
     <div class="collapse navbar-collapse w-auto max-height-vh-100 h-100" id="sidenav-collapse-main">
@@ -242,14 +290,76 @@
                     </div>
                     <span class="nav-link-text ms-1">System Updates</span>
                     @php
-                        $systemUpdateService = app(\App\Services\SystemUpdateService::class);
-                        $updateCheck = $systemUpdateService->checkForUpdates($clinic);
-                        $hasUpdates = isset($updateCheck['success']) && $updateCheck['success'] && $updateCheck['has_updates'];
+                        // Check for updates using the custom updater service
+                        $hasUpdates = false;
+                        $latestVersion = null;
+                        $pendingUpdatesCount = 0;
+                        $pendingCriticalUpdates = 0;
+                        $pendingSecurityUpdates = 0;
+                        $currentVersion = config('self-update.version_installed');
+                        
+                        try {
+                            $customUpdater = app(\App\Services\CustomUpdaterService::class);
+                            $hasUpdates = $customUpdater->isNewVersionAvailable();
+                            $latestVersion = $customUpdater->getLatestVersion();
+                            
+                            // Get clinic ID
+                            $clinicId = auth()->user() ? auth()->user()->clinic_id : (session('current_clinic_id') ?? null);
+                            
+                            // Also check if there are any pending updates in the database
+                            if ($clinicId) {
+                                $pendingUpdates = \App\Models\SystemUpdate::whereHas('clinicUpdates', function($query) use ($clinicId) {
+                                    $query->where('clinic_id', $clinicId)
+                                          ->where('is_applied', false)
+                                          ->where('is_dismissed', false);
+                                })->get();
+                                
+                                $pendingUpdatesCount = $pendingUpdates->count();
+                                $pendingCriticalUpdates = $pendingUpdates->where('is_critical', true)->count();
+                                $pendingSecurityUpdates = $pendingUpdates->where('is_security', true)->count();
+                                
+                                if ($pendingUpdatesCount > 0) {
+                                    $hasUpdates = true;
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            // Silently fail in sidebar
+                        }
                     @endphp
+                    
+                    <span class="badge bg-gradient-success text-white ms-auto text-xxs">{{ $currentVersion ?? 'v?.?.?' }}</span>
+                    
                     @if($hasUpdates)
-                        <span class="badge bg-gradient-danger text-white ms-auto">{{ count($updateCheck['updates']) }}</span>
+                        <span class="badge bg-gradient-danger text-white ms-1 pulse-animation">
+                            {{ $pendingUpdatesCount > 0 ? $pendingUpdatesCount : 'New' }}
+                        </span>
                     @endif
                 </a>
+                
+                @if($pendingUpdatesCount > 0)
+                <div class="ms-4 mt-1 mb-2 updates-sidebar-details">
+                    <div class="update-sidebar-list">
+                        @if($pendingCriticalUpdates > 0)
+                        <a href="{{ route('system.updates.index', ['filter' => 'critical']) }}" class="update-sidebar-item">
+                            <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+                            <span class="small">{{ $pendingCriticalUpdates }} critical update{{ $pendingCriticalUpdates > 1 ? 's' : '' }}</span>
+                        </a>
+                        @endif
+                        
+                        @if($pendingSecurityUpdates > 0)
+                        <a href="{{ route('system.updates.index', ['filter' => 'security']) }}" class="update-sidebar-item">
+                            <i class="fas fa-shield-alt text-warning me-1"></i>
+                            <span class="small">{{ $pendingSecurityUpdates }} security update{{ $pendingSecurityUpdates > 1 ? 's' : '' }}</span>
+                        </a>
+                        @endif
+                        
+                        <a href="{{ route('system.updates.index') }}" class="update-sidebar-item d-flex justify-content-between">
+                            <span class="small"><i class="fas fa-arrow-right text-info me-1"></i> View all updates</span>
+                            <span class="badge bg-primary">{{ $pendingUpdatesCount }}</span>
+                        </a>
+                    </div>
+                </div>
+                @endif
             </li>
             @endif
             
@@ -345,4 +455,36 @@
             @endif
         </ul>
     </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the updates sidebar - collapsed by default on mobile
+        if (window.innerWidth < 992) {
+            const updateDetails = document.querySelector('.updates-sidebar-details');
+            if (updateDetails) {
+                updateDetails.style.display = 'none';
+                
+                // Add click handler on the parent menu item
+                const updateLink = document.querySelector('.nav-link[href="{{ route("system.updates.index") }}"]');
+                if (updateLink) {
+                    updateLink.addEventListener('click', function(e) {
+                        // Only toggle on mobile devices
+                        if (window.innerWidth < 992) {
+                            e.preventDefault();
+                            if (updateDetails.style.display === 'none') {
+                                updateDetails.style.display = 'block';
+                            } else {
+                                updateDetails.style.display = 'none';
+                                // Allow navigation after second click
+                                setTimeout(() => {
+                                    window.location.href = "{{ route('system.updates.index') }}";
+                                }, 100);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    });
+    </script>
 </aside> 

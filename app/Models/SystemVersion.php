@@ -31,4 +31,12 @@ class SystemVersion extends Model
     {
         return self::where('is_current', true)->first();
     }
+
+    /**
+     * Get the update associated with this version
+     */
+    public function systemUpdate()
+    {
+        return $this->belongsTo(SystemUpdate::class, 'version', 'version');
+    }
 } 

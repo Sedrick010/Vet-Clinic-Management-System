@@ -3,17 +3,57 @@
 @section('title', $clinicName . ' - Dashboard')
 @section('page_name', $clinicName . ' Dashboard')
 
+@php
+    // Ensure sidebar is enabled for this page
+    $isSidebar = true;
+
+    // Check for any available updates
+    $systemUpdateService = app(\App\Services\SystemUpdateService::class);
+    $updateCheck = $systemUpdateService->checkForUpdates($clinic);
+    $hasUpdates = isset($updateCheck['success']) && $updateCheck['success'] && $updateCheck['has_updates'];
+    $pendingUpdates = $hasUpdates ? $updateCheck['updates'] : collect();
+    $criticalUpdates = $pendingUpdates->where('is_critical', true);
+    $mandatoryUpdates = $pendingUpdates->where('is_mandatory', true);
+    
+    // Get current system version
+    $currentVersion = config('self-update.version_installed');
+@endphp
+
 @section('content')
 <div class="container-fluid py-4">
-    @php
-        // Check for any available updates
-        $systemUpdateService = app(\App\Services\SystemUpdateService::class);
-        $updateCheck = $systemUpdateService->checkForUpdates($clinic);
-        $hasUpdates = isset($updateCheck['success']) && $updateCheck['success'] && $updateCheck['has_updates'];
-        $pendingUpdates = $hasUpdates ? $updateCheck['updates'] : collect();
-        $criticalUpdates = $pendingUpdates->where('is_critical', true);
-        $mandatoryUpdates = $pendingUpdates->where('is_mandatory', true);
-    @endphp
+    <!-- System Version Information Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-1">System Version</h5>
+                            <p class="mb-0 text-sm">Manage and apply system updates</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="d-flex flex-column">
+                                <span class="text-xs text-uppercase font-weight-bolder opacity-6">Current Version:</span>
+                                <h5 class="mb-0 d-flex align-items-center justify-content-md-end">
+                                    <span class="badge bg-gradient-success me-1">{{ $currentVersion ?? 'Unknown' }}</span>
+                                    @if($hasUpdates)
+                                    <span class="badge bg-gradient-info text-xs ms-2">
+                                        <i class="fas fa-arrow-up me-1"></i> {{ $pendingUpdates->first()->version ?? 'New version' }} available
+                                    </span>
+                                    @endif
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-md-end mt-3 mt-md-0">
+                            <a href="{{ route('system.updates.index') }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-sync-alt me-1"></i> Check for Updates
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if($hasUpdates)
         <div class="row mb-4">
@@ -21,20 +61,24 @@
                 <div class="alert {{ $criticalUpdates->count() > 0 ? 'bg-gradient-danger' : 'bg-gradient-primary' }} alert-dismissible fade show" role="alert">
                     <div class="d-flex align-items-center">
                         <div class="icon icon-sm me-3">
-                            <i class="fas {{ $criticalUpdates->count() > 0 ? 'fa-exclamation-triangle' : 'fa-download' }} text-white"></i>
+                            <i class="fas {{ $criticalUpdates->count() > 0 ? 'fa-exclamation-triangle' : 'fa-sync-alt' }} text-white"></i>
                         </div>
                         <div class="text-white flex-grow-1">
-                            <span class="fw-bold fs-6">{{ $criticalUpdates->count() > 0 ? 'Critical Updates Available!' : 'System Updates Available' }}</span>
+                            <span class="fw-bold fs-6">{{ $criticalUpdates->count() > 0 ? 'Critical System Update Available' : 'System Update Available' }}</span>
                             <p class="mb-0 mt-1">
-                                {{ $pendingUpdates->count() }} update(s) are available for your system.
+                                Version {{ $pendingUpdates->first()->version }} is ready to install
                                 @if($mandatoryUpdates->count() > 0)
-                                    {{ $mandatoryUpdates->count() }} of these updates are required.
+                                    (mandatory update)
                                 @endif
                             </p>
                         </div>
-                        <div>
-                            <a href="{{ route('system.updates.index') }}" class="btn btn-sm btn-outline-light ms-3">
-                                <i class="fas fa-arrow-circle-right me-1"></i> View Updates
+                        <div class="d-flex">
+                            <a href="{{ route('system.updates.update') }}" class="btn btn-sm btn-light me-2" 
+                                onclick="return confirm('Are you sure you want to update the system?');">
+                                <i class="fas fa-download me-1"></i> Apply Now
+                            </a>
+                            <a href="{{ route('system.updates.index') }}" class="btn btn-sm btn-outline-light me-2">
+                                <i class="fas fa-info-circle me-1"></i> Details
                             </a>
                             <button type="button" class="btn-close text-white" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>

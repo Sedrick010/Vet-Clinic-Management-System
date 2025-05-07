@@ -20,10 +20,24 @@
                             <div class="me-3">
                                 <i class="fas fa-info-circle fa-2x"></i>
                             </div>
-                            <div>
-                                <h5 class="text-white mb-1">System Information</h5>
-                                <p class="mb-0">Current Version: <strong>{{ $currentVersion->version ?? 'Unknown' }}</strong> ({{ $currentVersion->name ?? 'Unknown' }})</p>
-                                <p class="mb-0">Released: {{ $currentVersion && $currentVersion->released_at ? $currentVersion->released_at->format('F j, Y') : 'Unknown' }}</p>
+                            <div class="flex-grow-1">
+                                <h5 class="text-white mb-2">System Information</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Current Version:</strong> <span class="badge bg-gradient-success">{{ $currentVersion->version ?? config('self-update.version_installed') ?? 'Unknown' }}</span></p>
+                                        <p class="mb-1"><strong>Version Name:</strong> {{ $currentVersion->name ?? 'Standard Edition' }}</p>
+                                        <p class="mb-0"><strong>Released:</strong> {{ $currentVersion && $currentVersion->released_at ? $currentVersion->released_at->format('F j, Y') : 'Unknown' }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Last Update Check:</strong> {{ now()->format('F j, Y g:i A') }}</p>
+                                        @if($updateCheck['has_updates'] ?? false)
+                                        <p class="mb-1"><strong>Available Version:</strong> <span class="badge bg-gradient-warning">{{ $updateCheck['updates'][0]->version ?? 'New Version' }}</span></p>
+                                        <p class="mb-0"><strong>Updates Available:</strong> <span class="badge bg-gradient-danger">{{ count($updateCheck['updates'] ?? []) }}</span></p>
+                                        @else
+                                        <p class="mb-0"><strong>Status:</strong> <span class="badge bg-gradient-success">Up to date</span></p>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
