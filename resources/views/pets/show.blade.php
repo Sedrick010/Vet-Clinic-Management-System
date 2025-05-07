@@ -10,7 +10,10 @@
                 <div class="card-header pb-0 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Pet Details</h6>
                     <div>
-                        <a href="{{ route('pets.edit', $pet->id) }}" class="btn btn-sm bg-gradient-info me-2">
+                        <a href="{{ route('pets.pdf', $pet->id) }}" class="btn btn-sm bg-gradient-info me-2">
+                            <i class="fas fa-file-pdf me-1"></i> Download PDF
+                        </a>
+                        <a href="{{ route('pets.edit', $pet->id) }}" class="btn btn-sm bg-gradient-primary me-2">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>
                         <a href="{{ route('pets.index') }}" class="btn btn-sm bg-gradient-secondary">
