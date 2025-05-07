@@ -74,9 +74,9 @@
                         <div class="text-center mb-12">
                             @if($clinic)
                                 <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">Welcome to {{ $clinic->name }}</h1>
-                                <h2 class="text-xl md:text-2xl mb-4">Your Trusted Veterinary Care Partner</h2>
+                                <h2 class="text-xl md:text-2xl mb-4">Veterinary Staff Portal</h2>
                                 <p class="text-lg text-gray-600 mb-5 max-w-3xl mx-auto">
-                                    Access our comprehensive veterinary services and manage your pet's healthcare with our state-of-the-art clinic management system.
+                                    Access our comprehensive clinic management system to provide the best care for our patients.
                                 </p>
                             @else
                                 <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">VetClinic Management System</h1>
@@ -90,7 +90,7 @@
                             <div class="mx-auto max-w-lg mt-8 mb-8 bg-white rounded-lg shadow-lg overflow-hidden">
                                 <div class="p-4 bg-primary text-white">
                                     @if($clinic)
-                                        <h3 class="text-xl font-bold">Access {{ $clinic->name }}</h3>
+                                        <h3 class="text-xl font-bold">Staff Portal - {{ $clinic->name }}</h3>
                                     @else
                                         <h3 class="text-xl font-bold">Quick Access</h3>
                                     @endif
@@ -99,23 +99,77 @@
                                     @if($clinic)
                                         <!-- Clinic-specific actions -->
                                         <div class="space-y-4">
-                                            <div class="text-center">
-                                                <a href="{{ route('customer.login', ['subdomain' => $clinic->subdomain]) }}" 
-                                                   class="inline-block w-full bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors">
-                                                    <i class="fas fa-user me-2"></i> Customer Login
-                                                </a>
-                                            </div>
-                                            <div class="text-center">
-                                                <a href="{{ route('customer.register') }}" 
-                                                   class="inline-block w-full border border-primary text-primary px-6 py-2 rounded-md hover:bg-gray-50 transition-colors">
-                                                    <i class="fas fa-user-plus me-2"></i> Register as New Customer
-                                                </a>
-                                            </div>
-                                            <div class="text-center">
+                                            <div class="text-center mb-6">
                                                 <a href="{{ route('login') }}" 
-                                                   class="inline-block w-full bg-gray-800 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                                                   class="inline-block w-full bg-primary text-white px-6 py-4 rounded-md hover:bg-primary-dark transition-colors text-xl font-bold shadow-lg">
                                                     <i class="fas fa-clinic-medical me-2"></i> Staff Login
                                                 </a>
+                                                <p class="mt-2 text-sm text-gray-600">Secure access for clinic staff only</p>
+                                            </div>
+                                            <div class="border-t border-gray-200 pt-6">
+                                                <h3 class="text-lg font-medium text-gray-900 mb-4">Clinic Information</h3>
+                                                <div class="bg-gray-50 p-4 rounded-lg shadow-sm mb-4">
+                                                    <div class="flex items-center mb-3">
+                                                        <i class="fas fa-map-marker-alt text-primary w-6"></i>
+                                                        <span class="text-gray-700">{{ $clinic->address ?? 'Contact us for location details' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center mb-3">
+                                                        <i class="fas fa-phone text-primary w-6"></i>
+                                                        <span class="text-gray-700">{{ $clinic->phone ?? 'Contact us by email' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-envelope text-primary w-6"></i>
+                                                        <span class="text-gray-700">{{ $clinic->email ?? 'info@example.com' }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-center mt-4">
+                                                    <p class="text-sm text-gray-600">
+                                                        Need assistance? Contact our support team.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Adding business hours section -->
+                                            <div class="border-t border-gray-200 pt-6">
+                                                <h3 class="text-lg font-medium text-gray-900 mb-4">Business Hours</h3>
+                                                <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <div class="text-gray-600">Monday - Friday:</div>
+                                                        <div class="text-gray-900 font-medium">8:00 AM - 6:00 PM</div>
+                                                        
+                                                        <div class="text-gray-600">Saturday:</div>
+                                                        <div class="text-gray-900 font-medium">9:00 AM - 4:00 PM</div>
+                                                        
+                                                        <div class="text-gray-600">Sunday:</div>
+                                                        <div class="text-gray-900 font-medium">Closed</div>
+                                                        
+                                                        <div class="text-gray-600 mt-2">Emergency:</div>
+                                                        <div class="text-red-600 font-medium mt-2">24/7 On-Call Service</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Adding services overview section -->
+                                            <div class="border-t border-gray-200 pt-6">
+                                                <h3 class="text-lg font-medium text-gray-900 mb-4">Our Services</h3>
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <div class="bg-white p-3 rounded-lg shadow-sm flex items-center space-x-3">
+                                                        <i class="fas fa-stethoscope text-primary text-xl"></i>
+                                                        <span class="text-gray-800">Wellness Exams</span>
+                                                    </div>
+                                                    <div class="bg-white p-3 rounded-lg shadow-sm flex items-center space-x-3">
+                                                        <i class="fas fa-medkit text-primary text-xl"></i>
+                                                        <span class="text-gray-800">Vaccinations</span>
+                                                    </div>
+                                                    <div class="bg-white p-3 rounded-lg shadow-sm flex items-center space-x-3">
+                                                        <i class="fas fa-tooth text-primary text-xl"></i>
+                                                        <span class="text-gray-800">Dental Care</span>
+                                                    </div>
+                                                    <div class="bg-white p-3 rounded-lg shadow-sm flex items-center space-x-3">
+                                                        <i class="fas fa-briefcase-medical text-primary text-xl"></i>
+                                                        <span class="text-gray-800">Surgery</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     @else

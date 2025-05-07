@@ -295,6 +295,10 @@ class TenantDatabaseService
             // Get the main database credentials to reuse them for the tenant connection
             $mainConnection = config('database.connections.mysql');
             
+            // Clear any existing tenant connection first
+            DB::purge('tenant');
+            
+            // Configure the tenant connection
             Config::set('database.connections.tenant', [
                 'driver' => 'mysql',
                 'url' => env('DATABASE_URL'),
@@ -312,27 +316,121 @@ class TenantDatabaseService
                 'engine' => null,
                 'options' => extension_loaded('pdo_mysql') ? array_filter([
                     \PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                    \PDO::ATTR_PERSISTENT => false, // Disable persistent connections to avoid issues
+                    \PDO::ATTR_TIMEOUT => 5, // Set a timeout for connection attempts
                 ]) : [],
             ]);
             
-            DB::purge('tenant');
+            // Connect to the tenant database
             DB::reconnect('tenant');
             
             // Test the connection to make sure it works
-            DB::connection('tenant')->getPdo();
+            $pdo = DB::connection('tenant')->getPdo();
+            
+            // Additional check - run a test query
+            $result = DB::connection('tenant')->select('SELECT 1 as test');
+            
+            if (empty($result) || !isset($result[0]->test) || $result[0]->test != 1) {
+                throw new Exception("Could not execute test query on tenant database");
+            }
             
             Log::debug('Successfully connected to tenant database', [
                 'clinic_id' => $clinic->id,
                 'database' => $clinic->database_name
             ]);
         } catch (\Exception $e) {
-            Log::error('Error switching to tenant database: ' . $e->getMessage(), [
-                'clinic_id' => $clinic->id,
-                'database' => $clinic->database_name
-            ]);
-            
-            throw $e;
+            // If we failed on the first attempt, try once more with a fresh connection
+            try {
+                // Clear any existing tenant connection and try again
+                DB::purge('tenant');
+                
+                // Get the main database credentials to reuse them for the tenant connection
+                $mainConnection = config('database.connections.mysql');
+                
+                // Configure the tenant connection again
+                Config::set('database.connections.tenant', [
+                    'driver' => 'mysql',
+                    'url' => env('DATABASE_URL'),
+                    'host' => env('DB_HOST', 'localhost'),
+                    'port' => env('DB_PORT', '3306'),
+                    'database' => $clinic->database_name,
+                    'username' => env('DB_USERNAME', $mainConnection['username'] ?? 'root'),
+                    'password' => env('DB_PASSWORD', $mainConnection['password'] ?? ''),
+                    'unix_socket' => env('DB_SOCKET', ''),
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'prefix' => '',
+                    'prefix_indexes' => true,
+                    'strict' => true,
+                    'engine' => null,
+                    'options' => extension_loaded('pdo_mysql') ? array_filter([
+                        \PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                        \PDO::ATTR_PERSISTENT => false,
+                        \PDO::ATTR_TIMEOUT => 5,
+                    ]) : [],
+                ]);
+                
+                DB::reconnect('tenant');
+                
+                // Test the connection again
+                DB::connection('tenant')->getPdo();
+                
+                Log::info('Successfully reconnected to tenant database after initial failure', [
+                    'clinic_id' => $clinic->id,
+                    'database' => $clinic->database_name
+                ]);
+            } catch (\Exception $retryException) {
+                // If retry also failed, log and throw the original exception
+                Log::error('Error switching to tenant database (retry also failed): ' . $e->getMessage(), [
+                    'clinic_id' => $clinic->id,
+                    'database' => $clinic->database_name,
+                    'original_error' => $e->getMessage(),
+                    'retry_error' => $retryException->getMessage()
+                ]);
+                
+                throw $e;
+            }
         }
+    }
+    
+    /**
+     * Register the tenant database connection configuration without connecting
+     *
+     * @param Clinic $clinic
+     * @return void
+     */
+    public function registerTenantConnection(Clinic $clinic): void
+    {
+        // Get the main database credentials to reuse them for the tenant connection
+        $mainConnection = config('database.connections.mysql');
+        
+        // Configure the tenant connection
+        Config::set('database.connections.tenant', [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', 'localhost'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => $clinic->database_name,
+            'username' => env('DB_USERNAME', $mainConnection['username'] ?? 'root'),
+            'password' => env('DB_PASSWORD', $mainConnection['password'] ?? ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                \PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                \PDO::ATTR_PERSISTENT => false, // Disable persistent connections to avoid issues
+                \PDO::ATTR_TIMEOUT => 5, // Set a timeout for connection attempts
+            ]) : [],
+        ]);
+        
+        Log::debug('Tenant database connection configured', [
+            'clinic_id' => $clinic->id,
+            'database' => $clinic->database_name
+        ]);
     }
     
     /**

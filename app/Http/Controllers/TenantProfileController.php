@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 
 class TenantProfileController extends Controller
 {
@@ -20,6 +21,9 @@ class TenantProfileController extends Controller
         if (!session()->has('tenant_user')) {
             abort(403, 'Unauthorized action.');
         }
+
+        // Ensure tenant database connection is configured for any future queries
+        $this->ensureTenantConnection();
 
         $tenantUser = (object)session('tenant_user');
         
@@ -40,6 +44,11 @@ class TenantProfileController extends Controller
         
         $tenantUser = (object)session('tenant_user');
         $clinicId = session('current_clinic_id');
+        
+        // Ensure tenant database connection is configured
+        if (!$this->ensureTenantConnection()) {
+            return Redirect::route('tenant.profile.edit')->with('error', 'Database connection error. Please try again later or contact support.');
+        }
         
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -94,6 +103,18 @@ class TenantProfileController extends Controller
         }
         
         $tenantUser = (object)session('tenant_user');
+        
+        // Ensure tenant database connection is configured
+        if (!$this->ensureTenantConnection()) {
+            return Redirect::route('tenant.profile.edit')->with('error', 'Database connection error. Please try again later or contact support.');
+        }
+        
+        // Extra check - verify DB connection using the new macro
+        if (!DB::hasTenantConnection()) {
+            // Get clinic and try to establish connection with the macro
+            $clinic = \App\Models\Clinic::findOrFail(session('current_clinic_id'));
+            DB::useTenant($clinic);
+        }
         
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', function ($attribute, $value, $fail) use ($tenantUser) {

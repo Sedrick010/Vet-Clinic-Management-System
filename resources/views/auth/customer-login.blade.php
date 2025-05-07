@@ -8,53 +8,31 @@
             <img src="{{ $clinic->getLogoUrl() }}" alt="{{ $clinic->name }} Logo" class="max-w-[200px] max-h-[150px] object-contain rounded-lg shadow-md p-3 bg-white hover:shadow-lg transition-all duration-300" />
         </div>
         <h2 class="text-2xl font-bold text-gray-900">{{ $clinic->name }}</h2>
-        <p class="text-gray-600">Customer Login</p>
+        <p class="text-gray-600">Customer Portal Update</p>
     </div>
 
-    <form method="POST" action="{{ route('customer.login', ['subdomain' => $clinic->subdomain]) }}" class="space-y-6">
-        @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    The customer portal is currently unavailable. Please contact our clinic directly for any assistance.
+                </p>
+            </div>
         </div>
+    </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+    <div class="text-center space-y-6">
+        <p class="text-gray-600">Are you a clinic staff member?</p>
+        <a href="{{ route('login') }}" class="inline-block bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dark transition-colors">
+            <i class="fas fa-clinic-medical mr-2"></i> Staff Login
+        </a>
+        <div class="mt-4 pt-4 border-t border-gray-200">
+            <a href="{{ route('welcome') }}" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-arrow-left mr-1"></i> Return to home page
+            </a>
         </div>
-        
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ml-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ml-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-
-        <div class="text-center mt-4">
-            <p class="text-sm text-gray-600">
-                Don't have an account? 
-                <a href="{{ route('customer.register') }}" class="text-indigo-600 hover:text-indigo-900">
-                    Register here
-                </a>
-            </p>
-        </div>
-    </form>
+    </div>
 </x-guest-layout> 

@@ -89,21 +89,67 @@
                         <!-- Appointment Time -->
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="start_time" class="form-label fw-bold">Start Time <span class="text-danger">*</span></label>
-                                <input type="datetime-local" class="form-control @error('start_time') is-invalid @enderror" 
+                                <label for="start_date" class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
+                                       id="start_date" name="start_date" value="{{ old('start_date') }}" required>
+                                @error('start_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="start_time" class="form-label fw-bold">Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control @error('start_time') is-invalid @enderror" 
                                        id="start_time" name="start_time" value="{{ old('start_time') }}" required>
                                 @error('start_time')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+
+                        <!-- Duration and Type -->
+                        <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="end_time" class="form-label fw-bold">End Time <span class="text-danger">*</span></label>
-                                <input type="datetime-local" class="form-control @error('end_time') is-invalid @enderror" 
-                                       id="end_time" name="end_time" value="{{ old('end_time') }}" required>
-                                @error('end_time')
+                                <label for="duration" class="form-label fw-bold">Duration (minutes) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control @error('duration') is-invalid @enderror" 
+                                       id="duration" name="duration" value="{{ old('duration', 30) }}" min="5" required>
+                                @error('duration')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="appointment_type" class="form-label fw-bold">Appointment Type <span class="text-danger">*</span></label>
+                                <select class="form-control @error('appointment_type') is-invalid @enderror" 
+                                       id="appointment_type" name="appointment_type" required>
+                                    <option value="">-- Select Type --</option>
+                                    <option value="check-up" {{ old('appointment_type') == 'check-up' ? 'selected' : '' }}>Check Up</option>
+                                    <option value="vaccination" {{ old('appointment_type') == 'vaccination' ? 'selected' : '' }}>Vaccination</option>
+                                    <option value="surgery" {{ old('appointment_type') == 'surgery' ? 'selected' : '' }}>Surgery</option>
+                                    <option value="consultation" {{ old('appointment_type') == 'consultation' ? 'selected' : '' }}>Consultation</option>
+                                    <option value="emergency" {{ old('appointment_type') == 'emergency' ? 'selected' : '' }}>Emergency</option>
+                                    <option value="follow-up" {{ old('appointment_type') == 'follow-up' ? 'selected' : '' }}>Follow Up</option>
+                                    <option value="grooming" {{ old('appointment_type') == 'grooming' ? 'selected' : '' }}>Grooming</option>
+                                    <option value="other" {{ old('appointment_type') == 'other' ? 'selected' : '' }}>Other</option>
+                                </select>
+                                @error('appointment_type')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="form-group mb-4">
+                            <label for="status" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
+                            <select class="form-control @error('status') is-invalid @enderror" 
+                                   id="status" name="status" required>
+                                <option value="">-- Select Status --</option>
+                                <option value="scheduled" {{ old('status', 'scheduled') == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+                                <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                                <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                <option value="no-show" {{ old('status') == 'no-show' ? 'selected' : '' }}>No Show</option>
+                            </select>
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <!-- Reason for Visit -->
@@ -141,18 +187,38 @@
 @push('js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Set minimum dates for appointment times
+        // Set minimum date for appointment date field to today
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById('start_time').min = today + 'T00:00';
-        document.getElementById('end_time').min = today + 'T00:00';
-
-        // Update end time minimum when start time changes
-        document.getElementById('start_time').addEventListener('change', function() {
-            document.getElementById('end_time').min = this.value;
-            if (document.getElementById('end_time').value < this.value) {
-                document.getElementById('end_time').value = this.value;
+        document.getElementById('start_date').min = today;
+        document.getElementById('start_date').value = today;
+        
+        // Calculate estimated end time when duration or start time changes
+        function updateEndTimeEstimate() {
+            const startDate = document.getElementById('start_date').value;
+            const startTime = document.getElementById('start_time').value;
+            const duration = parseInt(document.getElementById('duration').value) || 30;
+            
+            if (startDate && startTime && duration) {
+                // Create a start datetime object
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                
+                // Add duration minutes
+                const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+                
+                // Format end time
+                const endTime = endDateTime.toTimeString().slice(0, 5);
+                
+                // Display estimated end time (optional)
+                if (document.getElementById('end_time_estimate')) {
+                    document.getElementById('end_time_estimate').textContent = endTime;
+                }
             }
-        });
+        }
+        
+        // Add event listeners for duration and time fields
+        document.getElementById('start_date').addEventListener('change', updateEndTimeEstimate);
+        document.getElementById('start_time').addEventListener('change', updateEndTimeEstimate);
+        document.getElementById('duration').addEventListener('input', updateEndTimeEstimate);
         
         // Client selection change handler
         const clientSelect = document.getElementById('client_id');
@@ -226,6 +292,17 @@
         if (clientSelect.value) {
             fetchPetsForClient(clientSelect.value);
         }
+        
+        // Add end time estimate display to the form
+        const durationField = document.getElementById('duration');
+        const durationFieldParent = durationField.closest('.col-md-6');
+        const endTimeEstimateElement = document.createElement('small');
+        endTimeEstimateElement.classList.add('form-text', 'text-muted');
+        endTimeEstimateElement.innerHTML = 'Estimated end time: <span id="end_time_estimate"></span>';
+        durationFieldParent.appendChild(endTimeEstimateElement);
+        
+        // Initialize end time estimate
+        updateEndTimeEstimate();
     });
 </script>
 @endpush 

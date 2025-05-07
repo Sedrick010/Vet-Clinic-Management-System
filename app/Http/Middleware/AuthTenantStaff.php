@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\TenantDatabaseService;
+use App\Models\Clinic;
 
 class AuthTenantStaff
 {
@@ -41,9 +43,32 @@ class AuthTenantStaff
         }
         
         // Check if user is authenticated as a tenant user through session
-        if (session()->has('tenant_user')) {
+        if (session()->has('tenant_user') && session()->has('current_clinic_id')) {
             $tenantUser = (object)session('tenant_user');
             $clinicId = session('current_clinic_id');
+            
+            // Ensure tenant database connection is properly established
+            try {
+                // Get the clinic information first
+                $clinic = Clinic::findOrFail($clinicId);
+                
+                // Check/reconfigure the tenant database connection
+                if (!config('database.connections.tenant') || !DB::connection('tenant')->getDatabaseName()) {
+                    app(TenantDatabaseService::class)->switchToTenant($clinic);
+                
+                    // Verify connection is working
+                    DB::connection('tenant')->getPdo();
+                }
+            } catch (\Exception $e) {
+                Log::error('Error connecting to tenant database in AuthTenantStaff: ' . $e->getMessage(), [
+                    'clinic_id' => $clinicId
+                ]);
+                
+                // Clear session and redirect to login
+                Session::flush();
+                return redirect()->route('login')
+                    ->with('error', 'Database connection error. Please try again later or contact support.');
+            }
             
             // Check if this staff account has been deleted
             try {
