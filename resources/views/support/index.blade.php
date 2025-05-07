@@ -25,10 +25,10 @@
                     </div>
                 @endif
 
-                <div class="card bg-gradient-info text-white p-3 mb-4">
+                <div class="card bg-gradient-primary border-0 text-white p-3 mb-4">
                     <div class="d-flex align-items-start">
-                        <div class="icon icon-shape bg-white shadow text-center me-3">
-                            <i class="fas fa-info-circle text-info opacity-10"></i>
+                        <div class="me-3">
+                            <i class="fas fa-info-circle fa-2x"></i>
                         </div>
                         <div>
                             <h5 class="text-white mb-2">How Support Works</h5>
@@ -38,29 +38,41 @@
                                 <div class="col-md-6 mb-3 mb-md-0">
                                     <h6 class="text-white opacity-8 mb-2">Status Meanings:</h6>
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge badge-sm bg-gradient-primary me-2">Open</span>
+                                        <span class="badge badge-sm bg-purple me-2" style="background-color: #E2E1FF; color: #6C63FF;">Open</span>
                                         <span class="text-sm text-white opacity-8">Ticket submitted, awaiting staff review</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge badge-sm bg-gradient-warning me-2">In Progress</span>
+                                        <span class="badge badge-sm me-2" style="background-color: #FFE2E1; color: #FF6359;">In Progress</span>
                                         <span class="text-sm text-white opacity-8">Staff is working on your issue</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge badge-sm bg-gradient-success me-2">Resolved</span>
+                                        <span class="badge badge-sm me-2" style="background-color: #E1FFE4; color: #4CAF50;">Resolved</span>
                                         <span class="text-sm text-white opacity-8">Issue has been resolved</span>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <span class="badge badge-sm bg-gradient-secondary me-2">Closed</span>
+                                        <span class="badge badge-sm me-2" style="background-color: #E9ECEF; color: #6C757D;">Closed</span>
                                         <span class="text-sm text-white opacity-8">Ticket has been closed</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <h6 class="text-white opacity-8 mb-2">Tips:</h6>
-                                    <ul class="ps-4 mb-0 text-sm">
-                                        <li>Be specific about your issue for faster resolution</li>
-                                        <li>Include any error messages exactly as they appear</li>
-                                        <li>You can add replies to your tickets at any time</li>
-                                        <li>Closed tickets can be reopened if needed</li>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-white opacity-8 me-2"></i>
+                                            <span class="text-sm text-white opacity-8">Be specific about your issue for faster resolution</span>
+                                        </li>
+                                        <li class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-white opacity-8 me-2"></i>
+                                            <span class="text-sm text-white opacity-8">Include any error messages exactly as they appear</span>
+                                        </li>
+                                        <li class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-white opacity-8 me-2"></i>
+                                            <span class="text-sm text-white opacity-8">You can add replies to your tickets at any time</span>
+                                        </li>
+                                        <li class="d-flex align-items-center">
+                                            <i class="fas fa-check-circle text-white opacity-8 me-2"></i>
+                                            <span class="text-sm text-white opacity-8">Closed tickets can be reopened if needed</span>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>

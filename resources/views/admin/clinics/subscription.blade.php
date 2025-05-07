@@ -65,15 +65,37 @@
                             <small class="text-muted">Provide a reason for the subscription deactivation</small>
                         </div>
                         
-                        <div class="alert alert-info mb-4">
-                            <h6 class="text-white"><i class="fas fa-info-circle me-2"></i>Subscription Information</h6>
-                            <ul class="mb-0 ps-4">
-                                <li>Free plan: Limited features and up to 100 patient records</li>
-                                <li>Basic plan: More features and up to 500 patient records</li>
-                                <li>Premium plan: Full feature access and unlimited records</li>
-                                <li><strong>Update Subscription:</strong> Change plan or end date without creating a new subscription record</li>
-                                <li><strong>Change & Extend:</strong> Change plan and add more time to the subscription, creating a new subscription record</li>
-                            </ul>
+                        <div class="alert bg-gradient-primary text-white border-0 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-crown fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white mb-2"><strong>Subscription Information</strong></h6>
+                                    <ul class="mb-0 ps-4" style="list-style-type: none;">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <strong>Free plan:</strong> Limited features and up to 100 patient records
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <strong>Basic plan:</strong> More features and up to 500 patient records
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <strong>Premium plan:</strong> Full feature access and unlimited records
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-sync me-2"></i>
+                                            <strong>Update Subscription:</strong> Change plan or end date without creating a new subscription record
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-calendar-plus me-2"></i>
+                                            <strong>Change & Extend:</strong> Change plan and add more time to the subscription, creating a new subscription record
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="d-flex justify-content-between">
@@ -113,9 +135,23 @@
                             <small class="text-muted">Provide a reason for the clinic deactivation</small>
                         </div>
                         
-                        <div class="alert alert-warning mb-4">
-                            <h6 class="text-white"><i class="fas fa-exclamation-triangle me-2"></i>Warning</h6>
-                            <p class="mb-0">Deactivating a clinic will prevent all users from accessing it. The database will remain intact, but inaccessible.</p>
+                        <div class="alert bg-gradient-warning border-0 mb-4">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white mb-2"><strong>Warning</strong></h6>
+                                    <p class="text-white mb-0" style="opacity: 0.9;">
+                                        <i class="fas fa-ban me-2"></i>
+                                        <strong>Access Restriction:</strong> Deactivating a clinic will prevent all users from accessing it.
+                                    </p>
+                                    <p class="text-white mb-0" style="opacity: 0.9;">
+                                        <i class="fas fa-database me-2"></i>
+                                        <strong>Data Safety:</strong> The database will remain intact, but inaccessible until reactivation.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="d-flex justify-content-end">

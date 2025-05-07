@@ -238,8 +238,8 @@
                                                         </div>
                                                         <div class="ms-auto">
                                                             <a href="{{ route('themes.customize') }}" class="btn btn-sm btn-light">
-                                                                <i class="fas fa-paint-brush me-1"></i> Customize Color Palette
-                                                            </a>
+                                                        <i class="fas fa-paint-brush me-1"></i> Customize Color Palette
+                                                    </a>
                                                         </div>
                                                     </div>
                                                 </div>

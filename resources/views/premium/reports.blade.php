@@ -92,8 +92,16 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-success" role="alert">
-                        <strong>Premium Feature:</strong> Thank you for being a valued subscriber! Your active subscription gives you access to all premium reports and analytics.
+                    <div class="alert bg-gradient-primary border-0 text-white fade show" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-crown fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-white mb-1"><strong>Premium Feature</strong></h6>
+                                <p class="mb-0">Thank you for being a valued subscriber! Your active subscription gives you access to all premium reports and analytics.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

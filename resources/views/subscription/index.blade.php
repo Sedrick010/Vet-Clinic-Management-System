@@ -184,6 +184,16 @@
     .bg-info-light {
         background-color: rgba(23, 162, 184, 0.1);
     }
+    
+    /* Increase icon sizes in action buttons */
+    .btn-group .btn i.fas {
+        font-size: 1.5rem;
+    }
+    
+    /* Add some padding to buttons to accommodate larger icons */
+    .btn-group .btn {
+        padding: 0.5rem 0.75rem;
+    }
 </style>
 @endsection
 

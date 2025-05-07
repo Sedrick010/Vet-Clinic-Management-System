@@ -183,6 +183,28 @@
                                     </div>
                                     <h6 class="mb-0 text-dark">New Appointment</h6>
                                 </div>
+<<<<<<< HEAD
+                                <h6 class="mb-0 text-dark">New Appointment</h6>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{{ route('staff.index') }}" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-primary">
+                                    <i class="fas fa-user-tie text-white opacity-10"></i>
+                                </div>
+                                <h6 class="mb-0 text-dark">Staff Management</h6>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="{{ route('premium.reports') }}" class="card shadow-sm h-100 text-decoration-none">
+                            <div class="card-body p-3 text-center">
+                                <div class="icon icon-shape icon-md shadow rounded-circle mx-auto mb-3 bg-gradient-warning">
+                                    <i class="fas fa-chart-bar text-white opacity-10"></i>
+=======
                             </a>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-3">
@@ -227,6 +249,7 @@
                                         <i class="fas fa-chart-bar text-white opacity-10"></i>
                                     </div>
                                     <h6 class="mb-0 text-dark">Reports</h6>
+>>>>>>> 378ae7f859faa712290a04cf7f8238f528658b9b
                                 </div>
                             </a>
                         </div>
