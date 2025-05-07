@@ -3,6 +3,20 @@
 @section('title', 'Support Ticket #' . $ticket->id)
 @section('page_name', 'Support Ticket Details')
 
+@section('styles')
+<style>
+    .issue-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
@@ -21,9 +35,18 @@
                 </div>
 
                 @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <span class="alert-text">{{ session('success') }}</span>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="card bg-gradient-success border-0 mb-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="issue-icon me-3">
+                                    <i class="fas fa-check-circle fa-lg text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white mb-0">{{ session('success') }}</h6>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
                     </div>
                 @endif
 

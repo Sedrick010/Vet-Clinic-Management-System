@@ -3,6 +3,26 @@
 @section('title', 'Create Support Ticket')
 @section('page_name', 'Create Support Ticket')
 
+@section('styles')
+<style>
+    .issue-card {
+        transition: transform 0.2s;
+    }
+    .issue-card:hover {
+        transform: translateY(-5px);
+    }
+    .issue-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
@@ -13,19 +33,101 @@
                     <p class="text-sm text-secondary mb-0">Our support team is here to help you with any issues or questions you may have.</p>
                 </div>
 
-                <div class="alert alert-info d-flex p-3 mb-4">
-                    <div class="icon icon-sm me-3">
-                        <i class="fas fa-info-circle opacity-10"></i>
+                @if (session('success'))
+                    <div class="card bg-gradient-success border-0 mb-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="issue-icon me-3">
+                                    <i class="fas fa-check-circle fa-lg text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white mb-0">{{ session('success') }}</h6>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h5 class="text-info mb-1">Common issues you can report:</h5>
-                        <ul class="ps-3 mb-0">
-                            <li>Technical problems with the system</li>
-                            <li>Billing or subscription inquiries</li>
-                            <li>Feature requests or suggestions</li>
-                            <li>Account access issues</li>
-                            <li>Data management questions</li>
-                        </ul>
+                @endif
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-gradient-primary border-0 h-100 issue-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="issue-icon me-3">
+                                        <i class="fas fa-tools fa-lg text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white mb-1"><strong>Technical Problems</strong></h6>
+                                        <p class="text-white mb-0" style="opacity: 0.9">System-related issues and technical support</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card bg-gradient-info border-0 h-100 issue-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="issue-icon me-3">
+                                        <i class="fas fa-credit-card fa-lg text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white mb-1"><strong>Billing Support</strong></h6>
+                                        <p class="text-white mb-0" style="opacity: 0.9">Subscription and payment inquiries</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card bg-gradient-success border-0 h-100 issue-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="issue-icon me-3">
+                                        <i class="fas fa-lightbulb fa-lg text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white mb-1"><strong>Feature Requests</strong></h6>
+                                        <p class="text-white mb-0" style="opacity: 0.9">Suggestions for improvements</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card bg-gradient-warning border-0 h-100 issue-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="issue-icon me-3">
+                                        <i class="fas fa-key fa-lg text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white mb-1"><strong>Account Access</strong></h6>
+                                        <p class="text-white mb-0" style="opacity: 0.9">Login and authentication issues</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card bg-gradient-danger border-0 h-100 issue-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="issue-icon me-3">
+                                        <i class="fas fa-database fa-lg text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white mb-1"><strong>Data Management</strong></h6>
+                                        <p class="text-white mb-0" style="opacity: 0.9">Questions about your data and records</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
