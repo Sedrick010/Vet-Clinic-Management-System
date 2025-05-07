@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'tenant' => \App\Http\Middleware\ResolveTenant::class,
             'tenant.auth' => \App\Http\Middleware\TenantAuthentication::class,
+            'pdf.access' => \App\Http\Middleware\CheckPdfAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

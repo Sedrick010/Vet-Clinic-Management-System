@@ -430,6 +430,19 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicEnabled::class
     ]);
 
+    // System Updates routes
+    Route::middleware([
+        \App\Http\Middleware\AuthTenantStaff::class,
+        \App\Http\Middleware\CheckClinicActive::class,
+        \App\Http\Middleware\CheckClinicEnabled::class
+    ])->prefix('system')->name('system.')->group(function () {
+        Route::get('/updates', [\App\Http\Controllers\SystemUpdateController::class, 'index'])->name('updates.index');
+        Route::get('/updates/check', [\App\Http\Controllers\SystemUpdateController::class, 'check'])->name('updates.check');
+        Route::get('/updates/{id}', [\App\Http\Controllers\SystemUpdateController::class, 'show'])->name('updates.show');
+        Route::post('/updates/{id}/apply', [\App\Http\Controllers\SystemUpdateController::class, 'apply'])->name('updates.apply');
+        Route::post('/updates/{id}/dismiss', [\App\Http\Controllers\SystemUpdateController::class, 'dismiss'])->name('updates.dismiss');
+    });
+
     // Debug routes - only available in local environment
     if (app()->environment('local')) {
         Route::get('/debug/pets-check', [AppointmentController::class, 'debugPetsCheck'])->name('debug.pets-check');

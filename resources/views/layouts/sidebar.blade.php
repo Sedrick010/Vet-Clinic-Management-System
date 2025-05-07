@@ -210,6 +210,24 @@
                     <span class="nav-link-text ms-1">Clinic Info</span>
                 </a>
             </li>
+            
+            <!-- System Updates -->
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('system/updates*') ? 'active' : '' }}" href="{{ route('system.updates.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-sync-alt text-success"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">System Updates</span>
+                    @php
+                        $systemUpdateService = app(\App\Services\SystemUpdateService::class);
+                        $updateCheck = $systemUpdateService->checkForUpdates($clinic);
+                        $hasUpdates = isset($updateCheck['success']) && $updateCheck['success'] && $updateCheck['has_updates'];
+                    @endphp
+                    @if($hasUpdates)
+                        <span class="badge bg-gradient-danger text-white ms-auto">{{ count($updateCheck['updates']) }}</span>
+                    @endif
+                </a>
+            </li>
             @endif
             
             <!-- Support Tickets - For tenants and regular users -->

@@ -88,5 +88,6 @@ class Kernel extends HttpKernel
         'real.time.subscription' => \App\Http\Middleware\RealTimeSubscriptionCheck::class, // Real-time subscription status checker
         'no.cache' => \App\Http\Middleware\NoCacheMiddleware::class, // Prevent caching of assets
         'pdf.access' => \App\Http\Middleware\CheckPdfAccess::class, // Check if user has access to PDF features
+        'github.webhook.secret' => \App\Http\Middleware\GitHubWebhookSecret::class, // Verify GitHub webhook signatures
     ];
 } 
