@@ -91,19 +91,80 @@
     <!-- New Feature Notification -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                <div class="d-flex">
-                    <div class="icon icon-sm me-3">
-                        <i class="fas fa-info-circle text-white"></i>
+            <div class="alert bg-gradient-info border-0 text-white fade show" role="alert">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-users-cog fa-2x"></i>
                     </div>
                     <div>
-                        <span class="fw-bold">New Feature:</span> Staff Management is now available! Easily add, edit, and manage clinic staff members. <a href="{{ route('staff.index') }}" class="alert-link text-white text-decoration-underline">Try it now →</a>
-                        <button type="button" class="btn-close text-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <h6 class="text-white mb-1"><strong>New Feature: Staff Management</strong></h6>
+                    <p class="mb-0">Easily add, edit, and manage clinic staff members.</p>
+                </div>
+                <div class="ms-auto d-flex align-items-center">
+                    <a href="{{ route('staff.index') }}" class="btn btn-sm btn-light me-3">
+                        <i class="fas fa-arrow-right me-1"></i> Try it now
+                    </a>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+<style>
+    /* Icon styling for Quick Actions and Statistics */
+    .icon-shape {
+        width: 48px !important;
+        height: 48px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+        margin-bottom: 1rem !important;
+        position: relative !important;
+    }
+    
+    .icon-shape i {
+        font-size: 1.25rem !important;
+        line-height: 0 !important;
+        position: relative !important;
+        top: 0 !important;
+        transform: translateY(0) !important;
+    }
+    
+    /* Quick Actions specific styling */
+    .card-body .icon-shape.icon-md {
+        width: 48px !important;
+        height: 48px !important;
+        margin: 0 auto 1rem auto !important;
+    }
+    
+    /* Statistics card icons */
+    .numbers + .col-4 .icon-shape {
+        width: 48px !important;
+        height: 48px !important;
+        margin: 0 !important;
+    }
+    
+    .numbers + .col-4 .icon-shape i {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Remove opacity from icons */
+    .opacity-10 {
+        opacity: 1 !important;
+    }
+    
+    /* Fix vertical alignment for all icons */
+    .icon-shape i.fas,
+    .icon-shape i.far,
+    .icon-shape i.fab {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100% !important;
+    }
+</style>
 
     <!-- Quick Actions -->
     <div class="row mb-4">

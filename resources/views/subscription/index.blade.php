@@ -226,8 +226,16 @@
 
     <div class="row mb-4">
         <div class="col-md-12">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i> <strong>Welcome to the Subscription Management page!</strong> All new clinic registrations start with the Free Plan by default. You can upgrade your plan at any time to access additional features.
+            <div class="alert bg-gradient-info text-white border-0">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-crown fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white mb-1"><strong>Welcome to the Subscription Management page!</strong></h6>
+                        <p class="mb-0">All new clinic registrations start with the Free Plan by default. You can upgrade your plan at any time to access additional features.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
