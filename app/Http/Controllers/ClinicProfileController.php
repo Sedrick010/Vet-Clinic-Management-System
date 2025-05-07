@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Services\SubscriptionService;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
 class ClinicProfileController extends Controller
 {
@@ -115,8 +118,7 @@ class ClinicProfileController extends Controller
                 'required', 
                 'string', 
                 'email', 
-                'max:255',
-                Rule::unique('clinics')->ignore($clinic->id)
+                'max:255'
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
@@ -140,14 +142,31 @@ class ClinicProfileController extends Controller
                 ->withInput();
         }
         
-        // Prepare data for update
+        // Verify that the email isn't taken by another clinic if it's changing
+        if ($request->email !== $clinic->email) {
+            $emailTaken = Clinic::where('email', $request->email)
+                ->where('id', '!=', $clinic->id)
+                ->exists();
+                
+            if ($emailTaken) {
+                return back()
+                    ->withErrors(['email' => 'The email has already been taken.'])
+                    ->withInput();
+            }
+        }
+        
+        // If email hasn't changed, remove it from the update data to avoid unique constraint issues
         $updateData = [
             'name' => $request->name,
             'address' => $request->address,
             'phone' => $request->phone,
-            'email' => $request->email,
             'description' => $request->description,
         ];
+        
+        // Only add email to update data if it has changed
+        if ($request->email !== $clinic->email) {
+            $updateData['email'] = $request->email;
+        }
         
         // Only update theme if customization is allowed
         if ($themeCustomizationLevel !== 'none' && in_array($request->theme, $allowedThemes)) {
@@ -169,18 +188,57 @@ class ClinicProfileController extends Controller
         // If this is a tenant user (clinic owner), update the clinic name in the tenant database
         if (session()->has('tenant_user')) {
             try {
-                DB::connection('tenant')->table('clinic_settings')
-                    ->where('id', 1)
-                    ->update([
+                // Check if clinic_settings table exists - if not, create it
+                if (!Schema::connection('tenant')->hasTable('clinic_settings')) {
+                    // Create the table if it doesn't exist
+                    Schema::connection('tenant')->create('clinic_settings', function (Blueprint $table) {
+                        $table->id();
+                        $table->string('clinic_name');
+                        $table->string('clinic_address')->nullable();
+                        $table->string('clinic_phone')->nullable();
+                        $table->string('clinic_email')->nullable();
+                        $table->timestamps();
+                    });
+                    
+                    // Insert initial record
+                    DB::connection('tenant')->table('clinic_settings')->insert([
+                        'id' => 1,
                         'clinic_name' => $request->name,
                         'clinic_address' => $request->address,
                         'clinic_phone' => $request->phone,
                         'clinic_email' => $request->email,
+                        'created_at' => now(),
                         'updated_at' => now()
                     ]);
+                    
+                    Log::info('Created clinic_settings table in tenant database', [
+                        'clinic_id' => $clinic->id
+                    ]);
+                } else {
+                    // Prepare data for tenant database update
+                    $tenantUpdateData = [
+                        'clinic_name' => $request->name,
+                        'clinic_address' => $request->address,
+                        'clinic_phone' => $request->phone,
+                        'updated_at' => now()
+                    ];
+                    
+                    // Only update email in tenant database if it has changed
+                    if ($request->email !== $clinic->email) {
+                        $tenantUpdateData['clinic_email'] = $request->email;
+                    }
+                    
+                    DB::connection('tenant')->table('clinic_settings')
+                        ->where('id', 1)
+                        ->update($tenantUpdateData);
+                }
             } catch (\Exception $e) {
                 // Log error but continue
-                Log::error('Failed to update clinic settings in tenant database: ' . $e->getMessage());
+                Log::error('Failed to update clinic settings in tenant database: ' . $e->getMessage(), [
+                    'clinic_id' => $clinic->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
         }
         
