@@ -626,23 +626,7 @@
                                         @endif
                                     </ul>
                                     <div class="mt-auto text-center">
-                                        @if((auth()->check() || session()->has('tenant_user')) && (!isset($activeSubscription) || !$activeSubscription || $activeSubscription->plan !== 'free'))
-                                        <a href="{{ route('subscription.create', ['plan' => 'free']) }}" class="btn btn-outline-primary w-100">
-                                            Select Free Plan
-                                        </a>
-                                        @elseif(isset($activeSubscription) && $activeSubscription && $activeSubscription->plan === 'free')
-                                        <button class="btn btn-success w-100" disabled>
-                                            <i class="fas fa-check-circle me-1"></i> Current Plan
-                                        </button>
-                                        @elseif((session()->has('current_clinic_id') || (auth()->check() && auth()->user()->clinic)) && !isset($activeSubscription))
-                                        <button class="btn btn-success w-100" disabled>
-                                            <i class="fas fa-check-circle me-1"></i> Current Plan
-                                        </button>
-                                        @else
-                                        <a href="{{ route('login') }}" class="btn btn-outline-primary w-100">
-                                            Login to Subscribe
-                                        </a>
-                                        @endif
+                                        <!-- All buttons removed -->
                                     </div>
                                 </div>
                             </div>
@@ -678,19 +662,7 @@
                                         @endif
                                     </ul>
                                     <div class="mt-auto text-center">
-                                        @if((auth()->check() || session()->has('tenant_user')) && (!isset($activeSubscription) || !$activeSubscription || $activeSubscription->plan !== 'basic'))
-                                        <a href="{{ route('subscription.create', ['plan' => 'basic']) }}" class="btn btn-outline-primary w-100">
-                                            Select Basic Plan
-                                        </a>
-                                        @elseif(isset($activeSubscription) && $activeSubscription && $activeSubscription->plan === 'basic')
-                                        <button class="btn btn-success w-100" disabled>
-                                            <i class="fas fa-check-circle me-1"></i> Current Plan
-                                        </button>
-                                        @else
-                                        <a href="{{ route('login') }}" class="btn btn-outline-primary w-100">
-                                            Login to Subscribe
-                                        </a>
-                                        @endif
+                                        <!-- All buttons removed -->
                                     </div>
                                 </div>
                             </div>
@@ -727,19 +699,7 @@
                                         @endif
                                     </ul>
                                     <div class="mt-auto text-center">
-                                        @if((auth()->check() || session()->has('tenant_user')) && (!isset($activeSubscription) || !$activeSubscription || $activeSubscription->plan !== 'standard'))
-                                        <a href="{{ route('subscription.create', ['plan' => 'standard']) }}" class="btn btn-primary w-100">
-                                            Select Standard Plan
-                                        </a>
-                                        @elseif(isset($activeSubscription) && $activeSubscription && $activeSubscription->plan === 'standard')
-                                        <button class="btn btn-success w-100" disabled>
-                                            <i class="fas fa-check-circle me-1"></i> Current Plan
-                                        </button>
-                                        @else
-                                        <a href="{{ route('login') }}" class="btn btn-primary w-100">
-                                            Login to Subscribe
-                                        </a>
-                                        @endif
+                                        <!-- All buttons removed -->
                                     </div>
                                 </div>
                             </div>
@@ -768,19 +728,7 @@
                                         <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Patient Portal (Client can view their pet's info, appointment history)</li>
                                     </ul>
                                     <div class="mt-auto text-center">
-                                        @if((auth()->check() || session()->has('tenant_user')) && (!isset($activeSubscription) || !$activeSubscription || ($activeSubscription->plan !== 'business' && $activeSubscription->plan !== 'premium')))
-                                        <a href="{{ route('subscription.create', ['plan' => 'business']) }}" class="btn btn-outline-dark w-100">
-                                            Select Business Plan
-                                        </a>
-                                        @elseif(isset($activeSubscription) && $activeSubscription && ($activeSubscription->plan === 'business' || $activeSubscription->plan === 'premium'))
-                                        <button class="btn btn-success w-100" disabled>
-                                            <i class="fas fa-check-circle me-1"></i> Current Plan
-                                        </button>
-                                        @else
-                                        <a href="{{ route('login') }}" class="btn btn-outline-dark w-100">
-                                            Login to Subscribe
-                                        </a>
-                                        @endif
+                                        <!-- All buttons removed -->
                                     </div>
                                 </div>
                             </div>
