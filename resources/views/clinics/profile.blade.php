@@ -223,8 +223,8 @@
                                             @elseif($themeCustomizationLevel === 'basic')
                                                 <div class="alert alert-info mt-2">
                                                     <i class="fas fa-info-circle me-2"></i>
-                                                    <strong class="text-dark">Basic Plan:</strong> <span class="text-dark">You can choose between Light and Dark themes.</span> 
-                                                    <a href="{{ route('subscription.index') }}" class="alert-link text-primary">Upgrade to Standard plan</a> <span class="text-dark">to access all themes.</span>
+                                                    <strong>Basic Plan:</strong> You can choose between Light and Dark themes. 
+                                                    <a href="{{ route('subscription.index') }}" class="alert-link">Upgrade to Standard plan</a> to access all themes.
                                                 </div>
                                             @elseif($themeCustomizationLevel === 'advanced')
                                                 <div class="alert alert-success mt-2">

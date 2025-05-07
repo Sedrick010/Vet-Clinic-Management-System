@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use PDO;
 use Exception;
+use Illuminate\Support\Facades\Schema;
 
 class TenantDatabaseService
 {
@@ -246,6 +247,78 @@ class TenantDatabaseService
                     'database' => $clinic->database_name,
                     'fix_tables_output' => $fixTablesOutput
                 ]);
+                
+                // Ensure appointments table has duration column
+                $hasDurationColumn = false;
+                try {
+                    $hasDurationColumn = DB::connection('tenant')->getSchemaBuilder()->hasColumn('appointments', 'duration');
+                    
+                    if (!$hasDurationColumn && DB::connection('tenant')->getSchemaBuilder()->hasTable('appointments')) {
+                        // Add duration column if it doesn't exist but table does
+                        Schema::connection('tenant')->table('appointments', function ($table) {
+                            $table->integer('duration')->nullable()->after('end_time')->comment('Duration in minutes');
+                        });
+                        
+                        // Update existing appointments to calculate duration
+                        DB::connection('tenant')->statement('
+                            UPDATE appointments 
+                            SET duration = TIMESTAMPDIFF(MINUTE, start_time, end_time) 
+                            WHERE start_time IS NOT NULL AND end_time IS NOT NULL
+                        ');
+                        
+                        Log::info('Added missing duration column to appointments table', [
+                            'database' => $clinic->database_name
+                        ]);
+                    }
+                    
+                    // Also check for appointment_type column
+                    $hasAppointmentTypeColumn = DB::connection('tenant')->getSchemaBuilder()->hasColumn('appointments', 'appointment_type');
+                    
+                    if (!$hasAppointmentTypeColumn && DB::connection('tenant')->getSchemaBuilder()->hasTable('appointments')) {
+                        // Add appointment_type column if it doesn't exist but table does
+                        Schema::connection('tenant')->table('appointments', function ($table) {
+                            $table->string('appointment_type')->nullable()->after('status')->comment('Type of appointment (check-up, vaccination, etc.)');
+                        });
+                        
+                        // Set a default value for existing appointments
+                        DB::connection('tenant')->statement("
+                            UPDATE appointments 
+                            SET appointment_type = 'check-up' 
+                            WHERE appointment_type IS NULL
+                        ");
+                        
+                        Log::info('Added missing appointment_type column to appointments table', [
+                            'database' => $clinic->database_name
+                        ]);
+                    }
+                    
+                    // Also check for client_name column
+                    $hasClientNameColumn = DB::connection('tenant')->getSchemaBuilder()->hasColumn('appointments', 'client_name');
+                    
+                    if (!$hasClientNameColumn && DB::connection('tenant')->getSchemaBuilder()->hasTable('appointments')) {
+                        // Add client_name column if it doesn't exist but table does
+                        Schema::connection('tenant')->table('appointments', function ($table) {
+                            $table->string('client_name')->nullable()->after('client_id')->comment('Name of the client for caching purposes');
+                        });
+                        
+                        // Update existing appointments to set client names from the clients table
+                        DB::connection('tenant')->statement("
+                            UPDATE appointments a
+                            JOIN clients c ON a.client_id = c.id
+                            SET a.client_name = c.name
+                            WHERE a.client_name IS NULL
+                        ");
+                        
+                        Log::info('Added missing client_name column to appointments table', [
+                            'database' => $clinic->database_name
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error checking/adding columns to appointments table: ' . $e->getMessage(), [
+                        'database' => $clinic->database_name,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             } catch (\Exception $e) {
                 Log::error('Error running tenant migrations: ' . $e->getMessage(), [
                     'database' => $clinic->database_name,

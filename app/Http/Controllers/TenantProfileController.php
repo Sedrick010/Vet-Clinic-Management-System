@@ -118,26 +118,46 @@ class TenantProfileController extends Controller
         
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', function ($attribute, $value, $fail) use ($tenantUser) {
-                // Verify current password
-                $staff = DB::connection('tenant')
-                    ->table('staff')
-                    ->where('id', $tenantUser->id)
-                    ->first();
-                
-                if (!$staff || !Hash::check($value, $staff->password)) {
-                    $fail('The current password is incorrect.');
+                // Verify current password based on user role
+                if ($tenantUser->role === 'owner') {
+                    $user = DB::connection('tenant')
+                        ->table('users')
+                        ->where('id', $tenantUser->id)
+                        ->first();
+                    
+                    if (!$user || !Hash::check($value, $user->password)) {
+                        $fail('The current password is incorrect.');
+                    }
+                } else {
+                    $staff = DB::connection('tenant')
+                        ->table('staff')
+                        ->where('id', $tenantUser->id)
+                        ->first();
+                    
+                    if (!$staff || !Hash::check($value, $staff->password)) {
+                        $fail('The current password is incorrect.');
+                    }
                 }
             }],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
         
-        // Update password in tenant database
-        DB::connection('tenant')->table('staff')
-            ->where('id', $tenantUser->id)
-            ->update([
-                'password' => Hash::make($validated['password']),
-                'updated_at' => now(),
-            ]);
+        // Update password in tenant database based on user role
+        if ($tenantUser->role === 'owner') {
+            DB::connection('tenant')->table('users')
+                ->where('id', $tenantUser->id)
+                ->update([
+                    'password' => Hash::make($validated['password']),
+                    'updated_at' => now(),
+                ]);
+        } else {
+            DB::connection('tenant')->table('staff')
+                ->where('id', $tenantUser->id)
+                ->update([
+                    'password' => Hash::make($validated['password']),
+                    'updated_at' => now(),
+                ]);
+        }
         
         return Redirect::route('tenant.profile.edit')->with('status', 'password-updated');
     }

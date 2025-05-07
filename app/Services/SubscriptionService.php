@@ -127,11 +127,18 @@ class SubscriptionService
      */
     public function hasReachedLimit(Clinic $clinic, $limitType, $currentCount)
     {
-        if (!$clinic->is_subscription_active) {
-            return true;
+        // If count is 0, we haven't reached any limit yet
+        if ($currentCount == 0) {
+            return false;
         }
-
-        $plan = $clinic->subscription_plan ?? 'free';
+        
+        if (!$clinic->is_subscription_active) {
+            // Allow some basic usage even without an active subscription
+            $plan = 'free';
+        } else {
+            $plan = $clinic->subscription_plan ?? 'free';
+        }
+        
         $features = $this->getPlanFeatures($plan);
 
         $limit = $features[$limitType] ?? 0;
