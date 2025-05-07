@@ -264,8 +264,14 @@ Route::middleware([
         Route::get('/pets', [\App\Http\Controllers\PetController::class, 'index'])->name('pets.index');
         Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
         Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');
+        Route::get('/pets/all-pdf', [\App\Http\Controllers\PetPdfController::class, 'generateAllPetsPdf'])
+            ->name('pets.all-pdf')
+            ->middleware('pdf.access');
         Route::get('/pets/{id}', [\App\Http\Controllers\PetController::class, 'show'])->name('pets.show');
         Route::get('/pets/{id}/edit', [\App\Http\Controllers\PetController::class, 'edit'])->name('pets.edit');
+        Route::get('/pets/{id}/pdf', [\App\Http\Controllers\PetPdfController::class, 'generatePdf'])
+            ->name('pets.pdf')
+            ->middleware('pdf.access');
         Route::put('/pets/{id}', [\App\Http\Controllers\PetController::class, 'update'])->name('pets.update');
         Route::delete('/pets/{id}', [\App\Http\Controllers\PetController::class, 'destroy'])->name('pets.destroy');
 
@@ -285,6 +291,12 @@ Route::middleware([
         Route::get('/appointments/get-pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets');
         Route::get('/appointments/pets/{clientId}', [AppointmentController::class, 'getPetsByClient'])->name('appointments.get-pets.alt');
         Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.update-status');
+        Route::get('/appointments/all-pdf', [App\Http\Controllers\AppointmentPdfController::class, 'generateAllAppointmentsPdf'])
+            ->name('appointments.all-pdf')
+            ->middleware('pdf.access');
+        Route::get('/appointments/{id}/pdf', [App\Http\Controllers\AppointmentPdfController::class, 'generatePdf'])
+            ->name('appointments.pdf')
+            ->middleware('pdf.access');
         
         // Clinic profile routes - accessible to all staff, but editing is restricted within the controller
         Route::get('/clinic/profile', [ClinicProfileController::class, 'edit'])->name('clinic.profile');
@@ -362,6 +374,18 @@ Route::middleware([
         Route::patch('/{id}/toggle-status', [App\Http\Controllers\InventoryController::class, 'toggleStatus'])->name('toggle-status');
     });
 
+    // Inventory PDF route - outside the group to avoid route parameter conflicts
+    Route::get('/inventory-pdf', [App\Http\Controllers\InventoryPdfController::class, 'generateInventoryPdf'])
+        ->middleware([
+            \App\Http\Middleware\AuthTenantStaff::class, 
+            \App\Http\Middleware\CheckClinicActive::class,
+            \App\Http\Middleware\CheckClinicEnabled::class,
+            \App\Http\Middleware\RealTimeSubscriptionCheck::class,
+            \App\Http\Middleware\CheckSubscriptionAccess::class.':inventory_management',
+            'pdf.access'
+        ])
+        ->name('inventory.pdf');
+
     // Public subscription routes for viewing plans and submitting requests
     Route::get('/subscription', [\App\Http\Controllers\SubscriptionRequestController::class, 'index'])->name('subscription.index');
     Route::get('/subscription/create', [\App\Http\Controllers\SubscriptionRequestController::class, 'create'])->name('subscription.create');
@@ -433,6 +457,28 @@ Route::middleware([
             })
         ]);
     });
+    
+    // Report export routes
+    Route::get('/reports/export/pdf/{type}', [\App\Http\Controllers\ReportExportController::class, 'exportPdf'])
+        ->name('reports.export.pdf')
+        ->middleware([
+            \App\Http\Middleware\AuthTenantStaff::class,
+            \App\Http\Middleware\CheckClinicActive::class,
+            \App\Http\Middleware\CheckClinicEnabled::class,
+            \App\Http\Middleware\RealTimeSubscriptionCheck::class,
+            \App\Http\Middleware\CheckSubscriptionAccess::class.':reports',
+            'pdf.access'
+        ]);
+
+    Route::get('/reports/export/csv/{type}', [\App\Http\Controllers\ReportExportController::class, 'exportCsv'])
+        ->name('reports.export.csv')
+        ->middleware([
+            \App\Http\Middleware\AuthTenantStaff::class,
+            \App\Http\Middleware\CheckClinicActive::class,
+            \App\Http\Middleware\CheckClinicEnabled::class,
+            \App\Http\Middleware\RealTimeSubscriptionCheck::class,
+            \App\Http\Middleware\CheckSubscriptionAccess::class.':reports'
+        ]);
 
     // Support tickets for tenants/clinic users
     Route::middleware([\App\Http\Middleware\CheckSessionValid::class])->group(function() {

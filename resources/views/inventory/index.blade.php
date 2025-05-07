@@ -19,9 +19,14 @@
                         />
                     @endif
                 </div>
-                <a href="{{ route('inventory.create') }}" class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus me-2"></i>Add New Item
-                </a>
+                <div>
+                    <a href="{{ route('inventory.pdf') }}" class="btn btn-sm btn-info me-2">
+                        <i class="fas fa-file-pdf me-2"></i>Download PDF
+                    </a>
+                    <a href="{{ route('inventory.create') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add New Item
+                    </a>
+                </div>
             </div>
             <div class="card-body px-0 pt-0 pb-2">
                 <!-- Filters and Search -->

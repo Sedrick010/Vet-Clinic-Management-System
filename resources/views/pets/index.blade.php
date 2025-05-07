@@ -24,9 +24,14 @@
                             />
                         @endif
                     </div>
-                    <a href="{{ route('pets.create') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> New Pet
-                    </a>
+                    <div>
+                        <a href="{{ route('pets.all-pdf') }}" class="btn btn-info btn-sm me-2">
+                            <i class="fas fa-file-pdf me-1"></i> Download PDF
+                        </a>
+                        <a href="{{ route('pets.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> New Pet
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     @if(session('success'))

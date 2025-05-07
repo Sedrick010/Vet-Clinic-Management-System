@@ -24,9 +24,14 @@
                             />
                         @endif
                     </div>
-                    <a href="{{ route('appointments.create') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> New Appointment
-                    </a>
+                    <div>
+                        <a href="{{ route('appointments.all-pdf') }}" class="btn btn-info btn-sm me-2">
+                            <i class="fas fa-file-pdf"></i> Export All to PDF
+                        </a>
+                        <a href="{{ route('appointments.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> New Appointment
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
                     <div class="table-responsive p-0">
