@@ -684,19 +684,11 @@
                                 <div class="card-body d-flex flex-column">
                                     <h1 class="text-center mb-3">₱1,599 <small class="text-muted fw-light">/month</small></h1>
                                     <ul class="list-unstyled mt-3 mb-4">
-                                        @if(isset($planFeatures) && isset($planFeatures['premium']))
-                                            @foreach($planFeatures['premium'] as $feature)
-                                                <li class="mb-2">
-                                                    <i class="fas fa-check text-success me-2"></i> {{ $feature }}
-                                                </li>
-                                            @endforeach
-                                        @else
-                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 500 appointments/month</li>
-                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Inventory for up to 500 products</li>
-                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Full clinic customization (logo, banners, multiple theme colors)</li>
-                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 5 staff accounts</li>
-                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Full reports and basic analytics</li>
-                                        @endif
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 500 appointments/month</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Inventory for up to 500 products</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Full clinic customization (logo, banners, multiple theme colors)</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Up to 5 staff accounts</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Full reports and basic analytics</li>
                                     </ul>
                                     <div class="mt-auto text-center">
                                         <!-- All buttons removed -->

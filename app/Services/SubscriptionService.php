@@ -46,11 +46,11 @@ class SubscriptionService
             'theme_customization' => 'full',
         ],
         'standard' => [
-            'staff_limit' => -1, // Unlimited
+            'staff_limit' => 5,
             'pets_limit' => -1, // Unlimited
-            'clients_limit' => -1, // Unlimited
-            'appointments_limit' => -1, // Unlimited
-            'inventory_limit' => -1, // Unlimited
+            'clients_limit' => 500,
+            'appointments_limit' => 500,
+            'inventory_limit' => 500,
             'inventory_management' => true,
             'reports' => true,
             'analytics' => true,
