@@ -252,6 +252,13 @@ class PetPdfController extends Controller
                 ->with('error', 'No clinic selected. Please login again.');
         }
 
+        // Direct check for subscription plan to prevent middleware bypass
+        if ($clinic->subscription_plan === 'free' || !$clinic->is_subscription_active) {
+            return redirect()->route('subscription.index')
+                ->with('upgrade_required', true)
+                ->with('error', 'PDF export is only available on paid plans (Basic, Standard, and Business). Please upgrade your subscription to access this feature.');
+        }
+
         $this->tenantDatabaseService->switchToTenant($clinic);
 
         // Get the pet with owner information
@@ -511,6 +518,13 @@ class PetPdfController extends Controller
         if (!$clinic) {
             return redirect()->route('login')
                 ->with('error', 'No clinic selected. Please login again.');
+        }
+
+        // Direct check for subscription plan to prevent middleware bypass
+        if ($clinic->subscription_plan === 'free' || !$clinic->is_subscription_active) {
+            return redirect()->route('subscription.index')
+                ->with('upgrade_required', true)
+                ->with('error', 'PDF export is only available on paid plans (Basic, Standard, and Business). Please upgrade your subscription to access this feature.');
         }
 
         $this->tenantDatabaseService->switchToTenant($clinic);

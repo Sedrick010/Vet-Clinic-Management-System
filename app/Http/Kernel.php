@@ -87,5 +87,6 @@ class Kernel extends HttpKernel
         'domain.auth' => \App\Http\Middleware\RedirectIfAuthenticatedForWrongDomain::class, // Enforce domain-specific authentication
         'real.time.subscription' => \App\Http\Middleware\RealTimeSubscriptionCheck::class, // Real-time subscription status checker
         'no.cache' => \App\Http\Middleware\NoCacheMiddleware::class, // Prevent caching of assets
+        'pdf.access' => \App\Http\Middleware\CheckPdfAccess::class, // Check if user has access to PDF features
     ];
 } 

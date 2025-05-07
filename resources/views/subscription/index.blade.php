@@ -202,6 +202,25 @@
                     {{ session('error') }}
                 </div>
             @endif
+            
+            @if (session('upgrade_required'))
+                <div class="alert alert-warning">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading mb-1">PDF Export Feature Requires an Upgrade</h5>
+                            <p class="mb-0">PDF export functionality is available exclusively on <strong>paid subscription plans</strong> (Basic, Standard, and Business). Please upgrade your subscription to access this premium feature.</p>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="#pricing-plans" class="btn btn-warning">
+                                <i class="fas fa-arrow-circle-up me-1"></i> View Upgrade Options
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -560,7 +579,7 @@
     @endif
 
     @if(auth()->check() && !auth()->user()->hasRole('admin') || session()->has('tenant_user'))
-    <div class="row mb-4">
+    <div class="row mb-4" id="pricing-plans">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
