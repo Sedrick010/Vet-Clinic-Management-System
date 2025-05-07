@@ -437,8 +437,8 @@ Route::middleware([
         \App\Http\Middleware\CheckClinicEnabled::class
     ])->prefix('system')->name('system.')->group(function () {
         Route::get('/updates', [\App\Http\Controllers\SystemUpdateController::class, 'index'])->name('updates.index');
-        Route::get('/updates/check', [\App\Http\Controllers\SystemUpdateController::class, 'check'])->name('updates.check');
-        Route::get('/updates/{id}', [\App\Http\Controllers\SystemUpdateController::class, 'show'])->name('updates.show');
+        Route::get('/updates/check', [\App\Http\Controllers\SystemUpdateController::class, 'checkForUpdates'])->name('updates.check');
+        Route::get('/updates/update', [App\Http\Controllers\SystemUpdateController::class, 'update'])->name('updates.update');
         Route::post('/updates/{id}/apply', [\App\Http\Controllers\SystemUpdateController::class, 'apply'])->name('updates.apply');
         Route::post('/updates/{id}/dismiss', [\App\Http\Controllers\SystemUpdateController::class, 'dismiss'])->name('updates.dismiss');
     });

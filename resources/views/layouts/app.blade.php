@@ -570,6 +570,24 @@
             .navbar-vertical .navbar-nav > .nav-item .nav-link.active {
                 color: #fff !important;
             }
+
+            /* Pulse animation for update badge */
+            .pulse-animation {
+                animation: pulse 2s infinite;
+                box-shadow: 0 0 0 rgba(220, 53, 69, 0.4);
+            }
+            
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+                }
+                70% {
+                    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+                }
+                100% {
+                    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+                }
+            }
         </style>
         
         <!-- Custom CSS -->
@@ -587,7 +605,7 @@
     </head>
 
     <body class="g-sidenav-show {{ (isset($theme['name']) ? $theme['name'] : (isset($theme->name) ? $theme->name : 'default')) == 'dark' ? 'bg-dark' : 'bg-gray-100' }}" @if(session('just_logged_out')) onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="" @endif>
-        @if(isset($isSidebar) && $isSidebar)
+        @if(!isset($isSidebar) || $isSidebar)
             @include('layouts.sidebar')
         @endif
         

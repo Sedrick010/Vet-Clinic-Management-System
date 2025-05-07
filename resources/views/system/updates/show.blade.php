@@ -98,9 +98,18 @@
                                 <div class="card-body">
                                     <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Details</h6>
                                     
+                                    @php
+                                        $currentVersion = config('self-update.version_installed');
+                                    @endphp
+                                    
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="text-sm text-muted">Version:</span>
-                                        <span class="text-sm font-weight-bold">{{ $update->version }}</span>
+                                        <span class="text-sm text-muted">Current Version:</span>
+                                        <span class="badge bg-gradient-success">{{ $currentVersion }}</span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-sm text-muted">Update Version:</span>
+                                        <span class="badge bg-gradient-info">{{ $update->version }}</span>
                                     </div>
                                     
                                     <div class="d-flex justify-content-between align-items-center mb-2">

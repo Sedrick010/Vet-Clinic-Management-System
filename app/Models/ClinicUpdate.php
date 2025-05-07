@@ -39,6 +39,6 @@ class ClinicUpdate extends Model
      */
     public function systemUpdate()
     {
-        return $this->belongsTo(SystemUpdate::class);
+        return $this->belongsTo(SystemUpdate::class, 'system_update_id');
     }
 } 

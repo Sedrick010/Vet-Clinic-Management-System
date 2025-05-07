@@ -49,10 +49,18 @@ class SystemUpdate extends Model
     }
 
     /**
+     * Get the version associated with this update
+     */
+    public function version()
+    {
+        return $this->hasOne(SystemVersion::class, 'version', 'version');
+    }
+
+    /**
      * Get the clinic updates associated with this system update
      */
     public function clinicUpdates()
     {
-        return $this->hasMany(ClinicUpdate::class);
+        return $this->hasMany(ClinicUpdate::class, 'system_update_id');
     }
 } 
