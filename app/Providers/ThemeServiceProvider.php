@@ -363,6 +363,20 @@ class ThemeServiceProvider extends ServiceProvider
                 'icon' => 'fas fa-clinic-medical',
                 'color' => 'success',
                 'matches' => ['admin/clinics']
+            ],
+            [
+                'name' => 'Support Tickets',
+                'route' => 'admin.support.index',
+                'icon' => 'fas fa-ticket-alt',
+                'color' => 'info',
+                'matches' => ['admin/support']
+            ],
+            [
+                'name' => 'Subscriptions',
+                'route' => 'admin.subscriptions.index',
+                'icon' => 'fas fa-gem',
+                'color' => 'warning',
+                'matches' => ['admin/subscriptions']
             ]
         ]);
     }

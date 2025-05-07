@@ -63,6 +63,17 @@ Route::middleware([
         Route::get('/clinics/{clinic}', [ClinicController::class, 'show'])->name('admin.clinics.show');
         Route::patch('/clinics/{clinic}/toggle-active', [ClinicController::class, 'toggleActive'])->name('admin.clinics.toggle-active');
         Route::patch('/clinics/{clinic}/toggle-enabled', [\App\Http\Controllers\Admin\ClinicController::class, 'toggleEnabled'])->name('admin.clinics.toggle-enabled');
+        
+        // Admin support ticket management
+        Route::get('/support', [App\Http\Controllers\Admin\SupportTicketController::class, 'index'])->name('admin.support.index');
+        Route::get('/support/{ticket}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('admin.support.show');
+        Route::post('/support/{ticket}/reply', [App\Http\Controllers\Admin\SupportTicketController::class, 'reply'])->name('admin.support.reply');
+        Route::post('/support/{ticket}/status', [App\Http\Controllers\Admin\SupportTicketController::class, 'updateStatus'])->name('admin.support.status');
+        Route::post('/support/{ticket}/priority', [App\Http\Controllers\Admin\SupportTicketController::class, 'updatePriority'])->name('admin.support.priority');
+        Route::delete('/support/{ticket}', [App\Http\Controllers\Admin\SupportTicketController::class, 'destroy'])->name('admin.support.destroy');
+        
+        // Admin support stats for dashboard
+        Route::get('/support-stats', [App\Http\Controllers\Admin\SupportTicketController::class, 'getStats'])->name('admin.support.stats');
     });
 
     // Clinic selector routes
@@ -378,11 +389,14 @@ Route::middleware([
     });
     
     // Admin subscription requests routes
-    Route::prefix('admin')->middleware(['auth', 'admin'])->group(function() {
+    Route::middleware(['auth', 'admin', 'web'])->prefix('admin')->group(function () {
         Route::get('/subscription-requests', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'index'])->name('admin.subscription-requests.index');
         Route::get('/subscription-requests/{id}', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'show'])->name('admin.subscription-requests.show');
         Route::post('/subscription-requests/{id}/approve', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'approve'])->name('admin.subscription-requests.approve');
         Route::post('/subscription-requests/{id}/reject', [\App\Http\Controllers\Admin\SubscriptionRequestController::class, 'reject'])->name('admin.subscription-requests.reject');
+        
+        // Admin subscription management
+        Route::get('/subscriptions', [\App\Http\Controllers\Admin\ClinicSubscriptionController::class, 'index'])->name('admin.subscriptions.index');
     });
 
     // Update the clinic info route to use the ClinicProfileController instead of an inline route definition
@@ -418,5 +432,17 @@ Route::middleware([
                 ];
             })
         ]);
+    });
+
+    // Support tickets for tenants/clinic users
+    Route::middleware([\App\Http\Middleware\CheckSessionValid::class])->group(function() {
+        Route::get('/support', [App\Http\Controllers\SupportTicketController::class, 'index'])->name('support.index');
+        Route::get('/support/create', [App\Http\Controllers\SupportTicketController::class, 'create'])->name('support.create');
+        Route::post('/support', [App\Http\Controllers\SupportTicketController::class, 'store'])->name('support.store');
+        Route::get('/support/{ticket}', [App\Http\Controllers\SupportTicketController::class, 'show'])->name('support.show');
+        Route::post('/support/{ticket}/reply', [App\Http\Controllers\SupportTicketController::class, 'reply'])->name('support.reply');
+        Route::post('/support/{ticket}/close', [App\Http\Controllers\SupportTicketController::class, 'close'])->name('support.close');
+        Route::post('/support/{ticket}/reopen', [App\Http\Controllers\SupportTicketController::class, 'reopen'])->name('support.reopen');
+        Route::delete('/support/{ticket}', [App\Http\Controllers\SupportTicketController::class, 'destroy'])->name('support.destroy');
     });
 });

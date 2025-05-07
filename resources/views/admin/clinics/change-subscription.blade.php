@@ -14,9 +14,14 @@
                             <h6 class="mb-0">Change Subscription: {{ $clinic->name }}</h6>
                             <p class="text-sm mb-0">Update clinic subscription plan and extend subscription period</p>
                         </div>
-                        <a href="{{ route('admin.clinics.show', $clinic) }}" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Clinic Details
-                        </a>
+                        <div>
+                            <a href="{{ route('admin.subscriptions.index') }}" class="btn btn-sm btn-info me-2">
+                                <i class="fas fa-list me-1"></i> Back to Subscriptions
+                            </a>
+                            <a href="{{ route('admin.clinics.show', $clinic) }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Clinic Details
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">

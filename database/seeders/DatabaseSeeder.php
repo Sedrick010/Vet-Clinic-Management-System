@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
     {
         // Create system admin
         $this->call(AdminUserSeeder::class);
-
+        
+        // Seed support tickets for testing
+        $this->call(SupportTicketSeeder::class);
     }
 }

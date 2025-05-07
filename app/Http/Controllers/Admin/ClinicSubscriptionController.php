@@ -23,6 +23,35 @@ class ClinicSubscriptionController extends Controller
     }
     
     /**
+     * Display a listing of all clinic subscriptions for admin management.
+     */
+    public function index(): View
+    {
+        // Get all clinics with their subscription information
+        $clinics = Clinic::select(
+            'id', 'name', 'email', 'is_active', 'is_subscription_active', 
+            'subscription_plan', 'subscription_ends_at', 'created_at'
+        )
+        ->orderBy('name')
+        ->get();
+        
+        // Get subscription plan names for display
+        $subscriptionPlans = [
+            'free' => 'Free Plan',
+            'basic' => 'Basic Plan',
+            'standard' => 'Standard Plan',
+            'business' => 'Business Plan',
+            'premium' => 'Premium Plan',
+        ];
+        
+        return view('admin.subscriptions.index', [
+            'clinics' => $clinics,
+            'subscriptionPlans' => $subscriptionPlans,
+            'isSidebar' => true,
+        ]);
+    }
+    
+    /**
      * Display the subscription management form.
      */
     public function edit(Clinic $clinic): View

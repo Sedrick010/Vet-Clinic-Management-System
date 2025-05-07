@@ -22,6 +22,9 @@
                     <x-nav-link :href="route('clinic.info')" :active="request()->routeIs('clinic.info')">
                         {{ __('Clinic Info') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
+                        {{ __('Support') }}
+                    </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -84,6 +87,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('clinic.info')" :active="request()->routeIs('clinic.info')">
                 {{ __('Clinic Info') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
+                {{ __('Support') }}
             </x-responsive-nav-link>
             @endif
         </div>

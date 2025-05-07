@@ -143,16 +143,6 @@
                 </a>
             </li>
             @endforeach
-            
-            <!-- Admin Subscription Management -->
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ route('subscription.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-gem text-info"></i>
-                    </div>
-                    <span class="nav-link-text ms-1">Subscriptions</span>
-                </a>
-            </li>
             @endif
             
             <!-- Clinic Functionality - Only show for non-admin users or clinic owners -->
@@ -222,7 +212,18 @@
             </li>
             @endif
             
-            <!-- Subscription Management -->
+            <!-- Support Tickets - For tenants and regular users -->
+            @if(!Auth::check() || Auth::user()->role !== 'admin')
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('support*') ? 'active' : '' }}" href="{{ route('support.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-ticket-alt {{ Request::is('support*') ? '' : 'text-warning' }}"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Support</span>
+                </a>
+            </li>
+            
+            <!-- Subscription Management - For tenants and regular users -->
             <li class="nav-item">
                 <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ route('subscription.index') }}">
                     <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
@@ -231,6 +232,7 @@
                     <span class="nav-link-text ms-1">Subscription</span>
                 </a>
             </li>
+            @endif
             
             <!-- Premium Reports - Only visible if clinic has active subscription -->
             @if(isset($clinic) && $clinic->is_subscription_active)

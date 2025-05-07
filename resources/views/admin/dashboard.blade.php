@@ -481,6 +481,125 @@
         </div>
     </div>
 
+    <!-- Support Ticket Stats -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h5 class="mb-3">Support Ticket Overview</h5>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card stat-card info-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize">Total Tickets</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ $totalTickets }}
+                                </h5>
+                                <p class="card-subtitle mb-0">
+                                    <i class="fas fa-ticket-alt text-info me-1"></i>
+                                    <span>All support requests</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow text-center icon-pulse">
+                                <i class="fas fa-headset text-lg opacity-10 text-white" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card stat-card primary-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize">Open Tickets</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ $openTickets }}
+                                    @if($openTickets > 0)
+                                    <span class="text-primary text-sm font-weight-bolder">New</span>
+                                    @endif
+                                </h5>
+                                <p class="card-subtitle mb-0">
+                                    <i class="fas fa-envelope-open text-primary me-1"></i>
+                                    <span>Need attention</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow text-center icon-pulse">
+                                <i class="fas fa-inbox text-lg opacity-10 text-white" aria-hidden="true"></i>
+                                @if($openTickets > 0)
+                                <span class="notification-badge">{{ $openTickets }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card stat-card warning-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize">In Progress</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ $inProgressTickets }}
+                                </h5>
+                                <p class="card-subtitle mb-0">
+                                    <i class="fas fa-sync text-warning me-1"></i>
+                                    <span>Being handled</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow text-center icon-rotate">
+                                <i class="fas fa-cogs text-lg opacity-10 text-white" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card stat-card danger-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize">Critical Tickets</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ $criticalTickets }}
+                                    @if($criticalTickets > 0)
+                                    <span class="text-danger text-sm font-weight-bolder">Urgent</span>
+                                    @endif
+                                </h5>
+                                <p class="card-subtitle mb-0">
+                                    <i class="fas fa-exclamation-circle text-danger me-1"></i>
+                                    <span>High priority</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-danger shadow text-center icon-pulse">
+                                <i class="fas fa-fire text-lg opacity-10 text-white" aria-hidden="true"></i>
+                                @if($criticalTickets > 0)
+                                <span class="notification-badge pulse">{{ $criticalTickets }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Actions and Overview -->
     <div class="row">
         <div class="col-lg-7 mb-lg-0 mb-4">

@@ -736,5 +736,15 @@
         </script>
         
         @stack('js')
+        
+        @if(Auth::check() || session()->has('tenant_user'))
+            <!-- Floating Contact Support Button -->
+            <div class="position-fixed bottom-4 end-4" style="z-index: 100;">
+                <a href="{{ route('support.create') }}" class="btn btn-primary btn-lg rounded-circle shadow" 
+                    data-bs-toggle="tooltip" data-bs-placement="left" title="Contact Support">
+                    <i class="fas fa-headset"></i>
+                </a>
+            </div>
+        @endif
     </body>
 </html>
