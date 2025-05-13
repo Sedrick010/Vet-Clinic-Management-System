@@ -373,6 +373,50 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Test Feature: System Information Panel -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-gradient-success">
+                                <div class="card-header bg-transparent p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon icon-shape bg-white shadow text-success rounded-circle">
+                                            <i class="fas fa-server"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="text-white mb-0">System Information</h5>
+                                            <p class="text-white text-sm mb-0 opacity-8">Technical details about your system</p>
+                                        </div>
+                                        <div class="ms-auto">
+                                            <span class="badge bg-white text-success">Test Feature</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-white text-sm">Environment</h6>
+                                            <ul class="list-unstyled mb-3">
+                                                <li class="text-white text-sm mb-1">PHP Version: {{ phpversion() }}</li>
+                                                <li class="text-white text-sm mb-1">Laravel Version: {{ app()->version() }}</li>
+                                                <li class="text-white text-sm mb-1">Environment: {{ app()->environment() }}</li>
+                                                <li class="text-white text-sm mb-1">Debug Mode: {{ config('app.debug') ? 'Enabled' : 'Disabled' }}</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-white text-sm">Database</h6>
+                                            <ul class="list-unstyled mb-0">
+                                                <li class="text-white text-sm mb-1">Database Type: {{ config('database.default') }}</li>
+                                                <li class="text-white text-sm mb-1">Cache Driver: {{ config('cache.default') }}</li>
+                                                <li class="text-white text-sm mb-1">Session Driver: {{ config('session.driver') }}</li>
+                                                <li class="text-white text-sm mb-1">Queue Connection: {{ config('queue.default') }}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
