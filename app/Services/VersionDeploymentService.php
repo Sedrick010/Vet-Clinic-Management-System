@@ -39,6 +39,17 @@ class VersionDeploymentService
             'storage/logs',
             'storage/self-update',
             'vendor',
+            '.git',
+            '.github',
+            'public/storage',
+            'public/uploads',
+            '.env',
+            '.env.backup',
+            '.env.example',
+            '.DS_Store',
+            'phpunit.xml',
+            '*.log',
+            'tests',
         ]);
         
         // Ensure storage directories exist with proper permissions
@@ -238,6 +249,10 @@ class VersionDeploymentService
      */
     public function deployVersion(string $version): bool
     {
+        // Prevent timeout for long-running updates
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+        
         $zipFilePath = $this->storagePath . '/' . $version . '.zip';
         
         if (!File::exists($zipFilePath)) {
@@ -246,24 +261,32 @@ class VersionDeploymentService
         }
         
         try {
-            Log::info("Starting deployment of version {$version}");
+            $currentVersion = config('self-update.version_installed', '1.0.0');
+            Log::info("Starting deployment: Moving from version {$currentVersion} to {$version}");
             
-            // Create a backup of the current version before updating
+            // Check if we're updating or downgrading
+            $isUpdate = version_compare($version, $currentVersion, '>');
+            $action = $isUpdate ? 'update' : 'downgrade';
+            
+            // Create a backup of the current version before changing
             $backupPath = $this->createBackup();
             if (!$backupPath) {
-                Log::warning("Failed to create backup before updating to version {$version}");
-                // Continue with update even if backup fails, but log warning
+                Log::warning("Failed to create backup before {$action} to version {$version}");
+                // Continue with deployment even if backup fails, but log warning
             } else {
-                Log::info("Backup created successfully before updating to version {$version}");
+                Log::info("Backup created successfully at {$backupPath} before {$action} to version {$version}");
             }
             
-            // Create a temporary extraction directory
-            $extractPath = $this->storagePath . '/extract_' . time();
+            // Create a temporary extraction directory with a unique name to avoid conflicts
+            $extractionId = time() . '_' . rand(1000, 9999);
+            $extractPath = $this->storagePath . '/extract_' . $extractionId;
+            
             if (!File::exists($extractPath)) {
                 File::makeDirectory($extractPath, 0775, true);
             }
             
             // Extract the zip file
+            Log::info("Extracting version {$version} zip file to {$extractPath}");
             $zip = new ZipArchive;
             $openResult = $zip->open($zipFilePath);
             
@@ -275,62 +298,75 @@ class VersionDeploymentService
             $zip->extractTo($extractPath);
             $zip->close();
             
-            // GitHub archives have a root folder containing all files
-            // Get the first directory in the extract path
-            $directories = File::directories($extractPath);
-            if (empty($directories)) {
-                Log::error("No root directory found in zip for version {$version}");
-                File::deleteDirectory($extractPath);
+            // Detect the source code root
+            Log::info("Detecting source code root in extracted files");
+            $sourceDir = $this->detectSourceCodeRoot($extractPath);
+            Log::info("Source code root detected: {$sourceDir}");
+            
+            if (!File::exists($sourceDir)) {
+                Log::error("Source directory not found: {$sourceDir}");
+                $this->cleanupTempFiles($extractPath, $zipFilePath);
                 return false;
             }
             
-            $sourceDir = $directories[0];
-            
             // Put the application into maintenance mode
-            // Fix for '--message' option error - use with() method instead
-            Artisan::call('down', ['--render' => "Upgrading to version {$version}"]);
+            Log::info("Putting application into maintenance mode for {$action} to version {$version}");
+            Artisan::call('down', ['--render' => "{$action} to version {$version}"]);
             
             // Copy files to base directory, respecting exclusions
-            $this->copyFiles($sourceDir, $this->basePath);
+            Log::info("Copying files from {$sourceDir} to base directory");
+            $this->copyFilesEnhanced($sourceDir, $this->basePath);
             
             // Update the installed version in the .env file
+            Log::info("Updating installed version in .env file to {$version}");
             $this->updateInstalledVersion($version);
             
-            // Clear caches
+            // Clear all caches to avoid stale configuration/views
+            Log::info("Clearing application caches");
             Artisan::call('config:clear');
             Artisan::call('cache:clear');
             Artisan::call('view:clear');
             Artisan::call('route:clear');
             
-            // Run migrations if they exist
-            if (File::exists($this->basePath . '/database/migrations')) {
-                Artisan::call('migrate', ['--force' => true]);
+            // Run migrations for the main database
+            Log::info("Running migrations for main database");
+            Artisan::call('migrate', ['--force' => true]);
+            
+            // Run migrations for all tenant databases
+            Log::info("Running migrations for all tenant databases");
+            try {
+                Artisan::call('migrate:all-tenants', ['--force' => true]);
+                Log::info("Tenant migrations completed successfully");
+            } catch (\Exception $e) {
+                Log::error("Error running tenant migrations: " . $e->getMessage());
+                // Continue with the deployment even if tenant migrations fail
             }
             
-            // Clean up extraction directory
-            File::deleteDirectory($extractPath);
-            
-            // Clean up the downloaded ZIP file
-            if (File::exists($zipFilePath)) {
-                File::delete($zipFilePath);
-            }
+            // Clean up extraction directory and downloaded zip
+            $this->cleanupTempFiles($extractPath, $zipFilePath);
             
             // Mark the version as current in the database
+            Log::info("Marking version {$version} as current in the database");
             $this->markVersionAsCurrent($version);
             
             // Bring the application back online
+            Log::info("Bringing application back online");
             Artisan::call('up');
             
-            Log::info("Version {$version} deployed successfully");
+            Log::info("Version {$version} deployed successfully. {$action} complete.");
             
             return true;
             
         } catch (\Exception $e) {
-            Log::error("Error deploying version {$version}: " . $e->getMessage());
+            Log::error("Error deploying version {$version}: " . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             // Try to bring the application back online if an error occurs
             try {
                 Artisan::call('up');
+                Log::info("Application brought back online after deployment error");
             } catch (\Exception $ex) {
                 // Just log the error, don't throw it
                 Log::error("Failed to bring application back online: " . $ex->getMessage());
@@ -341,40 +377,130 @@ class VersionDeploymentService
     }
     
     /**
-     * Copy files from source to destination, respecting exclusions
+     * Enhanced copy files method with better exclusion handling and special file treatment
+     * 
+     * @param string $source
+     * @param string $destination
+     * @return void
      */
-    public function copyFiles(string $source, string $destination): void
+    public function copyFilesEnhanced(string $source, string $destination): void
     {
         $source = rtrim($source, '/\\') . DIRECTORY_SEPARATOR;
         $destination = rtrim($destination, '/\\') . DIRECTORY_SEPARATOR;
         
-        $files = File::allFiles($source);
+        // Recursively iterate through all files and directories
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
         
-        foreach ($files as $file) {
-            $relativePath = str_replace($source, '', $file->getPathname());
+        foreach ($iterator as $item) {
+            $relativePath = str_replace($source, '', $item->getPathname());
+            $destPath = $destination . $relativePath;
             
-            // Skip excluded folders
-            $shouldExclude = false;
-            foreach ($this->excludeFolders as $excludeFolder) {
-                if (strpos($relativePath, $excludeFolder . DIRECTORY_SEPARATOR) === 0) {
-                    $shouldExclude = true;
-                    break;
-                }
-            }
-            
-            if ($shouldExclude) {
+            // Skip excluded paths
+            if ($this->shouldExclude($relativePath)) {
+                Log::debug("Skipping excluded path: {$relativePath}");
                 continue;
             }
             
-            $destPath = $destination . $relativePath;
-            $destDir = dirname($destPath);
+            if ($item->isDir()) {
+                // Create directory if it doesn't exist
+                if (!File::exists($destPath)) {
+                    File::makeDirectory($destPath, 0755, true);
+                    Log::debug("Created directory: {$destPath}");
+                }
+            } else {
+                // Handle special files
+                if (basename($relativePath) === 'artisan') {
+                    // Make artisan executable
+                    File::copy($item->getPathname(), $destPath);
+                    chmod($destPath, 0755);
+                    Log::debug("Copied artisan file with executable permissions: {$destPath}");
+                } else {
+                    // Copy regular file
+                    File::copy($item->getPathname(), $destPath);
+                    Log::debug("Copied file: {$destPath}");
+                }
+            }
+        }
+    }
+    
+    /**
+     * Check if a path should be excluded from copying
+     * 
+     * @param string $path Relative path to check
+     * @return bool
+     */
+    protected function shouldExclude(string $path): bool
+    {
+        $path = str_replace('\\', '/', $path); // Normalize path separators
+        
+        foreach ($this->excludeFolders as $exclude) {
+            // Check for wildcard patterns
+            if (strpos($exclude, '*') !== false) {
+                $pattern = '#^' . str_replace(['.', '*'], ['\.', '.*'], $exclude) . '#i';
+                if (preg_match($pattern, $path)) {
+                    return true;
+                }
+            } 
+            // Check for direct matches or folder prefixes
+            else if ($path === $exclude || strpos($path, $exclude . '/') === 0) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Detect the root directory of the application code in the extracted zip
+     * 
+     * @param string $extractPath The path where the zip was extracted
+     * @return string The path to the actual application code root
+     */
+    protected function detectSourceCodeRoot(string $extractPath): string
+    {
+        // Check for direct extraction (no subdirectory)
+        if (File::exists($extractPath . '/artisan') || 
+            File::exists($extractPath . '/composer.json')) {
+            Log::info("Found application files directly in extract root");
+            return $extractPath;
+        }
+        
+        // GitHub archives usually have a single subdirectory containing all files
+        $subfolders = array_filter(glob($extractPath . '/*'), 'is_dir');
+        
+        if (count($subfolders) === 1) {
+            // Check if this folder has typical Laravel application files
+            $potentialRoot = $subfolders[0];
             
-            if (!File::exists($destDir)) {
-                File::makeDirectory($destDir, 0755, true);
+            if (File::exists($potentialRoot . '/artisan') || 
+                File::exists($potentialRoot . '/composer.json')) {
+                Log::info("Found application files in single subfolder");
+                return $potentialRoot;
+            }
+        }
+        
+        // Check all subfolders for Laravel app structure
+        foreach ($subfolders as $subfolder) {
+            if (File::exists($subfolder . '/artisan') || 
+                File::exists($subfolder . '/composer.json')) {
+                Log::info("Found application files in subfolder");
+                return $subfolder;
             }
             
-            File::copy($file->getPathname(), $destPath);
+            // Check for specific Laravel folders
+            if (File::exists($subfolder . '/app') && 
+                File::exists($subfolder . '/public') && 
+                File::exists($subfolder . '/database')) {
+                Log::info("Found Laravel directory structure");
+                return $subfolder;
+            }
         }
+        
+        // Fallback: return the first subfolder or extract path if no subfolders
+        return count($subfolders) > 0 ? $subfolders[0] : $extractPath;
     }
     
     /**
@@ -426,6 +552,54 @@ class VersionDeploymentService
                 'is_current' => true,
                 'released_at' => now(),
             ]);
+        }
+    }
+    
+    /**
+     * Clean up temporary files after deployment
+     * 
+     * @param string $extractPath
+     * @param string $zipFilePath
+     * @return void
+     */
+    protected function cleanupTempFiles(string $extractPath, string $zipFilePath): void
+    {
+        try {
+            // Clean up extraction directory
+            if (File::exists($extractPath)) {
+                Log::info("Cleaning up extraction directory: {$extractPath}");
+                File::deleteDirectory($extractPath);
+            }
+            
+            // Clean up the downloaded ZIP file
+            if (File::exists($zipFilePath)) {
+                Log::info("Cleaning up downloaded zip file: {$zipFilePath}");
+                File::delete($zipFilePath);
+            }
+            
+            // Check for and clean up any old extraction directories
+            $oldExtractDirs = File::glob($this->storagePath . '/extract_*');
+            $currentTime = time();
+            
+            foreach ($oldExtractDirs as $dir) {
+                // If directory is more than 24 hours old or has a specific pattern, delete it
+                $dirName = basename($dir);
+                
+                if (preg_match('/extract_(\d+)/', $dirName, $matches)) {
+                    $timestamp = (int)$matches[1];
+                    
+                    // Delete if older than 24 hours
+                    if (($currentTime - $timestamp) > 86400) {
+                        Log::info("Cleaning up old extraction directory: {$dir}");
+                        File::deleteDirectory($dir);
+                    }
+                }
+            }
+            
+            Log::info("Temporary files cleanup completed successfully");
+        } catch (\Exception $e) {
+            // Log but don't throw, as this is not critical
+            Log::warning("Error cleaning up temporary files: " . $e->getMessage());
         }
     }
 } 

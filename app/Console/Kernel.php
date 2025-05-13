@@ -15,6 +15,7 @@ use App\Console\Commands\ExecuteSqlForTenant;
 use App\Console\Commands\FixAppointmentsTable;
 use App\Console\Commands\RunFixTablesForAllClinics;
 use App\Console\Commands\SyncApplicationVersion;
+use App\Console\Commands\MigrateAllTenants;
 
 class Kernel extends ConsoleKernel
 {
@@ -36,6 +37,7 @@ class Kernel extends ConsoleKernel
         RunFixTablesForAllClinics::class,
         \App\Console\Commands\RepairSubscriptionStatus::class,
         SyncApplicationVersion::class,
+        MigrateAllTenants::class,
     ];
 
     /**

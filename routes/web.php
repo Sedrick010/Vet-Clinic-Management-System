@@ -443,6 +443,7 @@ Route::middleware([
     Route::get('/version/manage', [\App\Http\Controllers\VersionManagementController::class, 'index'])->name('version.manage');
     Route::get('/version/check', [\App\Http\Controllers\VersionManagementController::class, 'checkForUpdates'])->name('version.check');
     Route::get('/version/update/{versionId}', [\App\Http\Controllers\VersionManagementController::class, 'update'])->name('version.update');
+    Route::get('/version/update-success', [\App\Http\Controllers\VersionManagementController::class, 'updateSuccess'])->name('version.update.success');
     Route::post('/version/rollback/{versionId}', [\App\Http\Controllers\VersionManagementController::class, 'rollback'])->name('version.rollback');
     Route::get('/version/backups', [\App\Http\Controllers\VersionManagementController::class, 'listBackups'])->name('version.backups');
     Route::post('/version/backups/restore', [\App\Http\Controllers\VersionManagementController::class, 'restoreFromBackup'])->name('version.backups.restore');

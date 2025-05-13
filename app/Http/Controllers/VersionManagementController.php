@@ -136,35 +136,90 @@ class VersionManagementController extends Controller
     
     /**
      * Apply update to a specific version
+     *
+     * @param int $versionId
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update($versionId)
     {
         try {
             $version = SystemVersion::findOrFail($versionId);
+            $currentVersion = config('self-update.version_installed', '1.0.0');
+            
+            // Check if trying to update to current version
+            if ($version->version === $currentVersion) {
+                return redirect()->route('version.manage')
+                    ->with('info', 'You are already on version ' . $version->version);
+            }
+            
+            // Determine if this is an upgrade or downgrade
+            $isUpgrade = version_compare($version->version, $currentVersion, '>');
+            $actionType = $isUpgrade ? 'upgrade' : 'downgrade';
+            
+            // Store previous version for success page
+            session(['previous_version' => $currentVersion]);
+            session(['update_type' => $actionType]);
             
             // Download the specific version ZIP file
+            Log::info("Starting {$actionType} process from version {$currentVersion} to {$version->version}");
             $zipPath = $this->versionDeployment->downloadVersion($version->version);
             
             if (!$zipPath) {
+                Log::error("Failed to download version {$version->version} for {$actionType}");
                 return redirect()->route('version.manage')
-                    ->with('error', "Failed to download version {$version->version}. Check logs for details.");
+                    ->with('error', "Failed to download version {$version->version}. Please check internet connection and GitHub access.");
             }
             
             // Deploy the version from the zip file
             $deployed = $this->versionDeployment->deployVersion($version->version);
             
             if (!$deployed) {
+                Log::error("Failed to deploy version {$version->version} for {$actionType}");
                 return redirect()->route('version.manage')
-                    ->with('error', "Failed to deploy version {$version->version}. Check logs for details.");
+                    ->with('error', "Failed to {$actionType} to version {$version->version}. Please check logs for details.");
             }
             
-            return redirect()->route('version.manage')
-                ->with('success', "Successfully updated to version {$version->version}");
+            // Set success indicators for the success page
+            session(['update_success' => true]);
+            session(['tenant_migration_success' => true]); // Assume success unless we know otherwise
+            
+            Log::info("Successfully completed {$actionType} to version {$version->version}");
+            return redirect()->route('version.update.success');
         } catch (\Exception $e) {
-            Log::error('Failed to update version: ' . $e->getMessage());
+            Log::error("Failed to process version {$actionType}: " . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('version.manage')
-                ->with('error', 'Failed to update version: ' . $e->getMessage());
+                ->with('error', 'Failed to process version change: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Display the update success page
+     * 
+     * @return \Illuminate\View\View
+     */
+    public function updateSuccess()
+    {
+        if (!session('update_success')) {
+            return redirect()->route('version.manage');
+        }
+        
+        $version = config('self-update.version_installed', '1.0.0');
+        $previousVersion = session('previous_version', 'Unknown');
+        $updateType = session('update_type', 'update');
+        $tenantMigrationSuccess = session('tenant_migration_success', true);
+        
+        // Clear the session data
+        session()->forget(['update_success', 'previous_version', 'update_type', 'tenant_migration_success']);
+        
+        return view('system.versions.update-success', [
+            'version' => $version,
+            'previousVersion' => $previousVersion,
+            'updateType' => $updateType,
+            'tenantMigrationSuccess' => $tenantMigrationSuccess
+        ]);
     }
     
     /**
@@ -200,6 +255,7 @@ class VersionManagementController extends Controller
                 }
                 
                 if ($importedCount > 0) {
+                    Log::info("Imported {$importedCount} new version(s) from GitHub");
                     return redirect()->route('version.manage')->with('success', "Imported {$importedCount} new version(s) from GitHub!");
                 } else if ($hasUpdates) {
                     // We have updates but they're already imported
@@ -209,10 +265,14 @@ class VersionManagementController extends Controller
                     return redirect()->route('version.manage')->with('info', 'You are already on the latest version. No new updates available.');
                 }
             } else {
+                Log::warning("No releases found on GitHub");
                 return redirect()->route('version.manage')->with('info', 'No releases found on GitHub.');
             }
         } catch (\Exception $e) {
-            Log::error('Error checking for updates: ' . $e->getMessage());
+            Log::error('Error checking for updates: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('version.manage')->with('error', 'Error checking for updates: ' . $e->getMessage());
         }
     }
@@ -253,6 +313,10 @@ class VersionManagementController extends Controller
     
     /**
      * Roll back to a previous version
+     * 
+     * @param Request $request
+     * @param int $versionId
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function rollback(Request $request, $versionId)
     {
@@ -266,27 +330,14 @@ class VersionManagementController extends Controller
                     ->with('info', 'You are already on this version.');
             }
             
-            // Download the specific version ZIP file
-            $zipPath = $this->versionDeployment->downloadVersion($version->version);
-            
-            if (!$zipPath) {
-                return redirect()->route('version.manage')
-                    ->with('error', "Failed to download version {$version->version} for rollback. Check logs for details.");
-            }
-            
-            // Deploy the version from the zip file
-            $deployed = $this->versionDeployment->deployVersion($version->version);
-            
-            if (!$deployed) {
-                return redirect()->route('version.manage')
-                    ->with('error', "Failed to rollback to version {$version->version}. Check logs for details.");
-            }
-            
-            return redirect()->route('version.manage')
-                ->with('success', "Successfully rolled back to version {$version->version}");
+            // This is now just a redirect to the update method, since both update and rollback use the same process
+            return $this->update($versionId);
             
         } catch (\Exception $e) {
-            Log::error('Failed to rollback version: ' . $e->getMessage());
+            Log::error('Failed to rollback version: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('version.manage')
                 ->with('error', 'Failed to roll back: ' . $e->getMessage());
         }
@@ -354,9 +405,16 @@ class VersionManagementController extends Controller
     
     /**
      * Restore the application from a backup file
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function restoreFromBackup(Request $request)
     {
+        // Prevent timeout for long-running restoration
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+        
         try {
             $backupFilename = $request->input('backup_filename');
             $backupPath = storage_path('app/version-backups/' . $backupFilename);
@@ -369,11 +427,16 @@ class VersionManagementController extends Controller
             // Extract the version from filename to update database after restore
             preg_match('/backup_(.+?)_\d{4}-\d{2}-\d{2}/', $backupFilename, $matches);
             $version = $matches[1] ?? config('self-update.version_installed', '1.0.0');
+            $currentVersion = config('self-update.version_installed', '1.0.0');
             
-            // Create a temporary extraction directory
-            $extractPath = storage_path('app/self-updater/extract_backup_' . time());
+            // Create a unique temporary extraction directory
+            $extractionId = time() . '_' . rand(1000, 9999);
+            $extractPath = storage_path('app/self-updater/extract_backup_' . $extractionId);
+            
+            Log::info("Starting restoration from backup to version {$version} (current: {$currentVersion})");
+            
             if (!File::exists($extractPath)) {
-                File::makeDirectory($extractPath, 0755, true);
+                File::makeDirectory($extractPath, 0775, true);
             }
             
             // Put the application into maintenance mode
@@ -391,43 +454,123 @@ class VersionManagementController extends Controller
                         ->with('error', 'Failed to open backup file.');
                 }
                 
+                Log::info("Extracting backup file to {$extractPath}");
                 $zip->extractTo($extractPath);
                 $zip->close();
                 
                 // Copy files to base directory, respecting exclusions
-                $this->versionDeployment->copyFiles($extractPath, base_path());
+                Log::info("Copying files from backup to base directory");
+                $this->versionDeployment->copyFilesEnhanced($extractPath, base_path());
                 
                 // Update the installed version in the .env file
+                Log::info("Updating installed version in .env file to {$version}");
                 $this->versionDeployment->updateInstalledVersion($version);
                 
                 // Clear caches
+                Log::info("Clearing application caches");
                 Artisan::call('config:clear');
                 Artisan::call('cache:clear');
                 Artisan::call('view:clear');
                 Artisan::call('route:clear');
                 
+                // Run main database migrations
+                Log::info("Running migrations for main database");
+                Artisan::call('migrate', ['--force' => true]);
+                
+                // Run migrations for all tenant databases
+                Log::info("Running migrations for all tenant databases");
+                try {
+                    Artisan::call('migrate:all-tenants', ['--force' => true]);
+                    Log::info("Tenant migrations completed successfully");
+                } catch (\Exception $e) {
+                    Log::error("Error running tenant migrations: " . $e->getMessage());
+                    // Continue with the restoration even if tenant migrations fail
+                }
+                
                 // Clean up extraction directory
-                File::deleteDirectory($extractPath);
+                Log::info("Cleaning up temporary extraction directory");
+                $this->cleanupExtractionDirectories($extractPath);
                 
                 // Mark the version as current in the database
+                Log::info("Marking version {$version} as current in the database");
                 $this->versionDeployment->markVersionAsCurrent($version);
                 
                 // Bring the application back online
+                Log::info("Bringing application back online");
                 Artisan::call('up');
                 
+                Log::info("Successfully restored system from backup to version {$version}");
                 return redirect()->route('version.manage')
                     ->with('success', 'System successfully restored from backup to version ' . $version);
                 
             } catch (\Exception $e) {
                 // Ensure the app is brought back online
                 Artisan::call('up');
+                Log::error("Error during backup restoration: " . $e->getMessage(), [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 throw $e;
             }
             
         } catch (\Exception $e) {
-            Log::error('Error restoring from backup: ' . $e->getMessage());
+            Log::error('Error restoring from backup: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('version.backups')
                 ->with('error', 'Failed to restore from backup: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Clean up extraction directories to prevent storage build-up
+     * 
+     * @param string $currentExtractPath The current extraction path to exclude from cleanup
+     * @return void
+     */
+    protected function cleanupExtractionDirectories(?string $currentExtractPath = null): void
+    {
+        try {
+            $basePath = storage_path('app/self-updater');
+            
+            // Clean up the current extract path if provided
+            if ($currentExtractPath && File::exists($currentExtractPath)) {
+                Log::info("Cleaning up current extraction directory: {$currentExtractPath}");
+                File::deleteDirectory($currentExtractPath);
+            }
+            
+            // Find all extraction directories
+            $extractDirs = File::glob($basePath . '/extract_*');
+            $backupExtractDirs = File::glob($basePath . '/extract_backup_*');
+            $allExtractDirs = array_merge($extractDirs, $backupExtractDirs);
+            
+            $currentTime = time();
+            $cleanedCount = 0;
+            
+            foreach ($allExtractDirs as $dir) {
+                // Skip the current extraction directory if it's the same
+                if ($currentExtractPath && $dir === $currentExtractPath) {
+                    continue;
+                }
+                
+                // If directory is more than 6 hours old, delete it
+                if (is_dir($dir)) {
+                    $modifiedTime = filemtime($dir);
+                    if (($currentTime - $modifiedTime) > 21600) { // 6 hours in seconds
+                        Log::info("Cleaning up old extraction directory: {$dir}");
+                        File::deleteDirectory($dir);
+                        $cleanedCount++;
+                    }
+                }
+            }
+            
+            if ($cleanedCount > 0) {
+                Log::info("Cleaned up {$cleanedCount} old extraction directories");
+            }
+        } catch (\Exception $e) {
+            // Log but don't throw, as this is not critical
+            Log::warning("Error cleaning up extraction directories: " . $e->getMessage());
         }
     }
     
