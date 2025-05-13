@@ -11,6 +11,9 @@ use App\Models\SystemVersion;
 use App\Models\ClinicUpdate;
 use App\Services\CustomUpdaterService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
 class SystemUpdateController extends Controller
 {
@@ -28,28 +31,96 @@ class SystemUpdateController extends Controller
      */
     public function index()
     {
-        $updates = SystemUpdate::orderBy('created_at', 'desc')->get();
-        $hasNewUpdate = false;
-        $latestVersion = null;
-
         try {
-            // Check for updates using our custom service
-            $hasNewUpdate = $this->customUpdater->isNewVersionAvailable();
-            $latestVersion = $this->customUpdater->getLatestVersion();
-            
-            // If a new version is found that isn't in our system_versions table
-            if ($latestVersion && !SystemVersion::where('version', $latestVersion)->exists()) {
-                $hasNewUpdate = true;
+            // Check if system_updates table exists
+            if (!Schema::hasTable('system_updates')) {
+                // Create system_updates table
+                Schema::create('system_updates', function (Blueprint $table) {
+                    $table->id();
+                    $table->string('version');
+                    $table->string('name');
+                    $table->text('description');
+                    $table->text('changes');
+                    $table->text('features')->nullable();
+                    $table->text('bug_fixes')->nullable();
+                    $table->boolean('is_critical')->default(false);
+                    $table->boolean('is_security')->default(false);
+                    $table->boolean('is_mandatory')->default(false);
+                    $table->timestamp('available_from')->nullable();
+                    $table->timestamp('expires_at')->nullable();
+                    $table->timestamps();
+                });
             }
-        } catch (\Exception $e) {
-            Log::error('Error checking for updates: ' . $e->getMessage());
-        }
+            
+            // Check if system_versions table exists
+            if (!Schema::hasTable('system_versions')) {
+                Schema::create('system_versions', function (Blueprint $table) {
+                    $table->id();
+                    $table->string('version');
+                    $table->string('name');
+                    $table->text('description')->nullable();
+                    $table->boolean('is_current')->default(false);
+                    $table->timestamp('released_at')->nullable();
+                    $table->timestamps();
+                });
+                
+                // Insert initial version
+                DB::table('system_versions')->insert([
+                    'version' => '1.0.0',
+                    'name' => 'Initial Release',
+                    'description' => 'The initial release of the VetClinic system',
+                    'is_current' => true,
+                    'released_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            
+            $updates = SystemUpdate::orderBy('created_at', 'desc')->get();
+            $hasNewUpdate = false;
+            $latestVersion = null;
+            $allReleases = [];
+            $versions = [];
+            $currentVersion = config('self-update.version_installed', '1.0.0');
 
-        return view('system-updates.index', [
-            'updates' => $updates,
-            'hasNewUpdate' => $hasNewUpdate,
-            'latestVersion' => $latestVersion
-        ]);
+            try {
+                // Check for updates using our custom service
+                $hasNewUpdate = $this->customUpdater->isNewVersionAvailable();
+                $latestVersion = $this->customUpdater->getLatestVersion();
+                
+                // If a new version is found that isn't in our system_versions table
+                if ($latestVersion && !SystemVersion::where('version', $latestVersion)->exists()) {
+                    $hasNewUpdate = true;
+                }
+                
+                // Get all GitHub releases for version management
+                $allReleases = $this->customUpdater->getAllReleases(20);
+                
+                // Get all versions sorted by version number (newest first)
+                $versions = SystemVersion::orderBy('released_at', 'desc')->get();
+            } catch (\Exception $e) {
+                Log::error('Error checking for updates: ' . $e->getMessage());
+            }
+
+            return view('system-updates.combined', [
+                'updates' => $updates,
+                'hasNewUpdate' => $hasNewUpdate,
+                'latestVersion' => $latestVersion,
+                'versions' => $versions,
+                'allReleases' => $allReleases,
+                'currentVersion' => $currentVersion
+            ]);
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error in SystemUpdateController@index: ' . $e->getMessage());
+            
+            // Return a simplified view without the database elements
+            return view('system-updates.error', [
+                'errorMessage' => 'System update tables are not set up properly. Please contact your administrator.',
+                'detailedError' => $e->getMessage(),
+                'currentVersion' => config('self-update.version_installed', '1.0.0')
+            ]);
+        }
     }
 
     /**
@@ -438,6 +509,159 @@ class SystemUpdateController extends Controller
         } catch (\Exception $e) {
             Log::error('Error dismissing update: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error dismissing update: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Fix the database tables for system updates
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function fixTables()
+    {
+        try {
+            Log::info('Attempting to fix system update tables');
+            
+            // Check if system_updates table exists
+            if (!Schema::hasTable('system_updates')) {
+                Log::info('Creating missing system_updates table');
+                
+                // Create system_updates table
+                Schema::create('system_updates', function (Blueprint $table) {
+                    $table->id();
+                    $table->string('version');
+                    $table->string('name');
+                    $table->text('description');
+                    $table->text('changes');
+                    $table->text('features')->nullable();
+                    $table->text('bug_fixes')->nullable();
+                    $table->boolean('is_critical')->default(false);
+                    $table->boolean('is_security')->default(false);
+                    $table->boolean('is_mandatory')->default(false);
+                    $table->timestamp('available_from')->nullable();
+                    $table->timestamp('expires_at')->nullable();
+                    $table->timestamps();
+                });
+                
+                Log::info('Successfully created system_updates table');
+            } else {
+                Log::info('system_updates table already exists');
+            }
+            
+            // Check if system_versions table exists
+            if (!Schema::hasTable('system_versions')) {
+                Log::info('Creating missing system_versions table');
+                
+                Schema::create('system_versions', function (Blueprint $table) {
+                    $table->id();
+                    $table->string('version');
+                    $table->string('name');
+                    $table->text('description')->nullable();
+                    $table->boolean('is_current')->default(false);
+                    $table->timestamp('released_at')->nullable();
+                    $table->timestamps();
+                });
+                
+                // Insert initial version if the table was just created
+                $currentVersion = config('self-update.version_installed', '1.0.0');
+                Log::info('Inserting initial version record', ['version' => $currentVersion]);
+                
+                DB::table('system_versions')->insert([
+                    'version' => $currentVersion,
+                    'name' => 'Initial Release',
+                    'description' => 'The initial release of the VetClinic system',
+                    'is_current' => true,
+                    'released_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                Log::info('Successfully created system_versions table');
+            } else {
+                Log::info('system_versions table already exists');
+                
+                // Check if we have at least one version record
+                $versionsCount = DB::table('system_versions')->count();
+                if ($versionsCount === 0) {
+                    // Insert initial version if there are no versions in the table
+                    $currentVersion = config('self-update.version_installed', '1.0.0');
+                    Log::info('No version records found. Inserting initial version', ['version' => $currentVersion]);
+                    
+                    DB::table('system_versions')->insert([
+                        'version' => $currentVersion,
+                        'name' => 'Initial Release',
+                        'description' => 'The initial release of the VetClinic system',
+                        'is_current' => true,
+                        'released_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+            
+            // Check if clinic_updates table exists with the correct schema
+            if (!Schema::hasTable('clinic_updates')) {
+                Log::info('Creating missing clinic_updates table');
+                
+                // Create clinic_updates table
+                Schema::create('clinic_updates', function (Blueprint $table) {
+                    $table->id();
+                    $table->foreignId('clinic_id')->constrained()->onDelete('cascade');
+                    $table->foreignId('system_update_id')->nullable();
+                    $table->boolean('is_applied')->default(false);
+                    $table->boolean('is_dismissed')->default(false);
+                    $table->timestamp('applied_at')->nullable();
+                    $table->timestamp('dismissed_at')->nullable();
+                    $table->text('notes')->nullable();
+                    $table->timestamps();
+                });
+                
+                Log::info('Successfully created clinic_updates table');
+            } else {
+                Log::info('clinic_updates table already exists');
+                
+                // Check if we need to add system_update_id column (in case of old schema)
+                if (!Schema::hasColumn('clinic_updates', 'system_update_id')) {
+                    Log::info('Adding system_update_id column to clinic_updates table');
+                    
+                    Schema::table('clinic_updates', function (Blueprint $table) {
+                        $table->foreignId('system_update_id')->nullable()->after('clinic_id');
+                        
+                        // Only add these columns if they don't exist
+                        if (!Schema::hasColumn('clinic_updates', 'is_applied')) {
+                            $table->boolean('is_applied')->default(false)->after('system_update_id');
+                        }
+                        
+                        if (!Schema::hasColumn('clinic_updates', 'is_dismissed')) {
+                            $table->boolean('is_dismissed')->default(false)->after('is_applied');
+                        }
+                        
+                        // Try to drop status column if it exists
+                        if (Schema::hasColumn('clinic_updates', 'status')) {
+                            $table->dropColumn('status');
+                        }
+                    });
+                    
+                    Log::info('Successfully updated clinic_updates table schema');
+                }
+            }
+            
+            Log::info('System update tables fix completed successfully');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'System update tables fixed successfully!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fixing system update tables: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 } 

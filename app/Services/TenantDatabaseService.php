@@ -298,21 +298,17 @@ class TenantDatabaseService
                     if (!$hasClientNameColumn && DB::connection('tenant')->getSchemaBuilder()->hasTable('appointments')) {
                         // Add client_name column if it doesn't exist but table does
                         Schema::connection('tenant')->table('appointments', function ($table) {
-                            $table->string('client_name')->nullable()->after('client_id')->comment('Name of the client for caching purposes');
+                            $table->string('client_name')->nullable()->after('client_id')->comment('Name of the client for the appointment');
                         });
-                        
-                        // Update existing appointments to set client names from the clients table
-                        DB::connection('tenant')->statement("
-                            UPDATE appointments a
-                            JOIN clients c ON a.client_id = c.id
-                            SET a.client_name = c.name
-                            WHERE a.client_name IS NULL
-                        ");
                         
                         Log::info('Added missing client_name column to appointments table', [
                             'database' => $clinic->database_name
                         ]);
                     }
+                    
+                    // Ensure system_updates tables exist
+                    $this->ensureSystemUpdateTablesExist();
+                    
                 } catch (\Exception $e) {
                     Log::error('Error checking/adding columns to appointments table: ' . $e->getMessage(), [
                         'database' => $clinic->database_name,
@@ -522,6 +518,100 @@ class TenantDatabaseService
             if (!app()->environment('local')) {
                 throw $e;
             }
+        }
+    }
+
+    /**
+     * Ensure system_updates tables exist
+     *
+     * @return void
+     */
+    public function ensureSystemUpdateTablesExist(): void
+    {
+        try {
+            $connection = DB::connection('tenant');
+            
+            // Check if system_updates table exists
+            if (!$connection->getSchemaBuilder()->hasTable('system_updates')) {
+                Log::info('Creating system_updates table');
+                $connection->statement('
+                    CREATE TABLE IF NOT EXISTS `system_updates` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+                        `version` varchar(255) NOT NULL,
+                        `name` varchar(255) NOT NULL,
+                        `description` text NOT NULL,
+                        `changes` text NOT NULL,
+                        `features` text DEFAULT NULL,
+                        `bug_fixes` text DEFAULT NULL,
+                        `is_critical` tinyint(1) NOT NULL DEFAULT 0,
+                        `is_security` tinyint(1) NOT NULL DEFAULT 0,
+                        `is_mandatory` tinyint(1) NOT NULL DEFAULT 0,
+                        `available_from` timestamp NULL DEFAULT NULL,
+                        `expires_at` timestamp NULL DEFAULT NULL,
+                        `created_at` timestamp NULL DEFAULT NULL,
+                        `updated_at` timestamp NULL DEFAULT NULL,
+                        PRIMARY KEY (`id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ');
+            }
+            
+            // Check if system_versions table exists
+            if (!$connection->getSchemaBuilder()->hasTable('system_versions')) {
+                Log::info('Creating system_versions table');
+                $connection->statement('
+                    CREATE TABLE IF NOT EXISTS `system_versions` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+                        `version` varchar(255) NOT NULL,
+                        `name` varchar(255) NOT NULL,
+                        `description` text DEFAULT NULL,
+                        `is_current` tinyint(1) NOT NULL DEFAULT 0,
+                        `released_at` timestamp NULL DEFAULT NULL,
+                        `created_at` timestamp NULL DEFAULT NULL,
+                        `updated_at` timestamp NULL DEFAULT NULL,
+                        PRIMARY KEY (`id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ');
+                
+                // Insert initial version
+                $currentVersion = config('self-update.version_installed', '1.0.0');
+                $connection->table('system_versions')->insert([
+                    'version' => $currentVersion,
+                    'name' => 'Initial Release',
+                    'description' => 'The initial release of the VetClinic system',
+                    'is_current' => true,
+                    'released_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            
+            // Check if clinic_updates table exists
+            if (!$connection->getSchemaBuilder()->hasTable('clinic_updates')) {
+                Log::info('Creating clinic_updates table');
+                $connection->statement('
+                    CREATE TABLE IF NOT EXISTS `clinic_updates` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+                        `clinic_id` bigint unsigned NOT NULL,
+                        `system_update_id` bigint unsigned DEFAULT NULL,
+                        `is_applied` tinyint(1) NOT NULL DEFAULT 0,
+                        `is_dismissed` tinyint(1) NOT NULL DEFAULT 0,
+                        `applied_at` timestamp NULL DEFAULT NULL,
+                        `dismissed_at` timestamp NULL DEFAULT NULL,
+                        `notes` text DEFAULT NULL,
+                        `created_at` timestamp NULL DEFAULT NULL,
+                        `updated_at` timestamp NULL DEFAULT NULL,
+                        PRIMARY KEY (`id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ');
+            }
+            
+            Log::info('System update tables verified');
+            
+        } catch (\Exception $e) {
+            Log::error('Error ensuring system update tables exist: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 } 

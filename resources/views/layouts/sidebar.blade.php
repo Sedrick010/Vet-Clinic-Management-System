@@ -301,9 +301,9 @@
             
             <!-- System Updates -->
             <li class="nav-item">
-                <a class="nav-link {{ Request::is('system-updates*') ? 'active' : '' }}" href="{{ route('updates.index') }}">
-                    <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="fas fa-sync text-dark"></i>
+                <a class="nav-link {{ Request::is('system-updates*') || Request::is('version*') ? 'active' : '' }}" href="{{ route('updates.index') }}">
+                    <div class="icon icon-shape icon-sm shadow border-radius-md {{ $theme['name'] == 'dark' ? 'bg-dark' : 'bg-white' }} text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-code-branch text-primary"></i>
                     </div>
                     <span class="nav-link-text ms-1">System Updates</span>
                     @if(isset($pendingUpdateCount) && $pendingUpdateCount > 0)

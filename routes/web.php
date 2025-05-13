@@ -431,12 +431,23 @@ Route::middleware([
     ]);
 
     // System updates
-    Route::get('/system-updates', [\App\Http\Controllers\SystemUpdateController::class, 'index'])->name('updates.index');
-    Route::get('/system-updates/check', [\App\Http\Controllers\SystemUpdateController::class, 'checkForUpdates'])->name('updates.check');
-    Route::get('/system-updates/update', [\App\Http\Controllers\SystemUpdateController::class, 'update'])->name('updates.update');
-    Route::get('/system-updates/refresh', [\App\Http\Controllers\SystemUpdateController::class, 'refresh'])->name('updates.refresh');
-    Route::post('/system-updates/{id}/apply', [\App\Http\Controllers\SystemUpdateController::class, 'apply'])->name('updates.apply');
-    Route::post('/system-updates/{id}/dismiss', [\App\Http\Controllers\SystemUpdateController::class, 'dismiss'])->name('updates.dismiss');
+    Route::get('/system-updates', [App\Http\Controllers\SystemUpdateController::class, 'index'])->name('updates.index');
+    Route::get('/system-updates/check', [App\Http\Controllers\SystemUpdateController::class, 'checkForUpdates'])->name('updates.check');
+    Route::get('/system-updates/update', [App\Http\Controllers\SystemUpdateController::class, 'update'])->name('updates.update');
+    Route::get('/system-updates/refresh', [App\Http\Controllers\SystemUpdateController::class, 'refresh'])->name('updates.refresh');
+    Route::post('/system-updates/{id}/apply', [App\Http\Controllers\SystemUpdateController::class, 'apply'])->name('updates.apply');
+    Route::post('/system-updates/{id}/dismiss', [App\Http\Controllers\SystemUpdateController::class, 'dismiss'])->name('updates.dismiss');
+    Route::post('/system-updates/fix-tables', [App\Http\Controllers\SystemUpdateController::class, 'fixTables'])->name('updates.fix-tables');
+    
+    // Version Management routes
+    Route::get('/version/manage', [\App\Http\Controllers\VersionManagementController::class, 'index'])->name('version.manage');
+    Route::get('/version/check', [\App\Http\Controllers\VersionManagementController::class, 'checkForUpdates'])->name('version.check');
+    Route::get('/version/update/{versionId}', [\App\Http\Controllers\VersionManagementController::class, 'update'])->name('version.update');
+    Route::post('/version/rollback/{versionId}', [\App\Http\Controllers\VersionManagementController::class, 'rollback'])->name('version.rollback');
+    Route::get('/version/backups', [\App\Http\Controllers\VersionManagementController::class, 'listBackups'])->name('version.backups');
+    Route::post('/version/backups/restore', [\App\Http\Controllers\VersionManagementController::class, 'restoreFromBackup'])->name('version.backups.restore');
+    Route::post('/version/backups/delete', [\App\Http\Controllers\VersionManagementController::class, 'deleteBackup'])->name('version.backups.delete');
+    Route::post('/version/dismiss/{id}', [\App\Http\Controllers\VersionManagementController::class, 'dismissUpdate'])->name('version.dismiss');
 
     // Debug routes - only available in local environment
     if (app()->environment('local')) {

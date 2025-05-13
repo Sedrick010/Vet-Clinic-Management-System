@@ -30,32 +30,6 @@
         // We already have update information from above, no need to call again
     @endphp
 
-    @if(app()->environment('local'))
-    <!-- Version Testing Panel (Only visible in development) -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-gradient-dark">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="icon icon-shape icon-sm bg-white text-dark shadow rounded-circle me-3">
-                            <i class="fas fa-code"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-white mb-0">Development Testing Panel</h6>
-                            <p class="text-sm text-white opacity-8 mb-2">Current simulated version: v{{ $currentVersion }}</p>
-                        </div>
-                        <div class="ms-auto">
-                            <a href="{{ route('dashboard') }}?test_version=1.0.6" class="btn btn-sm btn-outline-light me-2">Simulate v1.0.6</a>
-                            <a href="{{ route('dashboard') }}?test_version=1.0.7" class="btn btn-sm btn-outline-light">Simulate v1.0.7</a>
-                            <a href="{{ route('dashboard') }}" class="btn btn-sm btn-light ms-2">Reset</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <!-- System Version Information Card -->
     <div class="row mb-4">
         <div class="col-lg-12 mb-4">
