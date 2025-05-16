@@ -450,6 +450,9 @@ Route::middleware([
     Route::post('/version/backups/delete', [\App\Http\Controllers\VersionManagementController::class, 'deleteBackup'])->name('version.backups.delete');
     Route::post('/version/dismiss/{id}', [\App\Http\Controllers\VersionManagementController::class, 'dismissUpdate'])->name('version.dismiss');
 
+    // New route for future releases - Feature preview and roadmap
+    Route::get('/version/roadmap', [\App\Http\Controllers\VersionManagementController::class, 'roadmap'])->name('version.roadmap');
+
     // Debug routes - only available in local environment
     if (app()->environment('local')) {
         Route::get('/debug/pets-check', [AppointmentController::class, 'debugPetsCheck'])->name('debug.pets-check');

@@ -648,4 +648,51 @@ class VersionManagementController extends Controller
                 ->with('error', 'Failed to dismiss update: ' . $e->getMessage());
         }
     }
+    
+    /**
+     * Display the product roadmap and upcoming features
+     * 
+     * @return \Illuminate\View\View
+     */
+    public function roadmap()
+    {
+        $currentVersion = config('self-update.version_installed', '1.0.0');
+        
+        // Get all available versions, sorted by version number (newest first)
+        $versions = SystemVersion::orderBy('released_at', 'desc')->get();
+        
+        // Define upcoming features for future releases
+        $upcomingFeatures = [
+            [
+                'title' => 'Advanced Backup Management',
+                'description' => 'Scheduled automatic backups, cloud storage integration, and backup verification',
+                'estimated_version' => 'v4.0.0',
+                'status' => 'planned'
+            ],
+            [
+                'title' => 'Version Rollback Sandbox',
+                'description' => 'Test version rollbacks in a safe environment before applying to production',
+                'estimated_version' => 'v3.5.0',
+                'status' => 'in-development'
+            ],
+            [
+                'title' => 'Update Notifications',
+                'description' => 'Email and system notifications for new available updates',
+                'estimated_version' => 'v3.2.0',
+                'status' => 'coming-soon'
+            ],
+            [
+                'title' => 'Automatic Updates',
+                'description' => 'Schedule updates to run automatically during off-hours',
+                'estimated_version' => 'v3.3.0',
+                'status' => 'planned'
+            ]
+        ];
+        
+        return view('system.versions.roadmap', [
+            'currentVersion' => $currentVersion,
+            'versions' => $versions,
+            'upcomingFeatures' => $upcomingFeatures
+        ]);
+    }
 } 

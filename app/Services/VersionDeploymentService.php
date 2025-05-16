@@ -342,6 +342,10 @@ class VersionDeploymentService
                 // Continue with the deployment even if tenant migrations fail
             }
             
+            // Update version identifiers in blade files
+            Log::info("Updating version identifiers in blade files");
+            $this->updateVersionIdentifiers($version);
+            
             // Clean up extraction directory and downloaded zip
             $this->cleanupTempFiles($extractPath, $zipFilePath);
             
@@ -577,22 +581,15 @@ class VersionDeploymentService
                 File::delete($zipFilePath);
             }
             
-            // Check for and clean up any old extraction directories
+            // Check for and clean up ANY old extraction directories
             $oldExtractDirs = File::glob($this->storagePath . '/extract_*');
-            $currentTime = time();
+            Log::info("Found " . count($oldExtractDirs) . " extraction directories to check for cleanup");
             
             foreach ($oldExtractDirs as $dir) {
-                // If directory is more than 24 hours old or has a specific pattern, delete it
-                $dirName = basename($dir);
-                
-                if (preg_match('/extract_(\d+)/', $dirName, $matches)) {
-                    $timestamp = (int)$matches[1];
-                    
-                    // Delete if older than 24 hours
-                    if (($currentTime - $timestamp) > 86400) {
-                        Log::info("Cleaning up old extraction directory: {$dir}");
-                        File::deleteDirectory($dir);
-                    }
+                // Always clean up extract directories, regardless of age
+                if ($dir !== $extractPath) { // Don't try to delete the current directory twice
+                    Log::info("Cleaning up extraction directory: {$dir}");
+                    File::deleteDirectory($dir);
                 }
             }
             
@@ -600,6 +597,64 @@ class VersionDeploymentService
         } catch (\Exception $e) {
             // Log but don't throw, as this is not critical
             Log::warning("Error cleaning up temporary files: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Update version identifiers in blade files
+     * This helps visually verify that the update was successfully applied
+     * 
+     * @param string $version
+     * @return void
+     */
+    public function updateVersionIdentifiers(string $version): void
+    {
+        try {
+            // Clean the version number
+            $version = ltrim($version, 'v');
+            
+            // Files to update identifiers in
+            $files = [
+                resource_path('views/system/versions/manage.blade.php'),
+                resource_path('views/system/versions/roadmap.blade.php'),
+                resource_path('views/system/versions/update-success.blade.php')
+            ];
+            
+            foreach ($files as $file) {
+                if (File::exists($file)) {
+                    $content = File::get($file);
+                    
+                    // Update MANAGE-UI- version
+                    $content = preg_replace(
+                        '/VERSION IDENTIFIER: MANAGE-UI-v[0-9.]+/',
+                        'VERSION IDENTIFIER: MANAGE-UI-v' . $version,
+                        $content
+                    );
+                    
+                    // Update ROADMAP-UI- version
+                    $content = preg_replace(
+                        '/VERSION IDENTIFIER: ROADMAP-UI-v[0-9.]+/',
+                        'VERSION IDENTIFIER: ROADMAP-UI-v' . $version,
+                        $content
+                    );
+                    
+                    // Update SUCCESS-UI- version
+                    $content = preg_replace(
+                        '/VERSION IDENTIFIER: SUCCESS-UI-v[0-9.]+/',
+                        'VERSION IDENTIFIER: SUCCESS-UI-v' . $version,
+                        $content
+                    );
+                    
+                    // Save the modified content
+                    File::put($file, $content);
+                    Log::info("Updated version identifiers in file: {$file}");
+                }
+            }
+            
+            Log::info("Successfully updated version identifiers to v{$version}");
+        } catch (\Exception $e) {
+            // Log but don't throw, as this is not critical
+            Log::warning("Error updating version identifiers: " . $e->getMessage());
         }
     }
 } 

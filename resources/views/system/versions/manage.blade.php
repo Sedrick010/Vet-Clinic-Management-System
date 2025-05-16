@@ -12,8 +12,15 @@
                     <div>
                         <h5 class="mb-0">System Versions</h5>
                         <p class="text-sm mb-0">Manage and update your system version</p>
+                        <!-- VERSION INDICATOR - This helps verify successful updates -->
+                        <div class="mt-2">
+                            <span class="badge bg-primary">VERSION IDENTIFIER: MANAGE-UI-v3.1.0</span>
+                        </div>
                     </div>
                     <div>
+                        <a href="{{ route('version.roadmap') }}" class="btn btn-sm btn-dark me-2">
+                            <i class="fas fa-road me-1"></i> Feature Roadmap
+                        </a>
                         <a href="{{ route('version.backups') }}" class="btn btn-sm btn-info me-2">
                             <i class="fas fa-save me-1"></i> Version Backups
                         </a>
