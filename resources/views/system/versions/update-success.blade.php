@@ -14,7 +14,7 @@
                             <h5 class="mb-0 text-white">System Update Successful</h5>
                             <p class="text-sm mb-0 opacity-8">Your system has been successfully updated</p>
                             <div class="mt-2 bg-white px-3 py-1 rounded d-inline-block">
-                                <span class="badge bg-success">VERSION IDENTIFIER: SUCCESS-UI-v4.0.3</span>
+                                <span class="badge bg-success">VERSION IDENTIFIER: SUCCESS-UI-v4.0.4</span>
                             </div>
                         </div>
                         <a href="{{ route('version.manage') }}" class="btn btn-sm btn-outline-white">
