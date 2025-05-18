@@ -123,6 +123,25 @@
         </div>
     </div>
 
+    <!-- Pet Care Motivation Message -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-info text-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-shape icon-md rounded-circle bg-white text-info me-3">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-white font-weight-bold">Pets should be taken care just like humans</h5>
+                            <p class="mb-0 text-white opacity-8">Our mission is to provide the same level of care for your pets as we would for any family member</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Subscription Warning Alert -->
     @if(isset($clinic) && !$clinic->is_subscription_active)
     <div class="row mb-4">
@@ -170,38 +189,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Daily Quote Card - Only visible in v1.0.7 or higher -->
-    @php
-        $cleanCurrentVersion = ltrim($currentVersion, 'v');
-        $showNewFeature = version_compare($cleanCurrentVersion, '1.0.7', '>=');
-    @endphp
-
-    @if($showNewFeature)
-    <div class="row mb-4" id="new-v107-feature">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6>Daily Inspiration</h6>
-                    <span class="badge bg-gradient-success">New in v1.0.7</span>
-                </div>
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="icon icon-shape icon-md shadow rounded-circle bg-gradient-warning me-3">
-                            <i class="fas fa-quote-left text-white opacity-10"></i>
-                        </div>
-                        <div>
-                            <blockquote class="blockquote mb-0">
-                                <p class="text-sm">"If you don't take risks, you can't create a future!"</p>
-                                <footer class="blockquote-footer mt-1">Monkey D. Luffy, <cite title="Source">Future King of the Pirates</cite></footer>
-                            </blockquote>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
 
     <style>
         /* Icon styling for Quick Actions and Statistics */

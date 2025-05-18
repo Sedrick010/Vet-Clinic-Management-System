@@ -14,7 +14,7 @@
                         <p class="text-sm mb-0">Manage and update your system version</p>
                         <!-- VERSION INDICATOR - This helps verify successful updates -->
                         <div class="mt-2">
-                            <span class="badge bg-primary">VERSION IDENTIFIER: MANAGE-UI-v4.0.0</span>
+                            <span class="badge bg-primary">VERSION IDENTIFIER: MANAGE-UI-v4.0.1</span>
                         </div>
                     </div>
                     <div>
