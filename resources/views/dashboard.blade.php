@@ -142,6 +142,25 @@
         </div>
     </div>
 
+    <!-- Dragon Pet Message -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-danger text-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-shape icon-md rounded-circle bg-white text-danger me-3">
+                            <i class="fas fa-dragon"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-white font-weight-bold">Dragons are the best pets</h5>
+                            <p class="mb-0 text-white opacity-8">Mythical, majestic, and magical - consider a dragon for your next pet companion!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Subscription Warning Alert -->
     @if(isset($clinic) && !$clinic->is_subscription_active)
     <div class="row mb-4">
