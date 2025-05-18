@@ -25,6 +25,8 @@ class User extends Authenticatable
         'password',
         'clinic_id',
         'role',
+        'firebase_uid',
+        'phone',
     ];
 
     /**

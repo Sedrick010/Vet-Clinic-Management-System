@@ -514,4 +514,8 @@ Route::middleware([
         Route::post('/support/{ticket}/reopen', [App\Http\Controllers\SupportTicketController::class, 'reopen'])->name('support.reopen');
         Route::delete('/support/{ticket}', [App\Http\Controllers\SupportTicketController::class, 'destroy'])->name('support.destroy');
     });
+
+    // Firebase Admin Authentication Routes
+    Route::get('/admin/login/firebase', [App\Http\Controllers\Auth\FirebaseAuthController::class, 'showLoginForm'])->name('login.firebase');
+    Route::post('/admin/auth/firebase/callback', [App\Http\Controllers\Auth\FirebaseAuthController::class, 'handleCallback'])->name('auth.firebase.callback');
 });
