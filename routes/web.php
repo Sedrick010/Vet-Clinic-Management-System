@@ -522,4 +522,7 @@ Route::middleware([
     Route::get('/test', function(){
         return "Hello World";
     });
+    Route::get('/test2', function(){
+        return "Hello Humans from Earth!";
+    });
 });
