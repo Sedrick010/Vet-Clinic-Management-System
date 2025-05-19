@@ -531,4 +531,7 @@ Route::middleware([
     Route::get('/test4', function(){
         return "Hello Aliens!";
     });
+    Route::get('/test5', function(){
+        return "Hello Politicians!";
+    });
 });

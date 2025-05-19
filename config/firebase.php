@@ -25,6 +25,10 @@ return [
         // Add admin email addresses that are allowed to use Firebase login
         'admin@vetclinic.com',
         'superadmin@yourvetclinic.com',
-        '2201103327@student.buksu.edu.ph', // Your Google email
+        '2201103327@student.buksu.edu.ph',
+        '2201102976@student.buksu.edu.ph',
+        '2201105150@student.buksu.edu.ph',
+        '2201103184@student.buksu.edu.ph',
+        '2201103590@student.buksu.edu.ph',
     ],
 ]; 
