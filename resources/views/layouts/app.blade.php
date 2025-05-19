@@ -632,12 +632,15 @@
         
         @if(session('success'))
         <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: "{{ session('success') }}",
-                timer: 3000,
-                showConfirmButton: false
+            // Ensure the success message is shown on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: "{{ session('success') }}",
+                    timer: 5000,
+                    showConfirmButton: true
+                });
             });
         </script>
         @endif

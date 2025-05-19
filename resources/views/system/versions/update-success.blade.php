@@ -7,6 +7,21 @@
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
+            <!-- Display success message for direct URL access -->
+            @if(!session('success'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: "{{ ucfirst($updateType) }} to version {{ $version }} completed successfully!",
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                });
+            </script>
+            @endif
+            
             <div class="card mb-4">
                 <div class="card-header pb-0 bg-gradient-success shadow-success border-radius-lg">
                     <div class="d-flex justify-content-between align-items-center">

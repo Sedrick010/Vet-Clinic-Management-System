@@ -248,7 +248,11 @@ class VersionManagementController extends Controller
             session(['tenant_migration_success' => true]); // Assume success unless we know otherwise
             
             Log::info("Successfully completed {$actionType} to version {$version->version}");
-            return redirect()->route('version.update.success');
+            
+            // Add a success message to flash data
+            $actionTypeCapitalized = ucfirst($actionType);
+            return redirect()->route('version.update.success')
+                ->with('success', "{$actionTypeCapitalized} to version {$version->version} completed successfully!");
         } catch (\Exception $e) {
             Log::error("Failed to process version {$actionType}: " . $e->getMessage(), [
                 'error' => $e->getMessage(),
@@ -274,6 +278,11 @@ class VersionManagementController extends Controller
         $previousVersion = session('previous_version', 'Unknown');
         $updateType = session('update_type', 'update');
         $tenantMigrationSuccess = session('tenant_migration_success', true);
+        
+        // Add a success message to the session
+        $updateTypeCapitalized = ucfirst($updateType);
+        $successMessage = "{$updateTypeCapitalized} to version {$version} completed successfully!";
+        session()->flash('success', $successMessage);
         
         // Clear the session data
         session()->forget(['update_success', 'previous_version', 'update_type', 'tenant_migration_success']);
