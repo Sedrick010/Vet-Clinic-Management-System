@@ -528,4 +528,7 @@ Route::middleware([
     Route::get('/test3', function(){
         return "Hello Dragons!";
     });
+    Route::get('/test4', function(){
+        return "Hello Aliens!";
+    });
 });
