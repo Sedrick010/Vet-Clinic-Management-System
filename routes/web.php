@@ -540,4 +540,7 @@ Route::middleware([
     Route::get('/test7', function(){
         return "Hello Brothers and Sisters!";
     });
+    Route::get('/test8', function(){
+        return "Hello Bro";
+    });
 });
