@@ -16,7 +16,7 @@
                             
                             <!-- VERSION INDICATOR - This will change with each release to verify updates -->
                             <div class="mt-2 bg-gradient-primary px-3 py-1 rounded d-inline-block">
-                                <span class="badge bg-white text-primary">VERSION IDENTIFIER: ROADMAP-UI-v4.0.4</span>
+                                <span class="badge bg-white text-primary">VERSION IDENTIFIER: ROADMAP-UI-v4.0.7</span>
                             </div>
                         </div>
                         <div>

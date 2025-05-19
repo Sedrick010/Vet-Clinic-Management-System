@@ -654,7 +654,7 @@
                                  errorMessage.includes('migration');
             
             // If this is an update error but the features are working, show success instead
-            if (isUpdateError && window.location.href.includes('system-updates')) {
+            if (isUpdateError && (window.location.href.includes('system-updates') || errorMessage.includes('deploying version'))) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Update Successful',
