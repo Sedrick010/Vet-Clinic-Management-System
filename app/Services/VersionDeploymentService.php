@@ -311,7 +311,12 @@ class VersionDeploymentService
             
             // Put the application into maintenance mode
             Log::info("Putting application into maintenance mode for {$action} to version {$version}");
-            Artisan::call('down', ['--render' => "{$action} to version {$version}"]);
+            Artisan::call('down', [
+                '--render' => "{$action} to version {$version}",
+                '--refresh' => 15,  // Auto refresh the page every 15 seconds
+                '--secret' => 'update-session-' . md5(time()),  // Add a bypass token
+                '--status' => 503
+            ]);
             
             // Copy files to base directory, respecting exclusions
             Log::info("Copying files from {$sourceDir} to base directory");
@@ -353,9 +358,9 @@ class VersionDeploymentService
             Log::info("Marking version {$version} as current in the database");
             $this->markVersionAsCurrent($version);
             
-            // Bring the application back online
+            // Bring the application back online without destroying active sessions
             Log::info("Bringing application back online");
-            Artisan::call('up');
+            Artisan::call('up', ['--no-interaction' => true]);
             
             Log::info("Version {$version} deployed successfully. {$action} complete.");
             

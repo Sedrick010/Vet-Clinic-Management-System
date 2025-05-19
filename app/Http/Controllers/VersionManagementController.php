@@ -471,7 +471,12 @@ class VersionManagementController extends Controller
             }
             
             // Put the application into maintenance mode
-            Artisan::call('down', ['--render' => 'Restoring from backup']);
+            Artisan::call('down', [
+                '--render' => 'Restoring from backup',
+                '--refresh' => 15,  // Auto refresh the page every 15 seconds
+                '--secret' => 'restore-session-' . md5(time()),  // Add a bypass token
+                '--status' => 503
+            ]);
             
             try {
                 // Extract the zip file
@@ -480,7 +485,7 @@ class VersionManagementController extends Controller
                 
                 if ($openResult !== true) {
                     Log::error("Failed to open backup file: Error code {$openResult}");
-                    Artisan::call('up');
+                    Artisan::call('up', ['--no-interaction' => true]);
                     return redirect()->route('version.backups')
                         ->with('error', 'Failed to open backup file.');
                 }
@@ -526,9 +531,9 @@ class VersionManagementController extends Controller
                 Log::info("Marking version {$version} as current in the database");
                 $this->versionDeployment->markVersionAsCurrent($version);
                 
-                // Bring the application back online
+                // Bring the application back online without destroying active sessions
                 Log::info("Bringing application back online");
-                Artisan::call('up');
+                Artisan::call('up', ['--no-interaction' => true]);
                 
                 Log::info("Successfully restored system from backup to version {$version}");
                 return redirect()->route('version.manage')
@@ -536,7 +541,7 @@ class VersionManagementController extends Controller
                 
             } catch (\Exception $e) {
                 // Ensure the app is brought back online
-                Artisan::call('up');
+                Artisan::call('up', ['--no-interaction' => true]);
                 Log::error("Error during backup restoration: " . $e->getMessage(), [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
