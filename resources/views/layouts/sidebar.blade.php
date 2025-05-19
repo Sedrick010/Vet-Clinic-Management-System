@@ -306,44 +306,9 @@
                         <i class="fas fa-code-branch text-primary"></i>
                     </div>
                     <span class="nav-link-text ms-1">System Updates</span>
-                    @if(isset($pendingUpdateCount) && $pendingUpdateCount > 0)
-                    <span class="badge badge-sm bg-gradient-warning ms-auto">{{ $pendingUpdateCount }}</span>
-                    @endif
                 </a>
             </li>
             
-            @if(isset($pendingUpdates) && $pendingUpdates->count() > 0)
-            <div class="update-list">
-                <div class="update-list-header">
-                    <span>Available Updates</span>
-                </div>
-                <div class="update-list-body">
-                    @foreach($pendingUpdates->sortByDesc('is_critical') as $update)
-                        @if($update->is_critical)
-                            <a href="{{ route('updates.index', ['filter' => 'critical']) }}" class="update-sidebar-item">
-                                <span>{{ $update->version }}</span>
-                                <span class="badge bg-gradient-danger">Critical</span>
-                            </a>
-                        @elseif($update->is_security)
-                            <a href="{{ route('updates.index', ['filter' => 'security']) }}" class="update-sidebar-item">
-                                <span>{{ $update->version }}</span>
-                                <span class="badge bg-gradient-warning">Security</span>
-                            </a>
-                        @else
-                            <a href="{{ route('updates.index') }}" class="update-sidebar-item d-flex justify-content-between">
-                                <span>{{ $update->version }}</span>
-                                <span class="badge bg-gradient-info">Update</span>
-                            </a>
-                        @endif
-                    @endforeach
-                </div>
-                <div class="update-list-footer">
-                    <a href="{{ route('updates.index') }}" class="btn btn-sm btn-dark w-100">
-                        View All Updates
-                    </a>
-                </div>
-            </div>
-            @endif
             @endif
             
             <!-- Support Tickets - For tenants and regular users -->

@@ -26,84 +26,6 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    @php
-        // We already have update information from above, no need to call again
-    @endphp
-
-    <!-- System Version Information Card -->
-    <div class="row mb-4">
-        <div class="col-lg-12 mb-4">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="row">
-                        <div class="col-lg-6 col-7">
-                            <h6>System Version</h6>
-                            <p class="text-sm mb-0">
-                                <i class="fa fa-check text-success" aria-hidden="true"></i>
-                                <span class="font-weight-bold ms-1">Current Version: v{{ $currentVersion }}</span>
-                            </p>
-                        </div>
-                        <div class="col-lg-6 col-5 my-auto text-end">
-                            <a href="{{ route('updates.index') }}" class="btn btn-sm btn-dark">Manage Updates</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body px-0 pt-0 pb-2"></div>
-            </div>
-        </div>
-    </div>
-
-    @if($hasUpdates)
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert {{ $criticalUpdates->count() > 0 ? 'bg-gradient-danger' : 'bg-gradient-primary' }} alert-dismissible fade show" role="alert">
-                    <div class="d-flex align-items-center">
-                        <div class="icon icon-sm me-3">
-                            <i class="fas {{ $criticalUpdates->count() > 0 ? 'fa-exclamation-triangle' : 'fa-sync-alt' }} text-white"></i>
-                        </div>
-                        <div class="text-white flex-grow-1">
-                            <span class="fw-bold fs-6">{{ $criticalUpdates->count() > 0 ? 'Critical System Update Available' : 'System Update Available' }}</span>
-                            <p class="mb-0 mt-1">
-                                Version {{ $pendingUpdates->first()->version }} is ready to install
-                                @if($mandatoryUpdates->count() > 0)
-                                    (mandatory update)
-                                @endif
-                            </p>
-                        </div>
-                        <div class="d-flex">
-                            @php
-                                $update = $pendingUpdates->first();
-                            @endphp
-                            
-                            <form action="{{ route('updates.apply', $update->id) }}" method="POST" class="d-inline me-2">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-light" 
-                                    onclick="return confirm('Are you sure you want to apply this update?');">
-                                    <i class="fas fa-download me-1"></i> Apply Now
-                                </button>
-                            </form>
-                            
-                            @if(!$update->is_mandatory)
-                                <form action="{{ route('updates.dismiss', $update->id) }}" method="POST" class="d-inline me-2">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-outline-light" 
-                                        onclick="return confirm('Are you sure you want to dismiss this update?');">
-                                        <i class="fas fa-times me-1"></i> Dismiss
-                                    </button>
-                                </form>
-                            @endif
-                            
-                            <a href="{{ route('updates.index') }}" class="btn btn-sm btn-outline-light me-2">
-                                <i class="fas fa-info-circle me-1"></i> Details
-                            </a>
-                            <button type="button" class="btn-close text-white" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
-
     <!-- Welcome Message for Clinic Owner -->
     <div class="row mb-4">
         <div class="col-12">
@@ -602,10 +524,20 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.hasUpdates !== false) {
-                        // If there's an update, refresh the page to show the notification
-                        // or you could update a specific element to show the update notification
-                        if (document.querySelector('.update-notification') === null) {
-                            window.location.reload();
+                        // Show a toast notification instead of refreshing the page
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'System Update Available',
+                                text: 'A new system update is available. Visit the System Updates page to apply it.',
+                                icon: 'info',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 5000,
+                                timerProgressBar: true
+                            });
+                        } else {
+                            console.log('System update available');
                         }
                     }
                 })

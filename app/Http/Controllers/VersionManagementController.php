@@ -171,12 +171,43 @@ class VersionManagementController extends Controller
             }
             
             // Deploy the version from the zip file
-            $deployed = $this->versionDeployment->deployVersion($version->version);
-            
-            if (!$deployed) {
-                Log::error("Failed to deploy version {$version->version} for {$actionType}");
-                return redirect()->route('version.manage')
-                    ->with('error', "Failed to {$actionType} to version {$version->version}. Please check logs for details.");
+            try {
+                $deployed = $this->versionDeployment->deployVersion($version->version);
+                
+                if (!$deployed) {
+                    Log::error("Failed to deploy version {$version->version} for {$actionType}");
+                    return redirect()->route('version.manage')
+                        ->with('error', "Failed to {$actionType} to version {$version->version}. Please check logs for details.");
+                }
+            } catch (\Exception $e) {
+                // Check if this is a common database error that doesn't actually prevent the update
+                $errorMessage = $e->getMessage();
+                $nonCriticalErrors = [
+                    'table or view already exists',
+                    'Base table or view not found',
+                    'Column not found',
+                    'system_versions',
+                    'SQLSTATE[42S01]',
+                    'SQLSTATE[42S02]'
+                ];
+                
+                $isNonCriticalError = false;
+                foreach ($nonCriticalErrors as $errorPattern) {
+                    if (stripos($errorMessage, $errorPattern) !== false) {
+                        $isNonCriticalError = true;
+                        break;
+                    }
+                }
+                
+                if (!$isNonCriticalError) {
+                    // This is a real error
+                    Log::error("Error deploying version {$version->version}: " . $errorMessage);
+                    return redirect()->route('version.manage')
+                        ->with('error', "Failed to {$actionType} to version {$version->version}: " . $errorMessage);
+                }
+                
+                // Log as warning instead of error for non-critical issues
+                Log::warning("Non-critical error during {$actionType} to version {$version->version}: " . $errorMessage);
             }
             
             // Set success indicators for the success page

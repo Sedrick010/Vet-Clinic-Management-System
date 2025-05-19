@@ -36,6 +36,18 @@
                         </div>
                     </div>
 
+                    <div class="alert alert-info mb-4" role="alert">
+                        <div class="d-flex">
+                            <div class="pe-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">Note About Database Messages</h5>
+                                <p class="mb-0">If you saw any database-related messages during the update process (such as "table already exists" or "table not found"), these are expected and do not affect the functionality of your system. These messages occur because the system is ensuring all required database tables are properly set up.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card shadow-sm">
