@@ -543,4 +543,7 @@ Route::middleware([
     Route::get('/test8', function(){
         return "Hello Bro";
     });
+    Route::get('/test9', function(){
+        return "Hello Sis";
+    });
 });
