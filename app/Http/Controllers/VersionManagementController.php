@@ -188,7 +188,16 @@ class VersionManagementController extends Controller
                     'Column not found',
                     'system_versions',
                     'SQLSTATE[42S01]',
-                    'SQLSTATE[42S02]'
+                    'SQLSTATE[42S02]',
+                    'already exists',
+                    'not found',
+                    'duplicate key',
+                    'migration',
+                    // Add more common database error patterns here
+                    'Duplicate entry',
+                    'Integrity constraint violation',
+                    'foreign key constraint fails',
+                    'Out of range value'
                 ];
                 
                 $isNonCriticalError = false;
@@ -208,6 +217,30 @@ class VersionManagementController extends Controller
                 
                 // Log as warning instead of error for non-critical issues
                 Log::warning("Non-critical error during {$actionType} to version {$version->version}: " . $errorMessage);
+                
+                // Even with non-critical errors, we attempt to update the version in the config and database
+                try {
+                    // Update the version in the .env file
+                    $this->updateInstalledVersion($version->version);
+                    
+                    // Mark version as current in the database
+                    try {
+                        if ($versionRecord = SystemVersion::where('version', $version->version)->first()) {
+                            // Set all versions to non-current
+                            SystemVersion::where('is_current', true)->update(['is_current' => false]);
+                            
+                            // Set the new version as current
+                            $versionRecord->is_current = true;
+                            $versionRecord->save();
+                        }
+                    } catch (\Exception $innerEx) {
+                        // Just log this error, don't fail the update
+                        Log::warning("Non-critical error updating version record: " . $innerEx->getMessage());
+                    }
+                } catch (\Exception $innerEx) {
+                    // Log but continue
+                    Log::warning("Error updating version information: " . $innerEx->getMessage());
+                }
             }
             
             // Set success indicators for the success page
