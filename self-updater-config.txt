@@ -1,0 +1,31 @@
+# VetClinic Self-Updater Configuration Guide
+
+Based on your classmate's configuration, here's how you should update your .env file:
+
+```
+# Self-Updater Configuration
+SELF_UPDATER_SOURCE=github
+SELF_UPDATER_REPO_VENDOR=Sedrick010
+SELF_UPDATER_REPO_NAME=Vet-Clinic-Management-System
+SELF_UPDATER_VERSION_INSTALLED=1.0.4
+SELF_UPDATER_USE_BRANCH=main
+SELF_UPDATER_GITHUB_PRIVATE_ACCESS_TOKEN=your_github_token_here
+SELF_UPDATER_DOWNLOAD_PATH=/tmp
+SELF_UPDATER_LOG_EVENTS=true
+```
+
+## Steps to Update Your Configuration:
+
+1. Open your .env file
+2. Update the existing SELF_UPDATER variables or add missing ones
+3. Make sure to use YOUR actual GitHub token, not the example one
+4. You can keep your current version (1.0.4) or update it to match your latest release
+5. Set USE_BRANCH to whichever branch you want to pull updates from (main, master, etc.)
+6. After updating the .env file, run `php artisan config:clear` to apply changes
+
+## Important Notes:
+
+- Keep your GitHub token private and secure
+- The download path (`/tmp`) works for Linux systems; for Windows you might want to use a different path
+- You have duplicate entries in your current .env file that should be removed
+- You can create a custom GitHub updater service similar to your classmate's if needed 
